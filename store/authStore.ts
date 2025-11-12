@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { User, LoginRequest, RegisterRequest } from "@/types/auth";
-import api from "@/lib/api";
+import { authService } from "@/services/authService";
 
+// 🔐 SECURITY: NO token storage in client
+// Tokens stored in httpOnly cookies (set by backend)
+// AuthState contains ONLY user data and session state
 interface AuthState {
   user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -13,15 +14,14 @@ interface AuthState {
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  setUser: (user: User | null) => void;
   clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  accessToken: null,
-  refreshToken: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -29,24 +29,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.post("/auth/login", credentials);
-      const { accessToken, refreshToken, user } = response.data;
-
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      // 🔐 Backend sets httpOnly cookies via Set-Cookie header
+      const response = await authService.login(credentials);
 
       set({
-        user,
-        accessToken,
-        refreshToken,
+        user: response.user,
         isAuthenticated: true,
         isLoading: false,
+        error: null,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed";
+      const apiError = error as { response?: { data?: { message?: string } } };
       set({
-        error: (error as any).response?.data?.message || message,
+        error: apiError.response?.data?.message || message,
         isLoading: false,
+        isAuthenticated: false,
+        user: null,
       });
       throw error;
     }
@@ -55,62 +54,70 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.post("/auth/register", data);
-      const { accessToken, refreshToken, user } = response.data;
-
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      // 🔐 Backend sets httpOnly cookies via Set-Cookie header
+      const response = await authService.register(data);
 
       set({
-        user,
-        accessToken,
-        refreshToken,
+        user: response.user,
         isAuthenticated: true,
         isLoading: false,
+        error: null,
       });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Registration failed";
+      const apiError = error as { response?: { data?: { message?: string } } };
       set({
-        error: (error as any).response?.data?.message || message,
+        error: apiError.response?.data?.message || message,
         isLoading: false,
+        isAuthenticated: false,
+        user: null,
       });
       throw error;
     }
   },
 
-  logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    set({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-    });
+  logout: async () => {
+    try {
+      // 🔐 Call backend to clear httpOnly cookies
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear local state
+      set({
+        user: null,
+        isAuthenticated: false,
+        error: null,
+      });
+    }
   },
 
   loadUser: async () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return;
-    }
-
     set({ isLoading: true });
     try {
-      const response = await api.get("/users/profile");
+      // 🔐 Backend validates httpOnly cookie and returns user data
+      const user = await authService.getProfile();
       set({
-        user: response.data,
-        accessToken: token,
+        user,
         isAuthenticated: true,
         isLoading: false,
       });
     } catch {
-      set({ isLoading: false });
-      // Token invalid, clear storage
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      // Cookie invalid or expired - suppress error, just set unauthenticated state
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
+  },
+
+  setUser: (user) => {
+    set({
+      user,
+      isAuthenticated: !!user,
+    });
   },
 
   clearError: () => set({ error: null }),

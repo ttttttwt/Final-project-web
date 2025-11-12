@@ -14,12 +14,11 @@ export interface LoginRequest {
   password: string;
 }
 
+// 🔐 SECURITY: Tokens stored in httpOnly cookies (set by backend)
+// Client receives ONLY user data, NO tokens
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   user: User;
-  tokenType: string;
-  expiresIn: number;
+  message?: string;
 }
 
 export interface RegisterRequest {
@@ -28,13 +27,13 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+// 🔐 SECURITY: Refresh uses httpOnly cookie, no request body needed
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RefreshTokenRequest {
-  refreshToken: string;
+  // Empty - backend reads refreshToken from httpOnly cookie
 }
 
 export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
+  message: string;
+  // No tokens in response - backend sets new cookie via Set-Cookie header
 }
