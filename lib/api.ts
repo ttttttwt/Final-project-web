@@ -39,6 +39,15 @@ const processQueue = (error: Error | null = null) => {
 // Request interceptor - NO manual token handling
 api.interceptors.request.use(
   (config) => {
+    // 🌐 Check offline status before making request
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      console.warn("📴 Device is offline, request will fail");
+      return Promise.reject({
+        code: "OFFLINE",
+        message: "You are offline. Please check your internet connection.",
+      });
+    }
+
     // ❌ NO manual Authorization header
     // Cookies sent automatically by browser when withCredentials: true
     return config;
@@ -59,53 +68,80 @@ api.interceptors.response.use(
 
     // 🔐 Handle 401 - Token expired, try refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Mark request as already attempted refresh
       originalRequest._retry = true;
 
-      // Use Promise lock to prevent concurrent refresh calls
-      if (isRefreshing) {
+      // 🔒 Promise Lock Pattern: Prevent concurrent refresh requests
+      if (isRefreshing && refreshPromise) {
         // Wait for ongoing refresh to complete
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject, config: originalRequest });
         })
           .then(() => {
+            // Refresh succeeded, retry original request
             return api(originalRequest);
           })
           .catch((err) => {
+            // Refresh failed, propagate error
             return Promise.reject(err);
           });
       }
 
+      // Start refresh process
       isRefreshing = true;
       refreshPromise = (async () => {
         try {
-          // 🔐 Call refresh endpoint (backend reads httpOnly cookie)
+          console.log("🔐 Token expired, refreshing session...");
+
+          // 🔐 Call refresh endpoint (backend reads httpOnly refresh cookie)
+          // Backend returns new access token in httpOnly cookie
           await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
             {},
-            { withCredentials: true }
+            { withCredentials: true, timeout: 10000 }
           );
+
+          console.log("✅ Token refresh successful");
 
           // Refresh successful, process queued requests
           processQueue();
+
+          // Reset refresh state
           isRefreshing = false;
           refreshPromise = null;
 
-          // Retry original request
+          // Retry original request with new token (in cookie)
           return api(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, logout user
+          console.error("❌ Token refresh failed:", refreshError);
+
+          // Refresh failed, reject all queued requests
           processQueue(
             refreshError instanceof Error
               ? refreshError
               : new Error("Token refresh failed")
           );
+
+          // Reset refresh state
           isRefreshing = false;
           refreshPromise = null;
 
-          // Redirect to login
+          // 🚪 Auto-logout: Redirect to login
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            console.log("🚪 Session expired, redirecting to login...");
+
+            // Preserve current URL for redirect after login
+            const currentUrl =
+              window.location.pathname + window.location.search;
+            const loginUrl = `/login${
+              currentUrl !== "/"
+                ? `?returnUrl=${encodeURIComponent(currentUrl)}`
+                : ""
+            }`;
+
+            window.location.href = loginUrl;
           }
+
           return Promise.reject(refreshError);
         }
       })();
