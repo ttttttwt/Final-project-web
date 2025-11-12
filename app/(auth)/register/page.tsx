@@ -191,19 +191,19 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#121212] p-4 py-12">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-3 text-center">
           <div className="mb-2 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212] shadow-lg">
               <span className="text-2xl font-bold">L</span>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">
-            Create an Account
+          <CardTitle className="text-3xl font-serif text-[#202124] dark:text-[#E8EAED]">
+            Join LEXIA
           </CardTitle>
-          <CardDescription>
-            Start your English learning journey with LEXIA
+          <CardDescription className="text-base text-[#5F6368] dark:text-[#9AA0A6]">
+            Start your AI-powered English learning journey
           </CardDescription>
         </CardHeader>
 
@@ -216,17 +216,20 @@ export default function RegisterPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-[#202124] dark:text-[#E8EAED]">
+                      Email address
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="your.email@example.com"
                         autoComplete="email"
                         disabled={form.formState.isSubmitting}
+                        className="h-11 border-[#E0E0E0] dark:border-[#2E2E2E] focus:border-[#1A73E8] dark:focus:border-[#8AB4F8]"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[#EA4335] dark:text-[#F28B82]" />
                   </FormItem>
                 )}
               />
@@ -237,7 +240,9 @@ export default function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#202124] dark:text-[#E8EAED]">
+                      Password
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -245,13 +250,14 @@ export default function RegisterPage() {
                           placeholder="Create a strong password"
                           autoComplete="new-password"
                           disabled={form.formState.isSubmitting}
+                          className="h-11 border-[#E0E0E0] dark:border-[#2E2E2E] focus:border-[#1A73E8] dark:focus:border-[#8AB4F8] pr-10"
                           {...field}
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-[#5F6368] dark:text-[#9AA0A6]"
                           onClick={() => setShowPassword(!showPassword)}
                           disabled={form.formState.isSubmitting}
                           aria-label={
@@ -259,9 +265,9 @@ export default function RegisterPage() {
                           }
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-400" />
+                            <EyeOff className="h-4 w-4" />
                           ) : (
-                            <Eye className="h-4 w-4 text-gray-400" />
+                            <Eye className="h-4 w-4" />
                           )}
                         </Button>
                       </div>
@@ -271,24 +277,24 @@ export default function RegisterPage() {
                     {password && (
                       <div className="mt-2 space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-600">
+                          <span className="text-[#5F6368] dark:text-[#9AA0A6]">
                             Password strength:
                           </span>
                           <span
                             className={`font-medium ${
                               passwordStrength.score === 1
-                                ? "text-red-600"
+                                ? "text-[#EA4335] dark:text-[#F28B82]"
                                 : passwordStrength.score === 2
-                                ? "text-orange-600"
+                                ? "text-[#FFB300] dark:text-[#FDD663]"
                                 : passwordStrength.score === 3
-                                ? "text-yellow-600"
-                                : "text-green-600"
+                                ? "text-[#FBBC04] dark:text-[#FDD663]"
+                                : "text-[#34A853] dark:text-[#81C995]"
                             }`}
                           >
                             {passwordStrength.label}
                           </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-gray-200">
+                        <div className="h-2 w-full rounded-full bg-[#E0E0E0] dark:bg-[#2E2E2E]">
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`}
                             style={{ width: `${passwordStrength.percentage}%` }}
@@ -305,13 +311,15 @@ export default function RegisterPage() {
                           className="flex items-center gap-2 text-xs"
                         >
                           {req.met ? (
-                            <Check className="h-3 w-3 text-green-600" />
+                            <Check className="h-3 w-3 text-[#34A853] dark:text-[#81C995]" />
                           ) : (
-                            <X className="h-3 w-3 text-gray-400" />
+                            <X className="h-3 w-3 text-[#5F6368] dark:text-[#9AA0A6]" />
                           )}
                           <span
                             className={
-                              req.met ? "text-green-600" : "text-gray-600"
+                              req.met
+                                ? "text-[#34A853] dark:text-[#81C995]"
+                                : "text-[#5F6368] dark:text-[#9AA0A6]"
                             }
                           >
                             {req.label}
@@ -320,7 +328,7 @@ export default function RegisterPage() {
                       ))}
                     </div>
 
-                    <FormMessage />
+                    <FormMessage className="text-[#EA4335] dark:text-[#F28B82]" />
                   </FormItem>
                 )}
               />
@@ -331,7 +339,9 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-[#202124] dark:text-[#E8EAED]">
+                      Confirm Password
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -339,13 +349,14 @@ export default function RegisterPage() {
                           placeholder="Re-enter your password"
                           autoComplete="new-password"
                           disabled={form.formState.isSubmitting}
+                          className="h-11 border-[#E0E0E0] dark:border-[#2E2E2E] focus:border-[#1A73E8] dark:focus:border-[#8AB4F8] pr-10"
                           {...field}
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-[#5F6368] dark:text-[#9AA0A6]"
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
@@ -357,14 +368,14 @@ export default function RegisterPage() {
                           }
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-400" />
+                            <EyeOff className="h-4 w-4" />
                           ) : (
-                            <Eye className="h-4 w-4 text-gray-400" />
+                            <Eye className="h-4 w-4" />
                           )}
                         </Button>
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[#EA4335] dark:text-[#F28B82]" />
                   </FormItem>
                 )}
               />
@@ -380,14 +391,15 @@ export default function RegisterPage() {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={form.formState.isSubmitting}
+                        className="border-[#E0E0E0] dark:border-[#2E2E2E] data-[state=checked]:bg-[#1A73E8] dark:data-[state=checked]:bg-[#8AB4F8]"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-normal">
+                      <FormLabel className="text-sm font-normal text-[#5F6368] dark:text-[#9AA0A6]">
                         I accept the{" "}
                         <Link
                           href="/terms"
-                          className="text-blue-600 hover:underline"
+                          className="text-[#1A73E8] dark:text-[#8AB4F8] hover:underline"
                           target="_blank"
                           tabIndex={form.formState.isSubmitting ? -1 : 0}
                         >
@@ -396,14 +408,14 @@ export default function RegisterPage() {
                         and{" "}
                         <Link
                           href="/privacy"
-                          className="text-blue-600 hover:underline"
+                          className="text-[#1A73E8] dark:text-[#8AB4F8] hover:underline"
                           target="_blank"
                           tabIndex={form.formState.isSubmitting ? -1 : 0}
                         >
                           Privacy Policy
                         </Link>
                       </FormLabel>
-                      <FormMessage />
+                      <FormMessage className="text-[#EA4335] dark:text-[#F28B82]" />
                     </div>
                   </FormItem>
                 )}
@@ -412,7 +424,7 @@ export default function RegisterPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-11 mt-6"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -431,10 +443,10 @@ export default function RegisterPage() {
         <CardFooter className="flex flex-col space-y-4">
           <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-[#E0E0E0] dark:border-[#2E2E2E]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">
+              <span className="bg-[#F8F9FA] dark:bg-[#1E1E1E] px-2 text-[#5F6368] dark:text-[#9AA0A6]">
                 Already have an account?
               </span>
             </div>
@@ -442,7 +454,7 @@ export default function RegisterPage() {
 
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full h-11"
             asChild
             disabled={form.formState.isSubmitting}
           >
