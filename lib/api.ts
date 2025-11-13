@@ -126,20 +126,38 @@ api.interceptors.response.use(
           isRefreshing = false;
           refreshPromise = null;
 
-          // 🚪 Auto-logout: Redirect to login
+          // 🚪 Auto-logout: Redirect to login (avoid loops on auth pages)
           if (typeof window !== "undefined") {
-            console.log("🚪 Session expired, redirecting to login...");
+            const { pathname, search } = window.location;
+            const onAuthPage = ["/login", "/register", "/forgot-password"].some(
+              (p) => pathname.startsWith(p)
+            );
 
-            // Preserve current URL for redirect after login
-            const currentUrl =
-              window.location.pathname + window.location.search;
-            const loginUrl = `/login${
-              currentUrl !== "/"
-                ? `?returnUrl=${encodeURIComponent(currentUrl)}`
-                : ""
-            }`;
-
-            window.location.href = loginUrl;
+            // If we're already on an auth page, don't redirect again
+            // This prevents infinite /login?returnUrl=... nesting
+            if (onAuthPage) {
+              // Best-effort cleanup: drop nested returnUrl if present
+              try {
+                if (pathname === "/login" && search.includes("returnUrl=")) {
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("returnUrl");
+                  window.history.replaceState(null, "", url.toString());
+                }
+              } catch {
+                // no-op if URL parsing fails
+              }
+            } else {
+              console.log("🚪 Session expired, redirecting to login...");
+              const currentUrl = pathname + search;
+              // Guard: never set returnUrl to another /login URL
+              const shouldAttachReturn =
+                currentUrl !== "/" && !currentUrl.startsWith("/login");
+              const loginUrl = shouldAttachReturn
+                ? `/login?returnUrl=${encodeURIComponent(currentUrl)}`
+                : "/login";
+              // Use replace to avoid stacking history entries
+              window.location.replace(loginUrl);
+            }
           }
 
           return Promise.reject(refreshError);

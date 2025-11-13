@@ -61,12 +61,23 @@ export async function hasActiveSession(): Promise<boolean> {
 export function redirectToLogin(returnUrl?: string): void {
   if (typeof window === "undefined") return;
 
+  const currentPath = window.location.pathname;
   const url = new URL("/login", window.location.origin);
-  if (returnUrl) {
-    url.searchParams.set("returnUrl", returnUrl);
+
+  // Avoid nesting returnUrl pointing to /login
+  const safeReturn =
+    returnUrl && !returnUrl.startsWith("/login") ? returnUrl : undefined;
+
+  if (safeReturn) {
+    url.searchParams.set("returnUrl", safeReturn);
   }
 
-  window.location.href = url.toString();
+  // Use replace to avoid stacking history entries and loops
+  if (currentPath === "/login") {
+    window.history.replaceState(null, "", url.toString());
+  } else {
+    window.location.replace(url.toString());
+  }
 }
 
 /**

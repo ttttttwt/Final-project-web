@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +13,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
-import { BookOpen, User, Settings, LogOut, Menu } from "lucide-react";
+import {
+  BookOpen,
+  User,
+  Settings,
+  LogOut,
+  Menu,
+  Search,
+  Bell,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 /**
  * Header Component
@@ -26,22 +38,57 @@ import { cn } from "@/lib/utils";
  * - Navigation links
  * - Theme toggle (light/dark mode)
  * - User menu with avatar
- * - Responsive design with mobile menu
+ * - Mobile menu toggle for sidebar
+ * - Responsive design
  * - Version B color scheme
  *
  * @example
  * ```tsx
- * <Header />
+ * <Header onMenuToggle={() => {}} />
  * ```
  */
-export function Header() {
-  const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  // Check if user is logged in (placeholder - should come from auth store)
-  const isLoggedIn = true; // TODO: Replace with actual auth state
-  const userInitials = "JD"; // TODO: Get from user data
-  const userEmail = "user@example.com"; // TODO: Get from user data
+interface HeaderProps {
+  /** Callback to toggle mobile sidebar menu */
+  onMenuToggle?: () => void;
+  /** Whether sidebar is collapsed (affects spacing) */
+  isSidebarCollapsed?: boolean;
+  /** Page title to display */
+  pageTitle?: string;
+}
+
+export function Header({
+  onMenuToggle,
+  isSidebarCollapsed,
+  pageTitle,
+}: HeaderProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [notificationCount, setNotificationCount] = React.useState(3); // Placeholder
+
+  // Get user's full name
+  const getFullName = () => {
+    if (!user) return "";
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    return `${firstName} ${lastName}`.trim() || user.email.split("@")[0];
+  };
+
+  // Get user initials from name
+  const getUserInitials = () => {
+    if (!user) return "U";
+    if (user.firstName && user.lastName) {
+      return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
+    }
+    if (user.firstName) return user.firstName.charAt(0).toUpperCase();
+    return user.email.charAt(0).toUpperCase();
+  };
+
+  const userInitials = getUserInitials();
+  const userEmail = user?.email || "";
+  const fullName = getFullName();
 
   const navigationLinks = [
     { href: "/dashboard", label: "Dashboard" },
@@ -53,60 +100,117 @@ export function Header() {
     return pathname === path || pathname?.startsWith(`${path}/`);
   };
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#E0E0E0] dark:border-[#2E2E2E] bg-white/95 dark:bg-[#121212]/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-[#121212]/80">
-      <div className="page-container">
-        <div className="flex h-16 items-center justify-between px-6 md:px-12">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-xl font-bold text-[#202124] dark:text-[#E8EAED] hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] transition-colors"
-            aria-label="LEXIA Home"
-          >
-            <BookOpen className="h-6 w-6 text-[#1A73E8] dark:text-[#8AB4F8]" />
-            <span className="hidden sm:inline">LEXIA</span>
-          </Link>
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
+    }
+  };
 
-          {/* Desktop Navigation */}
-          {isLoggedIn && (
-            <nav
-              className="hidden md:flex items-center gap-1"
-              aria-label="Main navigation"
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // TODO: Implement search functionality
+      toast.info(`Searching for: ${searchQuery}`);
+    }
+  };
+
+  const handleNotificationClick = () => {
+    // TODO: Implement notifications
+    toast.info("Notifications feature coming soon!");
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-[#E0E0E0] dark:border-[#2E2E2E] bg-white/95 dark:bg-[#121212]/95 backdrop-blur supports-backdrop-filter:bg-white/80 dark:supports-backdrop-filter:bg-[#121212]/80">
+      <div className="page-container">
+        <div className="flex h-16 items-center justify-between gap-4 px-6 md:px-12">
+          {/* Mobile Menu Toggle + Logo + Page Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Sidebar Toggle */}
+            {onMenuToggle && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden shrink-0 text-[#5F6368] dark:text-[#9AA0A6]"
+                onClick={onMenuToggle}
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-xl font-bold text-[#202124] dark:text-[#E8EAED] hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] transition-colors shrink-0"
+              aria-label="LEXIA Home"
             >
-              {navigationLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                    isActivePath(link.href)
-                      ? "text-[#1A73E8] dark:text-[#8AB4F8] bg-[#F8F9FA] dark:bg-[#1E1E1E]"
-                      : "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+              <BookOpen className="h-6 w-6 text-[#1A73E8] dark:text-[#8AB4F8]" />
+              <span className="hidden sm:inline">LEXIA</span>
+            </Link>
+
+            {/* Page Title (Desktop only) */}
+            {pageTitle && (
+              <div className="hidden lg:block border-l border-[#E0E0E0] dark:border-[#2E2E2E] pl-4 ml-2">
+                <h1 className="text-lg font-semibold text-[#202124] dark:text-[#E8EAED] truncate">
+                  {pageTitle}
+                </h1>
+              </div>
+            )}
+          </div>
+
+          {/* Center - Search Bar (Desktop only) */}
+          {isAuthenticated && (
+            <div className="hidden md:flex flex-1 max-w-md mx-4">
+              <form onSubmit={handleSearch} className="w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5F6368] dark:text-[#9AA0A6]" />
+                  <Input
+                    type="search"
+                    placeholder="Search courses, lessons..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 h-10 bg-[#F8F9FA] dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E] text-[#202124] dark:text-[#E8EAED] placeholder:text-[#5F6368] dark:placeholder:text-[#9AA0A6] focus-visible:ring-[#1A73E8] dark:focus-visible:ring-[#8AB4F8]"
+                    aria-label="Search"
+                  />
+                </div>
+              </form>
+            </div>
           )}
 
-          {/* Right side - Theme Toggle & User Menu */}
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-
-            {isLoggedIn ? (
+          {/* Right side - Notifications, Theme Toggle & User Menu */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isAuthenticated && (
               <>
-                {/* Mobile Menu Button */}
+                {/* Notifications */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden text-[#5F6368] dark:text-[#9AA0A6]"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  aria-label="Toggle menu"
+                  className="relative text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED]"
+                  onClick={handleNotificationClick}
+                  aria-label="Notifications"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Bell className="h-5 w-5" />
+                  {notificationCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-[#EA4335] dark:bg-[#F28B82] text-white dark:text-[#121212]"
+                    >
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </Badge>
+                  )}
                 </Button>
+              </>
+            )}
 
+            <ThemeToggle />
+
+            {isAuthenticated ? (
+              <>
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -117,8 +221,8 @@ export function Header() {
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src="/placeholder-avatar.jpg"
-                          alt="User avatar"
+                          src={user?.avatarUrl || "/placeholder-avatar.jpg"}
+                          alt={`${fullName || "User"} avatar`}
                         />
                         <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">
                           {userInitials}
@@ -131,7 +235,7 @@ export function Header() {
                     className="w-56 bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
                   >
                     <DropdownMenuLabel className="text-[#202124] dark:text-[#E8EAED]">
-                      My Account
+                      {fullName || "My Account"}
                     </DropdownMenuLabel>
                     <p className="px-2 pb-2 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
                       {userEmail}
@@ -157,10 +261,7 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[#E0E0E0] dark:bg-[#2E2E2E]" />
                     <DropdownMenuItem
-                      onClick={() => {
-                        // TODO: Implement logout
-                        console.log("Logout");
-                      }}
+                      onClick={handleLogout}
                       className="flex items-center gap-2 cursor-pointer text-[#EA4335] dark:text-[#F28B82] hover:bg-[#FCE8E6] dark:hover:bg-[#2E2E2E]"
                     >
                       <LogOut className="h-4 w-4" />
@@ -182,33 +283,6 @@ export function Header() {
             )}
           </div>
         </div>
-
-        {/* Mobile Navigation Menu */}
-        {isLoggedIn && isMenuOpen && (
-          <nav
-            className="md:hidden border-t border-[#E0E0E0] dark:border-[#2E2E2E] py-4 px-6"
-            aria-label="Mobile navigation"
-          >
-            <ul className="space-y-2">
-              {navigationLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={cn(
-                      "block px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                      isActivePath(link.href)
-                        ? "text-[#1A73E8] dark:text-[#8AB4F8] bg-[#F8F9FA] dark:bg-[#1E1E1E]"
-                        : "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
       </div>
     </header>
   );

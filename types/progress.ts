@@ -1,3 +1,16 @@
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+}
+
+export interface DashboardStats {
+  enrolledCourses: number;
+  completedLessons: number;
+  totalLessons: number;
+  currentStreak: number;
+  longestStreak: number;
+}
 export interface LessonProgress {
   progressId: string;
   userId: string;

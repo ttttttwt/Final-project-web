@@ -82,12 +82,7 @@ export async function middleware(request: NextRequest) {
   const returnUrl = pathname + (search || "");
   loginUrl.searchParams.set("returnUrl", returnUrl);
 
-  // Prevent redirect loop safeguard (shouldn't trigger due to public route check)
-  if (pathname !== "/login") {
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+  return NextResponse.redirect(loginUrl);
 }
 
 // Apply to all routes except assets and API routes

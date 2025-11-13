@@ -45,6 +45,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * We always call loadUser() to check session status.
    */
   useEffect(() => {
+    // Avoid triggering profile loading on auth pages to prevent 401 loops
+    try {
+      const path = window.location?.pathname || "";
+      const isAuthPage = ["/login", "/register", "/forgot-password"].some((p) =>
+        path.startsWith(p)
+      );
+      if (isAuthPage) return;
+    } catch {
+      // If window is unavailable for any reason, continue normally
+    }
+
     loadUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array = run once on mount
