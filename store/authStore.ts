@@ -23,7 +23,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start with true to prevent flash of unauthenticated content
   error: null,
 
   login: async (credentials) => {

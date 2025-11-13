@@ -33,8 +33,6 @@ import { useAuthStore } from "@/store/authStore";
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUser = useAuthStore((state) => state.loadUser);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
   /**
    * Initialize user session on mount
@@ -43,13 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * If the cookie is valid, user data is loaded into the store.
    * If the cookie is invalid/expired, user remains unauthenticated.
    *
-   * Note: Only runs once on mount, not on every render.
+   * Note: Runs once on mount, not on every render.
+   * We always call loadUser() to check session status.
    */
   useEffect(() => {
-    // Only load user if not already authenticated and not currently loading
-    if (!isAuthenticated && !isLoading) {
-      loadUser();
-    }
+    loadUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array = run once on mount
 
