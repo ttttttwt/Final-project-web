@@ -1,11 +1,40 @@
 export interface Course {
-  courseId: string;
+  id: number;
   title: string;
   description: string;
-  level: string;
-  durationMinutes: number;
+  thumbnailUrl?: string;
+  cefrLevel: string;
+  isPublished: boolean;
+  sectionCount: number;
+  createdAt: string;
+  updatedAt: string;
+  sections?: Section[]; // Included when fetching with sections
+  // Legacy fields for backward compatibility
+  courseId?: string;
+  level?: string;
+  durationMinutes?: number;
   imageUrl?: string;
-  isActive: boolean;
+  isActive?: boolean;
+}
+
+export interface Section {
+  id: number;
+  courseId: number;
+  title: string;
+  orderIndex: number;
+  lessonCount: number;
+  createdAt: string;
+  lessons?: LessonDetail[]; // Populated when fetching lessons for section
+}
+
+export interface LessonDetail {
+  id: number;
+  sectionId: number;
+  title: string;
+  lessonType: "READING" | "LISTENING" | "QUIZ" | "SPEAKING";
+  content: string; // JSONB content as string
+  orderIndex: number;
+  durationMinutes: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,11 +54,13 @@ export interface Lesson {
 }
 
 export interface Enrollment {
-  enrollmentId: string;
-  userId: string;
-  courseId: string;
+  id: number;
+  courseId: number;
+  courseTitle: string;
+  thumbnailUrl?: string;
+  cefrLevel: string;
   enrolledAt: string;
-  completedAt?: string;
-  status: "ACTIVE" | "COMPLETED" | "DROPPED";
   progressPercentage: number;
+  completedAt?: string | null;
+  isCompleted: boolean;
 }

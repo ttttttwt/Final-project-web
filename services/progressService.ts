@@ -2,6 +2,26 @@ import api from "@/lib/api";
 import type { DashboardStats, StreakData } from "@/types/progress";
 
 /**
+ * Lesson completion request
+ */
+export interface CompleteLessonRequest {
+  resultDetailsJson?: string; // Optional JSONB string with quiz results, etc.
+}
+
+/**
+ * Lesson progress response from backend
+ */
+export interface LessonProgressDTO {
+  id: number;
+  lessonId: number;
+  userId: number;
+  isCompleted: boolean;
+  score?: number;
+  completedAt: string;
+  resultDetails?: string;
+}
+
+/**
  * Progress Service
  *
  * Handles progress tracking, streak data, and dashboard statistics
@@ -12,6 +32,23 @@ const progressService = {
    */
   async getStreak(signal?: AbortSignal): Promise<StreakData> {
     const response = await api.get<StreakData>("/progress/streak", { signal });
+    return response.data;
+  },
+
+  /**
+   * Mark a lesson as completed
+   * @param lessonId Lesson ID to complete
+   * @param resultDetailsJson Optional JSON string with results (quiz scores, etc.)
+   * @returns Lesson progress details
+   */
+  async completeLesson(
+    lessonId: number,
+    resultDetailsJson?: string
+  ): Promise<LessonProgressDTO> {
+    const response = await api.post<LessonProgressDTO>(
+      `/progress/lessons/${lessonId}/complete`,
+      { resultDetailsJson }
+    );
     return response.data;
   },
 
