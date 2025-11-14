@@ -3,11 +3,12 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, BookOpen } from "lucide-react";
+import { Clock, BookOpen, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/course";
+import { Progress } from "@/components/ui/progress";
 
 /**
  * CEFR Level Color Mapping
@@ -25,6 +26,8 @@ interface CourseCardProps {
   course: Course;
   onEnroll?: (courseId: string) => void;
   isEnrolled?: boolean;
+  progressPercentage?: number; // Progress percentage (0-100)
+  isCompleted?: boolean; // Whether course is completed
 }
 
 /**
@@ -35,16 +38,21 @@ interface CourseCardProps {
  * - Title and description (truncated)
  * - CEFR level badge
  * - Duration
+ * - Progress bar (if enrolled)
  * - Enroll/Continue button
  *
  * @param course - Course data
  * @param onEnroll - Callback when enroll button clicked
  * @param isEnrolled - Whether user is already enrolled
+ * @param progressPercentage - Course progress (0-100)
+ * @param isCompleted - Whether course is completed
  */
 export function CourseCard({
   course,
   onEnroll,
   isEnrolled = false,
+  progressPercentage = 0,
+  isCompleted = false,
 }: CourseCardProps) {
   const handleEnrollClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -94,6 +102,16 @@ export function CourseCard({
               {level}
             </Badge>
           </div>
+
+          {/* Completion Badge */}
+          {isCompleted && (
+            <div className="absolute top-3 left-3">
+              <Badge className="bg-[#34A853] text-white font-semibold shadow-md flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Completed</span>
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Card Content */}
@@ -123,6 +141,19 @@ export function CourseCard({
               </div>
             )}
           </div>
+
+          {/* Progress Bar */}
+          {isEnrolled && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                <span className="font-medium">Progress</span>
+                <span className="font-semibold">
+                  {Math.round(progressPercentage)}%
+                </span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          )}
         </CardContent>
 
         {/* Card Footer */}

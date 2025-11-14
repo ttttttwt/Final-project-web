@@ -2,6 +2,8 @@ export interface StreakData {
   currentStreak: number;
   longestStreak: number;
   lastActivityDate: string | null;
+  isActiveToday: boolean;
+  totalActiveDays: number;
 }
 
 export interface DashboardStats {
@@ -10,6 +12,26 @@ export interface DashboardStats {
   totalLessons: number;
   currentStreak: number;
   longestStreak: number;
+}
+
+/**
+ * Daily progress activity data for charts
+ */
+export interface DailyActivity {
+  date: string; // YYYY-MM-DD
+  lessonsCompleted: number;
+  timeSpentMinutes: number;
+}
+
+/**
+ * Progress summary for a time period
+ */
+export interface ProgressSummary {
+  totalLessonsCompleted: number;
+  totalTimeSpentMinutes: number;
+  averageTimePerLesson: number;
+  activeDays: number;
+  dailyActivities: DailyActivity[];
 }
 export interface LessonProgress {
   progressId: string;

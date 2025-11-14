@@ -22,13 +22,22 @@ import { parseLessonContent, LESSON_TYPE_INFO } from "@/types/lesson";
 import confetti from "canvas-confetti";
 
 interface LessonViewerPageProps {
-  params: {
+  params: Promise<{
     courseId: string;
     lessonId: string;
-  };
+  }>;
 }
 
-export default function LessonViewerPage({ params }: LessonViewerPageProps) {
+export default async function LessonViewerPage(props: LessonViewerPageProps) {
+  const params = await props.params;
+  return <LessonViewerContent params={params} />;
+}
+
+function LessonViewerContent({
+  params,
+}: {
+  params: { courseId: string; lessonId: string };
+}) {
   const router = useRouter();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);

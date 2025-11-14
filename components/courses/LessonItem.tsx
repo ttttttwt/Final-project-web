@@ -8,6 +8,7 @@ import {
   Mic,
   Clock,
   Lock,
+  CheckCircle2,
 } from "lucide-react";
 import { LessonDetail } from "@/types/course";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ interface LessonItemProps {
   index: number;
   isEnrolled: boolean;
   courseId: number;
+  isCompleted?: boolean;
 }
 
 const LESSON_TYPE_CONFIG = {
@@ -58,6 +60,7 @@ export function LessonItem({
   index,
   isEnrolled,
   courseId,
+  isCompleted = false,
 }: LessonItemProps) {
   const config =
     LESSON_TYPE_CONFIG[lesson.lessonType] || LESSON_TYPE_CONFIG.READING;
@@ -74,7 +77,8 @@ export function LessonItem({
         "transition-colors duration-200",
         isEnrolled
           ? "hover:bg-gray-50 dark:hover:bg-gray-800"
-          : "opacity-60 cursor-not-allowed"
+          : "opacity-60 cursor-not-allowed",
+        isCompleted && "bg-green-50/50 dark:bg-green-900/10"
       )}
     >
       {/* Lesson Number */}
@@ -113,15 +117,20 @@ export function LessonItem({
         </div>
       </div>
 
-      {/* Lock Icon for Unenrolled */}
-      {!isEnrolled && (
-        <div className="shrink-0">
+      {/* Completion Checkmark or Lock Icon */}
+      <div className="shrink-0">
+        {!isEnrolled ? (
           <Lock
             className="h-5 w-5 text-gray-400 dark:text-gray-500"
             aria-label="Locked"
           />
-        </div>
-      )}
+        ) : isCompleted ? (
+          <CheckCircle2
+            className="h-5 w-5 text-green-600 dark:text-green-400"
+            aria-label="Completed"
+          />
+        ) : null}
+      </div>
     </div>
   );
 

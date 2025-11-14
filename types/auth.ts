@@ -3,8 +3,14 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  fullName?: string;
+  bio?: string;
+  phoneNumber?: string;
   avatarUrl?: string;
+  timezone?: string;
+  language?: string;
   currentLevel?: string;
+  learningGoal?: string;
   createdAt: string;
   updatedAt: string;
 }
