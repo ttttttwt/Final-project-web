@@ -40,10 +40,12 @@ export const courseService = {
   getCourses: async (
     page: number = 0,
     size: number = 12,
-    sort: string = "createdAt,desc"
+    sort: string = "createdAt,desc",
+    signal?: AbortSignal
   ): Promise<PaginatedCoursesResponse> => {
     const response = await api.get("/courses", {
       params: { page, size, sort },
+      signal,
     });
     return response.data;
   },
@@ -63,12 +65,15 @@ export const courseService = {
    * @param id - Course ID
    * @returns Course details with sections and lessons
    */
-  getCourseWithSections: async (id: string): Promise<Course> => {
-    const response = await api.get(`/courses/${id}`);
+  getCourseWithSections: async (
+    id: string,
+    signal?: AbortSignal
+  ): Promise<Course> => {
+    const response = await api.get(`/courses/${id}`, { signal });
     const course = response.data;
 
     // Fetch lessons for the course
-    const lessonsResponse = await api.get(`/lessons/courses/${id}`);
+    const lessonsResponse = await api.get(`/lessons/courses/${id}`, { signal });
     const lessons: LessonDetail[] = lessonsResponse.data;
 
     // Group lessons by section
@@ -105,13 +110,15 @@ export const courseService = {
    * @returns Paginated search results
    */
   searchCourses: async (
-    params: CourseSearchParams
+    params: CourseSearchParams,
+    signal?: AbortSignal
   ): Promise<PaginatedCoursesResponse> => {
     const response = await api.get("/courses/search", {
       params: {
         ...params,
         isPublished: true, // Only show published courses to learners
       },
+      signal,
     });
     return response.data;
   },

@@ -12,10 +12,11 @@ import { ArrowLeft, Clock, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ContentRenderer } from "@/components/lessons";
+import { ContentRenderer, LessonNavigation } from "@/components/lessons";
 import { toast } from "sonner";
 import lessonService from "@/services/lessonService";
 import progressService from "@/services/progressService";
+import { useLessonNavigation } from "@/hooks/useLessonNavigation";
 import type { Lesson } from "@/types/lesson";
 import { parseLessonContent, LESSON_TYPE_INFO } from "@/types/lesson";
 import confetti from "canvas-confetti";
@@ -36,6 +37,15 @@ export default function LessonViewerPage({ params }: LessonViewerPageProps) {
 
   const lessonId = parseInt(params.lessonId);
   const courseId = parseInt(params.courseId);
+
+  // Lesson navigation data
+  const {
+    prevLessonId,
+    nextLessonId,
+    currentIndex,
+    totalLessons,
+    isLoading: isNavLoading,
+  } = useLessonNavigation(courseId, lessonId);
 
   useEffect(() => {
     fetchLesson();
@@ -179,8 +189,20 @@ export default function LessonViewerPage({ params }: LessonViewerPageProps) {
         />
       </div>
 
+      {/* Lesson Navigation */}
+      {!isNavLoading && totalLessons > 0 && (
+        <LessonNavigation
+          courseId={courseId}
+          currentLessonId={lessonId}
+          prevLessonId={prevLessonId}
+          nextLessonId={nextLessonId}
+          currentIndex={currentIndex}
+          totalLessons={totalLessons}
+        />
+      )}
+
       {/* Complete Lesson Button */}
-      <div className="flex justify-center pt-8 border-t">
+      <div className="flex justify-center pt-8 border-t mt-8">
         <Button
           size="lg"
           onClick={handleCompleteLesson}

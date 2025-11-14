@@ -52,6 +52,8 @@ export default function CoursesPage() {
   );
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = React.useState(false);
+  // Debounced search value for API queries
+  const [debouncedSearch, setDebouncedSearch] = React.useState(searchQuery);
 
   // Pagination state
   const [currentPage, setCurrentPage] = React.useState(
@@ -60,53 +62,60 @@ export default function CoursesPage() {
   const [totalPages, setTotalPages] = React.useState(0);
   const [totalElements, setTotalElements] = React.useState(0);
 
-  // Debounced search
-  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Debounce search input by 300ms
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   /**
    * Fetch courses from API
    */
-  const fetchCourses = React.useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const fetchCourses = React.useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        setIsLoading(true);
 
-      const params: CourseSearchParams = {
-        page: currentPage,
-        size: 12,
-        sort: sortBy,
-      };
+        const params: CourseSearchParams = {
+          page: currentPage,
+          size: 12,
+          sort: sortBy,
+        };
 
-      // Add search query if exists
-      if (searchQuery.trim()) {
-        params.title = searchQuery.trim();
+        // Add search query if exists
+        if (debouncedSearch.trim()) {
+          params.title = debouncedSearch.trim();
+        }
+
+        // Add CEFR level filter if selected
+        if (selectedLevel) {
+          params.cefrLevel = selectedLevel;
+        }
+
+        // Use search endpoint if filters applied, otherwise list all
+        const response =
+          debouncedSearch.trim() || selectedLevel
+            ? await courseService.searchCourses(params, signal)
+            : await courseService.getCourses(
+                params.page!,
+                params.size!,
+                params.sort!,
+                signal
+              );
+
+        setCourses(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      } catch (error: any) {
+        console.error("Failed to fetch courses:", error);
+        toast.error(error.message || "Failed to load courses");
+        setCourses([]);
+      } finally {
+        setIsLoading(false);
       }
-
-      // Add CEFR level filter if selected
-      if (selectedLevel) {
-        params.cefrLevel = selectedLevel;
-      }
-
-      // Use search endpoint if filters applied, otherwise list all
-      const response =
-        searchQuery.trim() || selectedLevel
-          ? await courseService.searchCourses(params)
-          : await courseService.getCourses(
-              params.page!,
-              params.size!,
-              params.sort!
-            );
-
-      setCourses(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-    } catch (error: any) {
-      console.error("Failed to fetch courses:", error);
-      toast.error(error.message || "Failed to load courses");
-      setCourses([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, sortBy, searchQuery, selectedLevel]);
+    },
+    [currentPage, sortBy, debouncedSearch, selectedLevel]
+  );
 
   /**
    * Update URL query params
@@ -114,7 +123,7 @@ export default function CoursesPage() {
   const updateURLParams = React.useCallback(() => {
     const params = new URLSearchParams();
 
-    if (searchQuery.trim()) params.set("search", searchQuery.trim());
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
     if (selectedLevel) params.set("level", selectedLevel);
     if (sortBy !== "createdAt,desc") params.set("sort", sortBy);
     if (currentPage > 0) params.set("page", currentPage.toString());
@@ -122,7 +131,7 @@ export default function CoursesPage() {
     const queryString = params.toString();
     const newUrl = queryString ? `/courses?${queryString}` : "/courses";
     router.replace(newUrl, { scroll: false });
-  }, [searchQuery, selectedLevel, sortBy, currentPage, router]);
+  }, [debouncedSearch, selectedLevel, sortBy, currentPage, router]);
 
   /**
    * Handle search input change with debounce
@@ -130,16 +139,8 @@ export default function CoursesPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Debounce search by 300ms
-    searchTimeoutRef.current = setTimeout(() => {
-      setCurrentPage(0); // Reset to first page on new search
-    }, 300);
+    // Reset to first page; actual fetch is debounced via debouncedSearch
+    setCurrentPage(0);
   };
 
   /**
@@ -181,7 +182,9 @@ export default function CoursesPage() {
 
   // Fetch courses on mount and when filters change
   React.useEffect(() => {
-    fetchCourses();
+    const controller = new AbortController();
+    fetchCourses(controller.signal);
+    return () => controller.abort();
   }, [fetchCourses]);
 
   // Update URL when params change
@@ -275,7 +278,16 @@ export default function CoursesPage() {
                         ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
                         : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
                     }`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selectedLevel === level}
                     onClick={() => handleLevelFilter(level)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleLevelFilter(level);
+                      }
+                    }}
                   >
                     {level}
                   </Badge>
@@ -298,7 +310,16 @@ export default function CoursesPage() {
                         ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
                         : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
                     }`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={sortBy === option.value}
                     onClick={() => handleSortChange(option.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSortChange(option.value);
+                      }
+                    }}
                   >
                     {option.label}
                   </Badge>
@@ -350,7 +371,7 @@ export default function CoursesPage() {
             >
               {courses.map((course) => (
                 <CourseCard
-                  key={course.courseId}
+                  key={course.id}
                   course={course}
                   onEnroll={handleEnroll}
                 />
