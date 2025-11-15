@@ -30,7 +30,7 @@ const CEFR_COLORS: Record<string, string> = {
 export default function CourseDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const courseId = params.id as string;
+  const courseId = params.courseId as string;
 
   const [course, setCourse] = useState<Course | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
