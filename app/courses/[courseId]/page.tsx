@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, BookOpen, Clock, Users, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  Users,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 import { courseService } from "@/services/courseService";
 import { enrollmentService } from "@/services/enrollmentService";
 import { Course } from "@/types/course";
@@ -245,7 +252,14 @@ export default function CourseDetailPage() {
                 disabled={isEnrolling}
                 className="min-w-[200px]"
               >
-                {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                {isEnrolling ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Enrolling...
+                  </>
+                ) : (
+                  "Enroll Now"
+                )}
               </Button>
             )}
           </div>

@@ -7,7 +7,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Clock, Award, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  Award,
+  CheckCircle2,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -145,7 +152,14 @@ export default function LearningPathCard({
             disabled={isLoading}
             className="w-full"
           >
-            {isLoading ? "Starting..." : "Start Learning Path"}
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              "Start Learning Path"
+            )}
           </Button>
         )}
       </CardFooter>

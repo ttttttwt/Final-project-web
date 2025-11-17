@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProfileForm } from "@/components/profile/ProfileForm";
+import { ProfileForm, AvatarUpload } from "@/components/profile";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -74,6 +74,16 @@ export default function ProfilePage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAvatarUpdate = async (newAvatarUrl: string) => {
+    // Update local state
+    setProfileData((prev) =>
+      prev ? { ...prev, avatarUrl: newAvatarUrl } : prev
+    );
+
+    // Reload user data in auth store to update avatar everywhere
+    await loadUser();
   };
 
   const getInitials = (name?: string) => {
@@ -140,13 +150,13 @@ export default function ProfilePage() {
               <CardDescription>Your public profile information</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profileData.avatarUrl} alt={fullName} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(fullName)}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex flex-col md:flex-row md:items-start gap-6">
+                {/* Avatar Upload Section */}
+                <AvatarUpload
+                  currentAvatarUrl={profileData.avatarUrl}
+                  userName={fullName}
+                  onAvatarUpdate={handleAvatarUpdate}
+                />
 
                 <div className="flex-1 space-y-3">
                   <div>

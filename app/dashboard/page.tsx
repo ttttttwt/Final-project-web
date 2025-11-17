@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import progressService from "@/services/progressService";
 import type { DashboardStats } from "@/types/progress";
@@ -175,9 +176,9 @@ export default function DashboardPage() {
 
             {isLoading ? (
               <div className="space-y-3">
-                <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
               </div>
             ) : stats && stats.enrolledCourses > 0 ? (
               <div className="text-[#5F6368] dark:text-[#9AA0A6]">

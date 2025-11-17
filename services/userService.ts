@@ -22,4 +22,8 @@ export const userService = {
     });
     return response.data;
   },
+
+  deleteAvatar: async (): Promise<void> => {
+    await api.delete("/users/profile/avatar");
+  },
 };

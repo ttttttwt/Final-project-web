@@ -9,6 +9,7 @@ import {
   Area,
   AreaChart,
 } from "recharts";
+import type { TooltipProps } from "recharts";
 import type { DailyActivity } from "@/types/progress";
 
 interface ProgressChartProps {
@@ -22,7 +23,6 @@ interface ChartDataPoint {
 }
 
 // Custom tooltip component (must be outside main component)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ChartDataPoint;
