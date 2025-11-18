@@ -39,6 +39,8 @@ export const mockUserMinimal: User = {
  * Mock login response
  */
 export const mockLoginResponse: LoginResponse = {
+  accessToken: "mock-access-token",
+  refreshToken: "mock-refresh-token",
   user: mockUser,
   message: "Login successful",
 };

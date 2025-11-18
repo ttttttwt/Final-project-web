@@ -7,10 +7,4 @@
 export * from "./mocks/mockData";
 
 // Test utilities (from test-utils.tsx)
-export {
-  render,
-  screen,
-  waitFor,
-  within,
-  fireEvent,
-} from "../utils/test-utils";
+export { render, screen, waitFor, within, fireEvent } from "./utils/test-utils";
