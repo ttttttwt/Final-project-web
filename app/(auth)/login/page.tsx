@@ -219,6 +219,8 @@ export default function LoginPage() {
                         <input
                           type="checkbox"
                           id="rememberMe"
+                          title="Remember me"
+                          aria-label="Remember me"
                           className="h-4 w-4 rounded border-[#E0E0E0] dark:border-[#2E2E2E] text-[#1A73E8] dark:text-[#8AB4F8] focus:ring-[#1A73E8] dark:focus:ring-[#8AB4F8]"
                           checked={field.value}
                           onChange={field.onChange}

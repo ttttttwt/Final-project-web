@@ -5,8 +5,9 @@ const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password"] as const;
 
 function isPublicRoute(pathname: string): boolean {
   // Exact matches for top-level public paths
-  if (PUBLIC_ROUTES.includes(pathname as (typeof PUBLIC_ROUTES)[number]))
+  if (PUBLIC_ROUTES.includes(pathname as (typeof PUBLIC_ROUTES)[number])) {
     return true;
+  }
 
   // Allow static/public assets (extra safety; main filter is via matcher)
   if (
@@ -27,8 +28,8 @@ function isPublicRoute(pathname: string): boolean {
 // Resolve backend API base URL from environment
 const API_BASE = process.env.NEXT_PUBLIC_API_URL; // e.g., http://localhost:8088/api/v1
 
-export async function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   // Allow public routes without checks
   if (isPublicRoute(pathname)) {
@@ -36,10 +37,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // ⚠️ Sprint 3 Token Strategy (localStorage)
-  // Tokens only exist in browser localStorage, so middleware running on the
-  // edge cannot read them. We therefore fail-open here and rely on
-  // client-side guards + backend API authorization until Sprint 6 migrates
-  // back to httpOnly cookies.
+  // Tokens only exist in browser localStorage, so this edge proxy cannot
+  // inspect them. We therefore fail-open here and rely on client-side guards
+  // plus backend API authorization until Sprint 6 migrates back to cookies.
   if (!API_BASE) {
     return NextResponse.next();
   }

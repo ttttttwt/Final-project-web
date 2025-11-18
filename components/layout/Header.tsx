@@ -89,6 +89,7 @@ export function Header({
   const userInitials = getUserInitials();
   const userEmail = user?.email || "";
   const fullName = getFullName();
+  const fallbackAvatarSrc = "/placeholder-avatar.svg";
 
   const navigationLinks = [
     { href: "/dashboard", label: "Dashboard" },
@@ -221,7 +222,7 @@ export function Header({
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src={user?.avatarUrl || "/placeholder-avatar.jpg"}
+                          src={user?.avatarUrl || fallbackAvatarSrc}
                           alt={`${fullName || "User"} avatar`}
                         />
                         <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">
