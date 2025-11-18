@@ -20,9 +20,17 @@ export interface LoginRequest {
   password: string;
 }
 
-// 🔐 SECURITY: Tokens stored in httpOnly cookies (set by backend)
-// Client receives ONLY user data, NO tokens
-export interface LoginResponse {
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+}
+
+// 🔐 SECURITY: Temporary localStorage token strategy (Sprint 3)
+// Client receives tokens in response body and stores them manually
+export interface LoginResponse extends AuthTokens {
+  refreshToken: string;
   user: User;
   message?: string;
 }
@@ -33,13 +41,8 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
-// 🔐 SECURITY: Refresh uses httpOnly cookie, no request body needed
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RefreshTokenRequest {
-  // Empty - backend reads refreshToken from httpOnly cookie
+  refreshToken: string;
 }
 
-export interface RefreshTokenResponse {
-  message: string;
-  // No tokens in response - backend sets new cookie via Set-Cookie header
-}
+export interface RefreshTokenResponse extends AuthTokens {}

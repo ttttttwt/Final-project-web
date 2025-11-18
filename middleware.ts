@@ -27,18 +27,6 @@ function isPublicRoute(pathname: string): boolean {
 // Resolve backend API base URL from environment
 const API_BASE = process.env.NEXT_PUBLIC_API_URL; // e.g., http://localhost:8088/api/v1
 
-/**
- * Next.js Middleware - Server-side route protection
- *
- * Strategy:
- * - Skip public routes
- * - For protected routes, call backend to validate httpOnly cookie
- * - Redirect unauthenticated users to /login with returnUrl
- *
- * Notes:
- * - We forward the incoming Cookie header so backend can validate session
- * - We DO NOT attempt to read/parse JWTs in middleware
- */
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
@@ -47,42 +35,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If API base not configured, fail-open to avoid blocking local dev
+  // ⚠️ Sprint 3 Token Strategy (localStorage)
+  // Tokens only exist in browser localStorage, so middleware running on the
+  // edge cannot read them. We therefore fail-open here and rely on
+  // client-side guards + backend API authorization until Sprint 6 migrates
+  // back to httpOnly cookies.
   if (!API_BASE) {
     return NextResponse.next();
   }
 
-  // Validate session by calling backend (uses httpOnly cookies on server)
-  try {
-    const res = await fetch(`${API_BASE}/users/profile`, {
-      method: "GET",
-      // Forward cookies so backend can validate the session
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-        // Pass through UA for observability (optional)
-        "user-agent": request.headers.get("user-agent") ?? "",
-      },
-      // Never cache auth checks
-      cache: "no-store",
-      // Keep connection lightweight for edge
-      // credentials can't be used cross-origin here; cookie header is forwarded instead
-    });
-
-    if (res.ok) {
-      // Authenticated - allow request to continue
-      return NextResponse.next();
-    }
-  } catch {
-    // Network/backend error: treat as unauthenticated for protected routes
-  }
-
-  // Not authenticated → redirect to login with returnUrl
-  const loginUrl = request.nextUrl.clone();
-  loginUrl.pathname = "/login";
-  const returnUrl = pathname + (search || "");
-  loginUrl.searchParams.set("returnUrl", returnUrl);
-
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next();
 }
 
 // Apply to all routes except assets and API routes

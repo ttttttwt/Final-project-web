@@ -17,7 +17,8 @@ import { redirectToLogin } from "@/lib/auth";
  * - Preserves current URL for return after login
  *
  * Note: This is CLIENT-SIDE protection only.
- * Server-side protection should be handled by Next.js middleware.
+ * Server-side middleware is temporarily fail-open while tokens live in
+ * localStorage (Sprint 3 strategy). Backend APIs still enforce auth.
  *
  * @example
  * ```tsx
@@ -104,10 +105,13 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
  * - Real security must be server-side (middleware + API)
  * - This is UX enhancement, not security feature
  *
- * Defense in Depth:
- * 1. ✅ Next.js middleware (server-side route protection)
- * 2. ✅ Backend API authentication (JWT validation)
- * 3. ✅ ProtectedRoute component (client-side UX)
+ * Defense in Depth (Current Sprint 3 Reality):
+ * 1. ⚠️ Next.js middleware disabled (localStorage tokens not accessible on edge)
+ * 2. ✅ Backend API authentication (JWT validation via Authorization header)
+ * 3. ✅ ProtectedRoute component (client-side UX guard)
+ *
+ * Middleware will be re-enabled once we migrate back to httpOnly cookies in
+ * Sprint 6 (security audit).
  *
  * When to Use:
  * - ✅ Wrap entire page components

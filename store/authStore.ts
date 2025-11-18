@@ -1,10 +1,15 @@
 import { create } from "zustand";
 import { User, LoginRequest, RegisterRequest } from "@/types/auth";
 import { authService } from "@/services/authService";
+import {
+  clearTokens,
+  hasValidAccessToken,
+  saveTokens,
+} from "@/lib/tokenStorage";
 
-// 🔐 SECURITY: NO token storage in client
-// Tokens stored in httpOnly cookies (set by backend)
-// AuthState contains ONLY user data and session state
+// 🔐 SECURITY: Temporary localStorage token storage (Sprint 3)
+// Tokens are saved in localStorage for implementation speed
+// AuthState keeps user/session data only (no tokens in memory)
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -20,7 +25,7 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true, // Start with true to prevent flash of unauthenticated content
@@ -29,8 +34,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      // 🔐 Backend sets httpOnly cookies via Set-Cookie header
       const response = await authService.login(credentials);
+      saveTokens({
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        tokenType: response.tokenType,
+        expiresIn: response.expiresIn,
+      });
 
       set({
         user: response.user,
@@ -54,14 +64,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      // 🔐 Backend sets httpOnly cookies via Set-Cookie header
-      const response = await authService.register(data);
+      await authService.register(data);
 
-      set({
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
+      // Auto-login after successful registration to obtain tokens
+      await get().login({
+        email: data.email,
+        password: data.password,
       });
     } catch (error) {
       const message =
@@ -79,15 +87,18 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      // 🔐 Call backend to clear httpOnly cookies
-      await authService.logout();
+      if (hasValidAccessToken()) {
+        await authService.logout();
+      }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      clearTokens();
       // Always clear local state
       set({
         user: null,
         isAuthenticated: false,
+        isLoading: false,
         error: null,
       });
     }
@@ -96,7 +107,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   loadUser: async () => {
     set({ isLoading: true });
     try {
-      // 🔐 Backend validates httpOnly cookie and returns user data
+      if (!hasValidAccessToken()) {
+        clearTokens();
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+        return;
+      }
+
       const user = await authService.getProfile();
       set({
         user,
@@ -104,7 +124,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       });
     } catch {
-      // Cookie invalid or expired - suppress error, just set unauthenticated state
+      clearTokens();
+      // Token invalid or expired - suppress error, just set unauthenticated state
       set({
         user: null,
         isAuthenticated: false,

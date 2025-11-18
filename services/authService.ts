@@ -8,38 +8,40 @@ import {
   User,
 } from "@/types/auth";
 
-// 🔐 SECURITY: All auth operations use httpOnly cookies
-// NO manual token handling in client code
+// 🔐 SECURITY: Temporary localStorage token strategy (Sprint 3)
+// Client receives tokens in response body and stores them manually
 export const authService = {
   /**
-   * Login user - backend sets httpOnly cookies
+   * Login user - backend returns JWT tokens + user data
    * @param credentials - email and password
-   * @returns User data (NO tokens)
+   * @returns Login response with access + refresh tokens and user data
    */
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await api.post("/auth/login", credentials);
+    const response = await api.post<LoginResponse>("/auth/login", credentials);
     return response.data;
   },
 
   /**
-   * Register new user - backend sets httpOnly cookies
+   * Register new user
    * @param data - registration form data
-   * @returns User data (NO tokens)
+   * @returns User profile data
    */
-  register: async (data: RegisterRequest): Promise<LoginResponse> => {
-    const response = await api.post("/auth/register", data);
+  register: async (data: RegisterRequest): Promise<User> => {
+    const response = await api.post<User>("/auth/register", data);
     return response.data;
   },
 
   /**
-   * Refresh access token - uses httpOnly cookie
-   * Backend reads refreshToken from cookie, returns new accessToken in cookie
-   * @returns Success message
+   * Refresh access token using refresh token from client storage
+   * @returns New access token + optional rotated refresh token
    */
   refreshToken: async (
     data: RefreshTokenRequest
   ): Promise<RefreshTokenResponse> => {
-    const response = await api.post("/auth/refresh", data);
+    const response = await api.post<RefreshTokenResponse>(
+      "/auth/refresh",
+      data
+    );
     return response.data;
   },
 
@@ -58,7 +60,7 @@ export const authService = {
    * @throws 401 if not authenticated or token expired
    */
   getProfile: async (): Promise<User> => {
-    const response = await api.get("/users/profile");
+    const response = await api.get<User>("/users/profile");
     return response.data;
   },
 };

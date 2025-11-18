@@ -2,50 +2,52 @@
  * Authentication Utilities
  *
  * 🔐 SECURITY NOTE:
- * This file contains MINIMAL auth utilities.
- * NO token storage, validation, or management.
- * All tokens are stored in httpOnly cookies (set/read by backend).
- *
- * Why httpOnly cookies?
- * - ✅ XSS Protection: JavaScript cannot access cookies
- * - ✅ CSRF Protection: SameSite=Strict prevents cross-site requests
- * - ✅ Secure: Transmitted only over HTTPS
- * - ✅ OWASP Compliant: Follows security best practices
+ * Sprint 3 temporarily stores tokens in localStorage for implementation speed.
+ * These helpers centralize token cleanup and validation before backend migration
+ * to httpOnly cookies (planned for Sprint 6 security audit).
  */
 
 import { authService } from "@/services/authService";
+import { clearTokens, hasValidAccessToken } from "@/lib/tokenStorage";
 
 /**
  * Clear user session (logout)
  *
- * 🔐 This calls the backend logout endpoint to clear httpOnly cookies.
- * The backend is responsible for invalidating tokens server-side.
+ * 🔐 Calls backend logout endpoint (invalidates refresh tokens server-side)
+ * and removes tokens from localStorage.
  *
  * @returns Promise that resolves when logout is complete
  */
 export async function clearSession(): Promise<void> {
   try {
-    // Call backend to clear httpOnly cookies
-    await authService.logout();
+    if (hasValidAccessToken()) {
+      await authService.logout();
+    }
   } catch (error) {
     console.error("Failed to clear session:", error);
     // Don't throw - allow local cleanup even if backend fails
+  } finally {
+    clearTokens();
   }
 }
 
 /**
  * Check if user has an active session
  *
- * 🔐 This calls the backend to validate the httpOnly cookie.
- * The backend is the source of truth for session validity.
+ * 🔐 Checks local token presence before calling backend for validation.
+ * The backend remains the source of truth for authentication state.
  *
  * @returns Promise<boolean> - true if session is valid
  */
 export async function hasActiveSession(): Promise<boolean> {
+  if (!hasValidAccessToken()) {
+    return false;
+  }
   try {
     await authService.getProfile();
     return true;
   } catch {
+    clearTokens();
     return false;
   }
 }
@@ -105,6 +107,7 @@ export function handleAuthError(error: unknown): boolean {
     ?.status;
 
   if (status === 401 || status === 403) {
+    clearTokens();
     redirectToLogin(window.location.pathname);
     return true;
   }
@@ -115,27 +118,12 @@ export function handleAuthError(error: unknown): boolean {
 /**
  * 🔐 SECURITY NOTES:
  *
- * What this file does NOT do:
- * ❌ Store tokens (localStorage, sessionStorage, state)
- * ❌ Validate tokens client-side
- * ❌ Decode JWT tokens
- * ❌ Check token expiry
- * ❌ Manage token lifecycle
+ * Token Flow (Temporary Sprint 3 Strategy):
+ * 1. Login → Backend returns access + refresh tokens in response body
+ * 2. Client stores tokens in localStorage (Authorization header added manually)
+ * 3. Refresh → Axios interceptor posts refresh token to /auth/refresh
+ * 4. Logout → Backend revokes refresh tokens, client clears localStorage
  *
- * Why?
- * - All token operations are handled by backend via httpOnly cookies
- * - Client only calls APIs, never manages tokens directly
- * - Backend is single source of truth for authentication state
- *
- * Token Flow:
- * 1. Login → Backend sets httpOnly cookies via Set-Cookie header
- * 2. API calls → Browser sends cookies automatically (withCredentials: true)
- * 3. Token refresh → Backend reads refresh cookie, sets new access cookie
- * 4. Logout → Backend clears httpOnly cookies
- *
- * OWASP Compliance:
- * - A3:2021 – Injection: No token handling in client prevents token injection
- * - A5:2021 – Security Misconfiguration: httpOnly + Secure + SameSite flags
- * - A7:2021 – Identification and Authentication Failures: Server-side validation
- * - A8:2021 – Software and Data Integrity Failures: No client-side token tampering
+ * ⚠️ This approach is temporary and will be replaced with httpOnly cookies
+ * during the Sprint 6 security audit for stronger XSS protection.
  */

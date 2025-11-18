@@ -1,13 +1,19 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  getTokenType,
+  saveTokens,
+} from "@/lib/tokenStorage";
 
-// 🔐 SECURITY: httpOnly cookies for JWT tokens
-// - withCredentials: true -> Cookies sent automatically
-// - NO manual Authorization header needed
-// - Backend sets/reads cookies via Set-Cookie header
+// 🔐 SECURITY: localStorage token strategy (temporary)
+// - Store tokens in localStorage for Sprint 3 velocity
+// - Manually attach Authorization header on every request
+// - Will migrate to httpOnly cookies during Sprint 6 security audit
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000"),
-  withCredentials: true, // ✅ CRITICAL: Enable cookie support
   headers: {
     "Content-Type": "application/json",
   },
@@ -36,7 +42,14 @@ const processQueue = (error: Error | null = null) => {
   failedQueue = [];
 };
 
-// Request interceptor - NO manual token handling
+interface RefreshResponse {
+  accessToken: string;
+  refreshToken?: string | null;
+  tokenType?: string | null;
+  expiresIn?: number;
+}
+
+// Request interceptor - attach bearer token from localStorage
 api.interceptors.request.use(
   (config) => {
     // 🌐 Check offline status before making request
@@ -48,8 +61,13 @@ api.interceptors.request.use(
       });
     }
 
-    // ❌ NO manual Authorization header
-    // Cookies sent automatically by browser when withCredentials: true
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      const tokenType = getTokenType() || "Bearer";
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = `${tokenType} ${accessToken}`;
+    }
+
     return config;
   },
   (error) => {
@@ -93,13 +111,29 @@ api.interceptors.response.use(
         try {
           console.log("🔐 Token expired, refreshing session...");
 
-          // 🔐 Call refresh endpoint (backend reads httpOnly refresh cookie)
-          // Backend returns new access token in httpOnly cookie
-          await axios.post(
+          const refreshToken = getRefreshToken();
+          if (!refreshToken) {
+            throw new Error("Missing refresh token");
+          }
+
+          // 🔐 Call refresh endpoint with stored refresh token
+          const response = await axios.post<RefreshResponse>(
             `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-            {},
-            { withCredentials: true, timeout: 10000 }
+            { refreshToken },
+            { timeout: 10000 }
           );
+
+          const refreshed = response.data;
+          if (!refreshed?.accessToken) {
+            throw new Error("Refresh endpoint did not return an access token");
+          }
+
+          saveTokens({
+            accessToken: refreshed.accessToken,
+            refreshToken: refreshed.refreshToken ?? refreshToken,
+            tokenType: refreshed.tokenType,
+            expiresIn: refreshed.expiresIn,
+          });
 
           console.log("✅ Token refresh successful");
 
@@ -110,10 +144,12 @@ api.interceptors.response.use(
           isRefreshing = false;
           refreshPromise = null;
 
-          // Retry original request with new token (in cookie)
+          // Retry original request with new token (from localStorage)
           return api(originalRequest);
         } catch (refreshError) {
           console.error("❌ Token refresh failed:", refreshError);
+
+          clearTokens();
 
           // Refresh failed, reject all queued requests
           processQueue(
