@@ -14,6 +14,7 @@ import { courseService, CourseSearchParams } from "@/services/courseService";
 import { enrollmentService } from "@/services/enrollmentService";
 import { Course, Enrollment } from "@/types/course";
 import { toast } from "sonner";
+import axios from "axios";
 
 /**
  * CEFR Levels for filtering
@@ -144,6 +145,10 @@ function CoursesPageContent() {
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
       } catch (error: any) {
+        if (axios.isCancel(error)) {
+          console.log("Request canceled");
+          return;
+        }
         console.error("Failed to fetch courses:", error);
         toast.error(error.message || "Failed to load courses");
         setCourses([]);

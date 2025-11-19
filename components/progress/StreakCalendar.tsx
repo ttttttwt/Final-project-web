@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { DailyActivity, StreakData } from "@/types/progress";
 
 interface StreakCalendarProps {
@@ -16,11 +17,17 @@ export function StreakCalendar({
   dailyActivities,
   streakData,
 }: StreakCalendarProps) {
+  const [hoveredDay, setHoveredDay] = useState<{
+    date: string;
+    lessonsCompleted: number;
+  } | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   // Generate calendar data for the last 365 days
   const calendarData = useMemo(() => {
     const today = new Date();
     const days: Array<{
       date: string;
+      dayOfWeek: number;
       lessonsCompleted: number;
       intensity: number;
     }> = [];
@@ -31,12 +38,19 @@ export function StreakCalendar({
       activityMap.set(activity.date, activity.lessonsCompleted);
     });
 
-    // Generate data for last 365 days
-    for (let i = 364; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
+    // Start from 52 weeks ago (364 days)
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 364);
 
+    // Find the most recent Sunday before or on startDate
+    const dayOfWeek = startDate.getDay();
+    const daysToSubtract = dayOfWeek; // 0 = Sunday, so subtract to get to previous Sunday
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+
+    // Generate data from that Sunday until today
+    const currentDate = new Date(startDate);
+    while (currentDate <= today) {
+      const dateStr = currentDate.toISOString().split("T")[0];
       const lessonsCompleted = activityMap.get(dateStr) || 0;
 
       // Calculate intensity (0-4 scale for color intensity)
@@ -48,18 +62,34 @@ export function StreakCalendar({
         else intensity = 1;
       }
 
-      days.push({ date: dateStr, lessonsCompleted, intensity });
+      days.push({
+        date: dateStr,
+        dayOfWeek: currentDate.getDay(), // 0 = Sunday, 1 = Monday, etc.
+        lessonsCompleted,
+        intensity,
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     return days;
   }, [dailyActivities]);
 
-  // Group days by week for rendering
+  // Group days by week for rendering (each week = column)
   const weeks = useMemo(() => {
     const result: (typeof calendarData)[] = [];
-    for (let i = 0; i < calendarData.length; i += 7) {
-      result.push(calendarData.slice(i, i + 7));
-    }
+    let currentWeek: typeof calendarData = [];
+
+    calendarData.forEach((day, index) => {
+      currentWeek.push(day);
+
+      // End of week (Saturday) or last day
+      if (day.dayOfWeek === 6 || index === calendarData.length - 1) {
+        result.push([...currentWeek]);
+        currentWeek = [];
+      }
+    });
+
     return result;
   }, [calendarData]);
 
@@ -85,24 +115,7 @@ export function StreakCalendar({
     });
   };
 
-  // Get month labels
-  const monthLabels = useMemo(() => {
-    const labels: Array<{ month: string; weekIndex: number }> = [];
-    let currentMonth = "";
 
-    weeks.forEach((week, index) => {
-      if (week[0]) {
-        const date = new Date(week[0].date);
-        const month = date.toLocaleDateString("en-US", { month: "short" });
-        if (month !== currentMonth) {
-          currentMonth = month;
-          labels.push({ month, weekIndex: index });
-        }
-      }
-    });
-
-    return labels;
-  }, [weeks]);
 
   return (
     <div className="w-full">
@@ -134,58 +147,89 @@ export function StreakCalendar({
       <div className="relative overflow-x-auto">
         {/* Month Labels */}
         <div className="flex gap-[3px] mb-2 ml-8">
-          {monthLabels.map((label) => (
-            <div
-              key={label.month}
-              className="text-xs text-gray-600 dark:text-gray-400"
-              style={{
-                width: "12px",
-                marginLeft: label.weekIndex > 0 ? "3px" : "0",
-              }}
-            >
-              {label.month}
-            </div>
-          ))}
+          {weeks.map((week, index) => {
+            if (!week[0]) return <div key={index} className="w-3" />;
+            
+            const date = new Date(week[0].date);
+            const month = date.toLocaleDateString("en-US", { month: "short" });
+            
+            let showLabel = false;
+            if (index === 0) {
+              showLabel = true;
+            } else {
+              const prevWeek = weeks[index - 1];
+              if (prevWeek && prevWeek[0]) {
+                const prevDate = new Date(prevWeek[0].date);
+                const prevMonth = prevDate.toLocaleDateString("en-US", { month: "short" });
+                if (month !== prevMonth) {
+                  showLabel = true;
+                }
+              }
+            }
+
+            return (
+              <div
+                key={index}
+                className="text-xs text-gray-600 dark:text-gray-400 w-3 overflow-visible whitespace-nowrap"
+              >
+                {showLabel ? month : ""}
+              </div>
+            );
+          })}
         </div>
 
         {/* Weekday Labels + Grid */}
         <div className="flex gap-[3px]">
           {/* Weekday labels */}
-          <div className="flex flex-col gap-[3px] text-xs text-gray-600 dark:text-gray-400 pr-2">
-            <div className="h-3"></div> {/* Spacer for Mon */}
-            <div className="h-3">Mon</div>
-            <div className="h-3"></div> {/* Spacer for Wed */}
-            <div className="h-3">Wed</div>
-            <div className="h-3"></div> {/* Spacer for Fri */}
-            <div className="h-3">Fri</div>
-            <div className="h-3"></div> {/* Spacer for Sun */}
+          <div className="flex flex-col gap-[3px] text-xs text-gray-600 dark:text-gray-400 pr-2 pt-px">
+            <div className="h-3 leading-3">Sun</div>
+            <div className="h-3 leading-3">Mon</div>
+            <div className="h-3 leading-3">Tue</div>
+            <div className="h-3 leading-3">Wed</div>
+            <div className="h-3 leading-3">Thu</div>
+            <div className="h-3 leading-3">Fri</div>
+            <div className="h-3 leading-3">Sat</div>
           </div>
 
           {/* Calendar squares */}
           <div className="flex gap-[3px]">
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-[3px]">
-                {week.map((day) => (
-                  <div
-                    key={day.date}
-                    className={`w-3 h-3 rounded-sm ${getIntensityColor(
-                      day.intensity
-                    )} hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer group relative`}
-                    title={`${formatDate(day.date)}: ${
-                      day.lessonsCompleted
-                    } lessons`}
-                  >
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                        {formatDate(day.date)}
-                        <br />
-                        {day.lessonsCompleted}{" "}
-                        {day.lessonsCompleted === 1 ? "lesson" : "lessons"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {/* Render all 7 days, fill with empty cells if week is incomplete */}
+                {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                  const day = week.find((d) => d.dayOfWeek === dayIndex);
+
+                  if (!day) {
+                    // Empty cell for days that don't exist yet
+                    return (
+                      <div
+                        key={`empty-${weekIndex}-${dayIndex}`}
+                        className="w-3 h-3"
+                      />
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={day.date}
+                      className={`w-3 h-3 rounded-sm ${getIntensityColor(
+                        day.intensity
+                      )} hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer relative`}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTooltipPos({
+                          x: rect.left + rect.width / 2,
+                          y: rect.top,
+                        });
+                        setHoveredDay({
+                          date: day.date,
+                          lessonsCompleted: day.lessonsCompleted,
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredDay(null)}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -237,6 +281,31 @@ export function StreakCalendar({
           </div>
         </div>
       )}
+
+      {/* Portal Tooltip */}
+      {hoveredDay &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: tooltipPos.x,
+              top: tooltipPos.y,
+              transform: "translate(-50%, -100%) translateY(-8px)",
+            }}
+          >
+            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">
+              <div className="font-medium">{formatDate(hoveredDay.date)}</div>
+              <div>
+                {hoveredDay.lessonsCompleted}{" "}
+                {hoveredDay.lessonsCompleted === 1 ? "lesson" : "lessons"}
+              </div>
+            </div>
+            {/* Arrow */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-gray-900 dark:border-t-gray-700" />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
