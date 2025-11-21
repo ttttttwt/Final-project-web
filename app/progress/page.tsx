@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { MainLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Card } from "@/components/ui/card";
@@ -38,14 +39,14 @@ export default function ProgressPage() {
 
         // Fetch both progress summary and streak data
         const [summary, streak] = await Promise.all([
-          progressService.getProgressSummary(30),
+          progressService.getProgressSummary(30, controller.signal),
           progressService.getStreak(controller.signal),
         ]);
 
         setProgressSummary(summary);
         setStreakData(streak);
       } catch (error: any) {
-        if (error.name !== "AbortError") {
+        if (error.name !== "AbortError" && !axios.isCancel(error)) {
           console.error("Failed to fetch progress data:", error);
           toast.error("Failed to load progress data");
         }

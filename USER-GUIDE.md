@@ -1,12 +1,18 @@
 # LEXIA Web App — Hướng Dẫn Sử Dụng (Frontend)
 
-Phiên bản: Sprint 3 (Nov 2025)
+Phiên bản: Sprint 3 (Nov 2025) - **Cập nhật hoàn tất**
 
 ---
 
 ## 👋 Giới thiệu
 
-LEXIA là nền tảng học tiếng Anh thông minh cho người đi làm. Tài liệu này hướng dẫn người dùng cuối (end users) sử dụng ứng dụng web tại `http://localhost:3000` (môi trường dev) với thiết kế tối giản, dễ đọc và hỗ trợ dark mode.
+LEXIA là nền tảng học tiếng Anh thông minh cho người đi làm. Tài liệu này hướng dẫn người dùng cuối (end users) sử dụng ứng dụng web tại `http://localhost:3000` (môi trường dev).
+
+**Giao diện mới (Version B):**
+
+- Phong cách thiết kế hiện đại, tối giản (Medium-inspired).
+- Tông màu chủ đạo: **Deep Blue** (Xanh đậm) & **Warm Yellow** (Vàng ấm).
+- Hỗ trợ **Dark Mode** hoàn chỉnh.
 
 - Trình duyệt hỗ trợ: Chrome, Edge, Firefox, Safari (phiên bản mới nhất)
 - Thiết bị: Mobile (≥320px), Tablet (≥768px), Desktop (≥1024px)
@@ -19,11 +25,6 @@ LEXIA là nền tảng học tiếng Anh thông minh cho người đi làm. Tài
 2. Nếu chưa có tài khoản, chọn "Register" để đăng ký
 3. Đăng nhập và truy cập "Dashboard" để xem nội dung chính
 
-Lưu ý bảo mật:
-
-- Hệ thống dùng cookie httpOnly để quản lý phiên đăng nhập (an toàn trước XSS)
-- Không cần (và không nên) dán token ở bất kỳ đâu
-
 ---
 
 ## 🔐 Đăng ký & Đăng nhập
@@ -32,189 +33,156 @@ Lưu ý bảo mật:
 
 - Truy cập: `/register`
 - Nhập Email, Mật khẩu, Xác nhận mật khẩu
-- Mật khẩu cần tối thiểu 8 ký tự (gợi ý độ mạnh theo thời gian thực)
+- **Mới:** Chỉ báo độ mạnh mật khẩu theo thời gian thực (Màu sắc trực quan).
 - Chấp nhận điều khoản sử dụng
 - Nhấn "Create Account" → Chuyển đến Dashboard nếu thành công
-
-Lỗi thường gặp khi đăng ký:
-
-- Email đã tồn tại (409): "Email already registered. Please login."
-- Dữ liệu không hợp lệ (422/400): Kiểm tra thông báo dưới từng ô nhập
-- Mạng/Timeout: Hệ thống sẽ hiển thị thông báo và thử lại phù hợp
 
 ### Đăng nhập
 
 - Truy cập: `/login`
 - Nhập Email, Mật khẩu → "Sign In"
 - Thành công → chuyển đến `/dashboard`
-- Sai thông tin (401): Hiển thị "Invalid credentials" và giữ nguyên trang
-
-Quên mật khẩu: sẽ được bổ sung trong sprint sau.
+- Hệ thống tự động chuyển hướng nếu phiên đăng nhập hết hạn.
 
 ---
 
 ## 🧭 Điều hướng chính (Navigation)
 
-- `Dashboard`: Trang tổng quan sau đăng nhập
-- `Courses`: Danh sách khóa học và bộ lọc (theo CEFR)
-- `Progress`: Tiến độ học tập, streak (sẽ mở rộng dần)
-- `Profile`: Thông tin cá nhân, avatar, múi giờ, ngôn ngữ
-- `Settings`: Tùy chọn giao diện, ngôn ngữ (kế hoạch mở rộng)
+- `Dashboard`: Tổng quan, thống kê và hoạt động gần đây.
+- `Courses`: Thư viện khóa học, tìm kiếm và lọc.
+- `Learning Paths`: Lộ trình học tập được đề xuất.
+- `Progress`: Biểu đồ tiến độ và lịch sử streak.
+- `Profile`: Hồ sơ cá nhân, avatar.
+- `Settings`: Cài đặt hệ thống.
 
-Gợi ý:
+**Tính năng giao diện:**
 
-- Trên mobile, menu có thể thu gọn; dùng nút menu để mở/đóng
-- Có hỗ trợ dark mode (theo hệ thống hoặc bật/tắt thủ công ở phần Header)
+- **Sidebar (Desktop):** Có thể thu gọn để mở rộng không gian học.
+- **Mobile Menu:** Menu trượt mượt mà, hỗ trợ vuốt (swipe) để đóng/mở.
+- **Theme Toggle:** Chuyển đổi chế độ Sáng/Tối/Hệ thống ngay trên Header.
 
 ---
 
 ## 🏠 Dashboard
 
-- Hiển thị lời chào, trạng thái đăng nhập và lối tắt đến mục quan trọng
-- Sẽ bổ sung các thẻ thống kê (tiến độ, khóa học đã đăng ký, gợi ý lộ trình)
-- Các vùng tải dữ liệu sẽ hiển thị skeleton/loading để tránh giật/nháy
+Trang tổng quan hiển thị đầy đủ thông tin:
+
+- **Thẻ thống kê (Stats Cards):**
+  - Số khóa học đang tham gia.
+  - Số bài học đã hoàn thành.
+  - Tổng giờ học.
+  - **Current Streak:** Chuỗi ngày học liên tiếp (có biểu tượng lửa 🔥).
+- **Hoạt động gần đây (Recent Activity):** Danh sách các khóa học vừa truy cập để học tiếp nhanh chóng.
+- **Biểu đồ nhanh:** Tổng quan tiến độ tuần này.
 
 ---
 
-## 📚 Khóa học (Courses)
+## 📚 Khóa học (Courses) & Bài học
 
-- Duyệt danh sách khóa học theo cấp độ CEFR (A1→C2)
-- Tìm kiếm/ lọc (khi được bật)
-- Chọn một khóa học để xem chi tiết (sẽ bổ sung giao diện viewer bài học trong sprint kế tiếp)
-- Đăng ký (Enroll) để thêm vào lộ trình học cá nhân (khi backend mở endpoint tương ứng)
+### Danh sách khóa học
+
+- **Tìm kiếm:** Tìm theo tên khóa học (kết quả hiển thị ngay).
+- **Bộ lọc:** Lọc theo trình độ CEFR (A1 - C2).
+- **Sắp xếp:** Mới nhất, Phổ biến nhất, v.v.
+- **Chế độ xem:** Dạng Lưới (Grid) hoặc Danh sách (List).
+
+### Chi tiết & Học tập
+
+- Xem cấu trúc khóa học, danh sách bài học.
+- **Đăng ký (Enroll):** Tham gia khóa học với một cú nhấp chuột.
+- **Lesson Viewer (Giao diện học):**
+  - Giao diện tập trung, không xao nhãng.
+  - Điều hướng bài học (Trước/Sau) dễ dàng.
+  - Đánh dấu hoàn thành bài học.
 
 ---
 
 ## 📈 Tiến độ học (Progress)
 
-- Xem tổng quan số bài đã hoàn thành, phần trăm tiến độ theo khóa
-- Theo dõi streak học tập theo ngày (đang mở rộng)
-- Các biểu đồ/heatmap sẽ được bổ sung ở sprint sau
+Trang theo dõi chi tiết hiệu suất học tập:
+
+- **Biểu đồ vùng (Area Chart):** Trực quan hóa hoạt động học tập theo thời gian.
+- **Streak Heatmap:** Biểu đồ nhiệt (giống GitHub) hiển thị cường độ học tập trong năm.
+- **Thống kê chi tiết:** Tổng điểm, xếp hạng (sắp ra mắt).
 
 ---
 
 ## 👤 Hồ sơ cá nhân (Profile)
 
-- Xem/ cập nhật: họ tên, bio, số điện thoại, múi giờ, ngôn ngữ giao diện
-- Cập nhật avatar bằng URL (upload file sẽ bổ sung sau)
-- Thay đổi được đồng bộ với backend theo thời gian thực
+Quản lý thông tin cá nhân toàn diện:
 
-Lưu ý định dạng:
-
-- Số điện thoại: `+84xxxxxxxxx` hoặc 10–20 chữ số
-- Múi giờ: IANA (vd: `Asia/Ho_Chi_Minh`)
-- Ngôn ngữ: ISO 639-1 (vd: `vi`, `en`)
+- **Avatar:** Tải ảnh đại diện lên từ máy tính (Hỗ trợ xem trước, cắt ảnh).
+- **Thông tin:** Cập nhật Họ tên, Bio, Số điện thoại.
+- **Học tập:** Cập nhật Trình độ hiện tại và Mục tiêu học tập.
 
 ---
 
-## 🌙 Chế độ tối (Dark Mode)
+## ⚙️ Cài đặt (Settings)
 
-- Tự động theo hệ thống
-- Có thể bật/tắt thủ công trong Header → nút Theme Toggle
-- Cài đặt được lưu trong trình duyệt (không yêu cầu đăng nhập lại)
+Tùy chỉnh trải nghiệm ứng dụng:
 
----
-
-## 🧰 Hành vi bảo mật & phiên đăng nhập
-
-- Đăng nhập sử dụng cookie httpOnly (không hiển thị trong JS/DevTools Application → Local Storage)
-- Ứng dụng kiểm tra phiên khi tải trang:
-  - Trong lúc kiểm tra, hiển thị màn hình chờ (LoadingScreen) để tránh nháy nội dung
-  - Nếu phiên hợp lệ → truy cập bình thường
-  - Nếu không hợp lệ → chuyển về `/login`
-- Các trang cần bảo vệ được kiểm tra cả phía server (middleware) và client (UX mượt mà)
+- **Giao diện:** Chọn theme Light, Dark hoặc theo hệ thống.
+- **Ngôn ngữ:** Chọn ngôn ngữ hiển thị (Tiếng Việt, English, v.v.).
+- **Múi giờ:** Cài đặt múi giờ để nhận thông báo đúng lúc.
+- **Thông báo:** Bật/tắt thông báo Email, Nhắc nhở học tập, Báo cáo tuần.
 
 ---
 
-## 🧩 Thông báo lỗi & trạng thái tải
+## 🧰 Hành vi bảo mật & Phiên đăng nhập
 
-Hệ thống hiển thị thông báo theo ngữ cảnh:
-
-- Lỗi 401 (chưa đăng nhập/phiên hết hạn): chuyển về login, kèm thông báo phù hợp
-- Lỗi mạng/timeout: hiện toast "No internet"/"Request timeout" và có thể tự thử lại ở các yêu cầu an toàn
-- Lỗi 500+: hiển thị thông báo chung và ghi log client tối thiểu
-- Trạng thái tải: dùng spinner/skeleton trên các vùng nội dung chính
+- **Token Management:** Hiện tại sử dụng `localStorage` kết hợp với cơ chế bảo mật phía client. (Sẽ nâng cấp lên httpOnly cookies trong các bản cập nhật tới).
+- **Loading States:** Hệ thống hiển thị Skeleton hoặc Spinner khi tải dữ liệu, tránh giật trang.
+- **Error Handling:** Thông báo lỗi thân thiện (Toast notification) khi mất mạng hoặc lỗi server.
 
 ---
 
 ## ♿ Trợ năng (Accessibility)
 
-- Hỗ trợ điều hướng bằng bàn phím (Tab, Enter, Escape)
-- ARIA labels cho các nút/biểu tượng quan trọng
-- Tương phản màu đạt mức WCAG AA
-- Focus ring rõ ràng khi dùng bàn phím
+Đạt chuẩn **WCAG AA**:
+
+- Hỗ trợ điều hướng hoàn toàn bằng bàn phím (Tab, Enter, Esc).
+- Tương phản màu sắc tối ưu cho người khiếm thị.
+- Hỗ trợ trình đọc màn hình (Screen Reader) với đầy đủ ARIA labels.
+- Form có thông báo lỗi rõ ràng, liên kết với ô nhập liệu.
 
 ---
 
 ## ❓ Câu hỏi thường gặp (FAQ)
 
-1. Tôi bị chuyển về trang đăng nhập dù vừa đăng nhập xong?
+1. **Tôi có thể đổi Avatar không?**
 
-- Có thể phiên đã hết hạn hoặc cookie bị chặn bởi trình duyệt. Kiểm tra cài đặt cookie/Privacy và thử lại.
+   - Có, bạn có thể tải ảnh lên tại trang Profile.
 
-2. Tại sao tôi không thấy token ở Local Storage?
+2. **Làm sao để bật chế độ tối (Dark Mode)?**
 
-- LEXIA dùng cookie httpOnly để bảo mật, token không nằm ở Local Storage nhằm tránh XSS.
+   - Nhấn vào biểu tượng Mặt trăng/Mặt trời ở góc trên bên phải màn hình.
 
-3. Tôi không thấy nút "Forgot Password" hoạt động?
+3. **Tôi quên mật khẩu thì sao?**
 
-- Tính năng này sẽ được bổ sung ở sprint tiếp theo; hiện thời là placeholder.
+   - Tính năng "Quên mật khẩu" đang được phát triển và sẽ ra mắt sớm.
 
-4. Vì sao giao diện khác nhau giữa mobile và desktop?
-
-- Ứng dụng thiết kế responsive. Một số thành phần (sidebar, menu) thu gọn trên mobile để tối ưu không gian.
+4. **Tại sao tôi thấy token trong Local Storage?**
+   - Trong phiên bản hiện tại, chúng tôi lưu token tại Local Storage để đảm bảo trải nghiệm mượt mà nhất. Cơ chế bảo mật nâng cao sẽ được cập nhật sau.
 
 ---
 
 ## 🔧 Khắc phục sự cố (Troubleshooting)
 
-- Không đăng nhập được:
+- **Không đăng nhập được:**
 
-  - Kiểm tra email/mật khẩu
-  - Kiểm tra kết nối mạng
-  - Cho phép cookie cho `http://localhost:3000`
-  - Backend phải chạy ở URL cấu hình (mặc định: `NEXT_PUBLIC_API_URL`)
+  - Kiểm tra email/mật khẩu.
+  - Kiểm tra kết nối mạng.
+  - Đảm bảo Backend đang chạy.
 
-- Trang trắng khi vừa vào app:
-
-  - Đợi vài giây: ứng dụng đang kiểm tra phiên đăng nhập (màn hình chờ)
-  - Nếu vẫn trắng, mở DevTools → Console để xem lỗi mạng
-
-- Giao diện không đúng theme:
-  - Dùng nút Theme Toggle trong Header
-  - Làm mới trang sau khi đổi
-
----
-
-## 🧪 Môi trường & yêu cầu (dành cho người dùng nội bộ/dev)
-
-- Frontend dev: `http://localhost:3000`
-- Backend dev: mặc định `http://localhost:8088/api/v1` (cấu hình qua `NEXT_PUBLIC_API_URL`)
-- Cookie bắt buộc: bật cookies cho domain `localhost`
-
-Chạy cục bộ (tham khảo nhanh):
-
-```bash
-# Trong thư mục lexia-web
-npm install
-# Cấu hình file .env.local (ví dụ)
-# NEXT_PUBLIC_API_URL=http://localhost:8088/api/v1
-npm run dev
-```
-
----
-
-## 📞 Hỗ trợ
-
-- Email: support@lexia.com
-- Tài liệu Backend API (tham khảo): `backend/docs/USER-GUIDE.md`
-- Swagger (backend): `http://localhost:8088/swagger-ui.html`
+- **Giao diện bị vỡ hoặc không đúng theme:**
+  - Thử tải lại trang (F5).
+  - Xóa cache trình duyệt nếu cần thiết.
 
 ---
 
 ## 🔄 Lịch sử cập nhật
 
-- Sprint 3 (2025-11-12/13):
-  - Hoàn thiện luồng đăng nhập/đăng ký với cookie httpOnly
-  - Bổ sung middleware bảo vệ route và LoadingScreen chống nháy nội dung
-  - Cải thiện thông báo lỗi và dark mode
+- **Sprint 3 (Nov 2025) - Hoàn tất:**
+  - **UI/UX:** Refactor toàn bộ theo Design System mới (Blue/Yellow).
+  - **Tính năng:** Dashboard thống kê, Tìm kiếm khóa học, Lesson Viewer, Upload Avatar, Settings.
+  - **Kỹ thuật:** Tối ưu hiệu năng, Accessibility (WCAG AA), Unit Tests.

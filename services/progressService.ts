@@ -102,10 +102,13 @@ const progressService = {
    * Generates mock data for now since backend doesn't have historical data endpoint
    * @param days Number of days to fetch (default: 30)
    */
-  async getProgressSummary(days: number = 30): Promise<ProgressSummary> {
+  async getProgressSummary(
+    days: number = 30,
+    signal?: AbortSignal
+  ): Promise<ProgressSummary> {
     // TODO: Replace with actual backend endpoint when available
     // For now, generate mock data based on streak information
-    const streakData = await this.getStreak();
+    const streakData = await this.getStreak(signal);
 
     // Generate mock daily activities for the chart
     const dailyActivities: DailyActivity[] = [];

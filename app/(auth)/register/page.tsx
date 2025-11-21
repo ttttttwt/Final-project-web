@@ -45,6 +45,7 @@ const registerSchema = z
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
       .regex(/[0-9]/, "Password must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    fullName: z.string().min(1, "Full name is required").max(255, "Full name must be less than 255 characters"),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "You must accept the terms and conditions",
     }),
@@ -109,6 +110,7 @@ export default function RegisterPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      fullName: "",
       acceptTerms: false,
     },
   });
@@ -132,6 +134,7 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         confirmPassword: data.confirmPassword,
+        fullName: data.fullName,
       });
 
       // Success: User profile already in authStore (session established)
@@ -210,6 +213,29 @@ export default function RegisterPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Full Name Field */}
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#202124] dark:text-[#E8EAED]">
+                      Full Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John Doe"
+                        autoComplete="name"
+                        disabled={form.formState.isSubmitting}
+                        className="h-11 border-[#E0E0E0] dark:border-[#2E2E2E] focus:border-[#1A73E8] dark:focus:border-[#8AB4F8]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[#EA4335] dark:text-[#F28B82]" />
+                  </FormItem>
+                )}
+              />
+
               {/* Email Field */}
               <FormField
                 control={form.control}
@@ -281,15 +307,14 @@ export default function RegisterPage() {
                             Password strength:
                           </span>
                           <span
-                            className={`font-medium ${
-                              passwordStrength.score === 1
-                                ? "text-[#EA4335] dark:text-[#F28B82]"
-                                : passwordStrength.score === 2
+                            className={`font-medium ${passwordStrength.score === 1
+                              ? "text-[#EA4335] dark:text-[#F28B82]"
+                              : passwordStrength.score === 2
                                 ? "text-[#FFB300] dark:text-[#FDD663]"
                                 : passwordStrength.score === 3
-                                ? "text-[#FBBC04] dark:text-[#FDD663]"
-                                : "text-[#34A853] dark:text-[#81C995]"
-                            }`}
+                                  ? "text-[#FBBC04] dark:text-[#FDD663]"
+                                  : "text-[#34A853] dark:text-[#81C995]"
+                              }`}
                           >
                             {passwordStrength.label}
                           </span>

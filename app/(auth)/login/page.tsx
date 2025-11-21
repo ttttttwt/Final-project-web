@@ -130,7 +130,10 @@ export default function LoginPage() {
               <span className="text-2xl font-bold">L</span>
             </div>
           </div>
-          <CardTitle className="text-3xl font-serif text-[#202124] dark:text-[#E8EAED]">
+          <CardTitle
+            className="text-3xl font-serif text-[#202124] dark:text-[#E8EAED]"
+            suppressHydrationWarning
+          >
             Welcome back
           </CardTitle>
           <CardDescription className="text-base text-[#5F6368] dark:text-[#9AA0A6]">
