@@ -166,7 +166,7 @@ export function CourseCard({
                 : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
             } text-white dark:text-[#121212] font-medium transition-colors`}
           >
-            {isEnrolled ? "Continue Learning" : "Enroll Now"}
+            {isEnrolled ? "Continue Learning" : "View Detail"}
           </Button>
         </CardFooter>
       </Card>

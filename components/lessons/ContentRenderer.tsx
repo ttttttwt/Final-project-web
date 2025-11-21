@@ -27,10 +27,10 @@ import type {
 interface ContentRendererProps {
   lessonType: LessonType;
   parsedContent:
-    | ReadingContent
-    | ListeningContent
-    | QuizContent
-    | SpeakingContent;
+  | ReadingContent
+  | ListeningContent
+  | QuizContent
+  | SpeakingContent;
 }
 
 export default function ContentRenderer({
@@ -423,12 +423,14 @@ function SpeakingContentRenderer({ content }: { content: SpeakingContent }) {
                 content.difficulty === "beginner"
                   ? "bg-green-100 text-green-800"
                   : content.difficulty === "intermediate"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
               }
             >
-              {content.difficulty.charAt(0).toUpperCase() +
-                content.difficulty.slice(1)}
+              {content.difficulty
+                ? content.difficulty.charAt(0).toUpperCase() +
+                content.difficulty.slice(1)
+                : "Unknown"}
             </Badge>
             {content.rolePlaySettings?.turns && (
               <Badge variant="outline">
@@ -451,7 +453,7 @@ function SpeakingContentRenderer({ content }: { content: SpeakingContent }) {
       {/* Prompts */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Practice Prompts</h3>
-        {content.prompts.map((prompt, index) => (
+        {content.prompts?.map((prompt, index) => (
           <Card key={index}>
             <CardHeader>
               <CardTitle className="text-base">

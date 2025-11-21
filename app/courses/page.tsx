@@ -214,11 +214,9 @@ function CoursesPageContent() {
   };
 
   /**
-   * Handle enroll click
+   * Handle view detail click
    */
   const handleEnroll = (courseId: string) => {
-    // TODO: Implement enrollment in next task
-    toast.info("Enrollment feature coming soon!");
     router.push(`/courses/${courseId}`);
   };
 
@@ -414,6 +412,7 @@ function CoursesPageContent() {
                 key={course.id}
                 course={course}
                 onEnroll={handleEnroll}
+                isEnrolled={!!enrollment}
                 progressPercentage={enrollment?.progressPercentage || 0}
                 isCompleted={enrollment?.isCompleted || false}
               />

@@ -52,7 +52,7 @@ const progressService = {
   ): Promise<LessonProgressDTO> {
     const response = await api.post<LessonProgressDTO>(
       `/progress/lessons/${lessonId}/complete`,
-      { resultDetailsJson }
+      { resultDetailsJson: resultDetailsJson || "{}" }
     );
     return response.data;
   },
