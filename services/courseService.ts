@@ -23,6 +23,7 @@ export interface CourseSearchParams {
   page?: number;
   size?: number;
   sort?: string;
+  isEnrolled?: boolean;
 }
 
 /**

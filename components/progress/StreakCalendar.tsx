@@ -7,6 +7,7 @@ import type { DailyActivity, StreakData } from "@/types/progress";
 interface StreakCalendarProps {
   dailyActivities: DailyActivity[];
   streakData: StreakData | null;
+  year?: number;
 }
 
 /**
@@ -16,15 +17,16 @@ interface StreakCalendarProps {
 export function StreakCalendar({
   dailyActivities,
   streakData,
+  year = new Date().getFullYear(),
 }: StreakCalendarProps) {
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
     lessonsCompleted: number;
   } | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  // Generate calendar data for the last 365 days
+
+  // Generate calendar data for the specified year
   const calendarData = useMemo(() => {
-    const today = new Date();
     const days: Array<{
       date: string;
       dayOfWeek: number;
@@ -38,20 +40,29 @@ export function StreakCalendar({
       activityMap.set(activity.date, activity.lessonsCompleted);
     });
 
-    // Start from 52 weeks ago (364 days)
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - 364);
+    // Start from Jan 1st of the target year
+    const startDate = new Date(year, 0, 1);
+    // End at Dec 31st of the target year
+    const endDate = new Date(year, 11, 31);
 
-    // Find the most recent Sunday before or on startDate
+    // Adjust start date to the beginning of the week (Sunday)
+    // This ensures the grid starts correctly aligned
     const dayOfWeek = startDate.getDay();
-    const daysToSubtract = dayOfWeek; // 0 = Sunday, so subtract to get to previous Sunday
-    startDate.setDate(startDate.getDate() - daysToSubtract);
+    const daysToSubtract = dayOfWeek; // 0 = Sunday
+    const gridStartDate = new Date(startDate);
+    gridStartDate.setDate(startDate.getDate() - daysToSubtract);
 
-    // Generate data from that Sunday until today
-    const currentDate = new Date(startDate);
-    while (currentDate <= today) {
+    // Generate data from gridStartDate until endDate
+    const currentDate = new Date(gridStartDate);
+
+    // We continue until we pass the end date AND finish the current week
+    while (currentDate <= endDate || currentDate.getDay() !== 0) {
       const dateStr = currentDate.toISOString().split("T")[0];
-      const lessonsCompleted = activityMap.get(dateStr) || 0;
+
+      // Only show data for the target year, but we need to generate days 
+      // for the grid structure even if they are outside the year (padding)
+      const isTargetYear = currentDate.getFullYear() === year;
+      const lessonsCompleted = isTargetYear ? (activityMap.get(dateStr) || 0) : 0;
 
       // Calculate intensity (0-4 scale for color intensity)
       let intensity = 0;
@@ -66,14 +77,17 @@ export function StreakCalendar({
         date: dateStr,
         dayOfWeek: currentDate.getDay(), // 0 = Sunday, 1 = Monday, etc.
         lessonsCompleted,
-        intensity,
+        intensity: isTargetYear ? intensity : 0, // No intensity for padding days
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
+
+      // Safety break to prevent infinite loops if logic is wrong
+      if (days.length > 400) break;
     }
 
     return days;
-  }, [dailyActivities]);
+  }, [dailyActivities, year]);
 
   // Group days by week for rendering (each week = column)
   const weeks = useMemo(() => {
@@ -125,7 +139,7 @@ export function StreakCalendar({
           {streakData && (
             <span>
               <span className="font-medium">{streakData.totalActiveDays}</span>{" "}
-              active days in the last year
+              active days in {year}
             </span>
           )}
         </div>
@@ -149,10 +163,10 @@ export function StreakCalendar({
         <div className="flex gap-[3px] mb-2 ml-8">
           {weeks.map((week, index) => {
             if (!week[0]) return <div key={index} className="w-3" />;
-            
+
             const date = new Date(week[0].date);
             const month = date.toLocaleDateString("en-US", { month: "short" });
-            
+
             let showLabel = false;
             if (index === 0) {
               showLabel = true;
@@ -160,9 +174,27 @@ export function StreakCalendar({
               const prevWeek = weeks[index - 1];
               if (prevWeek && prevWeek[0]) {
                 const prevDate = new Date(prevWeek[0].date);
-                const prevMonth = prevDate.toLocaleDateString("en-US", { month: "short" });
+                const prevMonth = prevDate.toLocaleDateString("en-US", {
+                  month: "short",
+                });
                 if (month !== prevMonth) {
                   showLabel = true;
+                }
+              }
+            }
+
+            // Prevent label overlap: if the next week starts a new month,
+            // it means the current month has only one week in this column view.
+            // We hide the label to avoid overlapping with the next month's label.
+            if (showLabel && index < weeks.length - 1) {
+              const nextWeek = weeks[index + 1];
+              if (nextWeek && nextWeek[0]) {
+                const nextDate = new Date(nextWeek[0].date);
+                const nextMonth = nextDate.toLocaleDateString("en-US", {
+                  month: "short",
+                });
+                if (month !== nextMonth) {
+                  showLabel = false;
                 }
               }
             }
@@ -269,11 +301,10 @@ export function StreakCalendar({
             <div>
               <span className="text-gray-600 dark:text-gray-400">Status:</span>
               <span
-                className={`ml-2 font-semibold ${
-                  streakData.isActiveToday
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-gray-600 dark:text-gray-400"
-                }`}
+                className={`ml-2 font-semibold ${streakData.isActiveToday
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-gray-600 dark:text-gray-400"
+                  }`}
               >
                 {streakData.isActiveToday ? "✓ Active" : "Inactive"}
               </span>

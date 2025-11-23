@@ -65,6 +65,10 @@ function CoursesPageContent() {
   const [sortBy, setSortBy] = React.useState(
     searchParams.get("sort") || "createdAt,desc"
   );
+  const [enrollmentFilter, setEnrollmentFilter] = React.useState<
+    "all" | "enrolled" | "not_enrolled"
+  >((searchParams.get("enrollment") as "all" | "enrolled" | "not_enrolled") || "all");
+
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = React.useState(false);
   // Debounced search value for API queries
@@ -130,16 +134,24 @@ function CoursesPageContent() {
           params.cefrLevel = selectedLevel;
         }
 
-        // Use search endpoint if filters applied, otherwise list all
-        const response =
-          debouncedSearch.trim() || selectedLevel
-            ? await courseService.searchCourses(params, signal)
-            : await courseService.getCourses(
-                params.page!,
-                params.size!,
-                params.sort!,
-                signal
-              );
+        // Add enrollment filter
+        if (enrollmentFilter === "enrolled") {
+          params.isEnrolled = true;
+        } else if (enrollmentFilter === "not_enrolled") {
+          params.isEnrolled = false;
+        }
+
+        // Use search endpoint if any filter is applied, otherwise list all
+        const shouldUseSearch = debouncedSearch.trim() || selectedLevel || enrollmentFilter !== "all";
+
+        const response = shouldUseSearch
+          ? await courseService.searchCourses(params, signal)
+          : await courseService.getCourses(
+            params.page!,
+            params.size!,
+            params.sort!,
+            signal
+          );
 
         setCourses(response.content);
         setTotalPages(response.totalPages);
@@ -156,7 +168,7 @@ function CoursesPageContent() {
         setIsLoading(false);
       }
     },
-    [currentPage, sortBy, debouncedSearch, selectedLevel]
+    [currentPage, sortBy, debouncedSearch, selectedLevel, enrollmentFilter]
   );
 
   /**
@@ -168,6 +180,7 @@ function CoursesPageContent() {
     if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
     if (selectedLevel) params.set("level", selectedLevel);
     if (sortBy !== "createdAt,desc") params.set("sort", sortBy);
+    if (enrollmentFilter !== "all") params.set("enrollment", enrollmentFilter);
     if (currentPage > 0) params.set("page", currentPage.toString());
 
     const queryString = params.toString();
@@ -299,6 +312,35 @@ function CoursesPageContent() {
 
       {/* Filters (Desktop or Mobile when toggled) */}
       <div className={`${showFilters ? "block" : "hidden"} md:block space-y-4`}>
+        {/* Enrollment Filter */}
+        <div>
+          <h3 className="text-sm font-medium text-[#202124] dark:text-[#E8EAED] mb-3">
+            Enrollment Status
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: "all", label: "All Courses" },
+              { value: "enrolled", label: "Joined" },
+              { value: "not_enrolled", label: "Not Joined" },
+            ].map((option) => (
+              <Badge
+                key={option.value}
+                variant={enrollmentFilter === option.value ? "default" : "outline"}
+                className={`cursor-pointer transition-all ${enrollmentFilter === option.value
+                  ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
+                  : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                  }`}
+                onClick={() => {
+                  setEnrollmentFilter(option.value as any);
+                  setCurrentPage(0);
+                }}
+              >
+                {option.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
         {/* CEFR Level Filter */}
         <div>
           <h3 className="text-sm font-medium text-[#202124] dark:text-[#E8EAED] mb-3">
@@ -309,11 +351,10 @@ function CoursesPageContent() {
               <Badge
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
-                className={`cursor-pointer transition-all ${
-                  selectedLevel === level
-                    ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
-                    : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
-                }`}
+                className={`cursor-pointer transition-all ${selectedLevel === level
+                  ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
+                  : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                  }`}
                 role="button"
                 tabIndex={0}
                 aria-pressed={selectedLevel === level}
@@ -341,11 +382,10 @@ function CoursesPageContent() {
               <Badge
                 key={option.value}
                 variant={sortBy === option.value ? "default" : "outline"}
-                className={`cursor-pointer transition-all ${
-                  sortBy === option.value
-                    ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
-                    : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
-                }`}
+                className={`cursor-pointer transition-all ${sortBy === option.value
+                  ? "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
+                  : "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                  }`}
                 role="button"
                 tabIndex={0}
                 aria-pressed={sortBy === option.value}
@@ -385,7 +425,7 @@ function CoursesPageContent() {
           className={
             viewMode === "grid"
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
+              : "flex flex-col gap-4"
           }
         >
           {[...Array(6)].map((_, i) => (
@@ -402,7 +442,7 @@ function CoursesPageContent() {
           className={
             viewMode === "grid"
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
+              : "flex flex-col gap-4"
           }
         >
           {courses.map((course) => {
@@ -415,6 +455,7 @@ function CoursesPageContent() {
                 isEnrolled={!!enrollment}
                 progressPercentage={enrollment?.progressPercentage || 0}
                 isCompleted={enrollment?.isCompleted || false}
+                viewMode={viewMode}
               />
             );
           })}
@@ -428,6 +469,7 @@ function CoursesPageContent() {
             onClick={() => {
               setSearchQuery("");
               setSelectedLevel(null);
+              setEnrollmentFilter("all");
               setCurrentPage(0);
             }}
             className="mt-4 bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"

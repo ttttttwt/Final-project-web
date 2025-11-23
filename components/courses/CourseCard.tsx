@@ -28,6 +28,7 @@ interface CourseCardProps {
   isEnrolled?: boolean;
   progressPercentage?: number; // Progress percentage (0-100)
   isCompleted?: boolean; // Whether course is completed
+  viewMode?: "grid" | "list";
 }
 
 /**
@@ -46,6 +47,7 @@ interface CourseCardProps {
  * @param isEnrolled - Whether user is already enrolled
  * @param progressPercentage - Course progress (0-100)
  * @param isCompleted - Whether course is completed
+ * @param viewMode - Display mode (grid or list)
  */
 export function CourseCard({
   course,
@@ -53,6 +55,7 @@ export function CourseCard({
   isEnrolled = false,
   progressPercentage = 0,
   isCompleted = false,
+  viewMode = "grid",
 }: CourseCardProps) {
   const handleEnrollClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -73,9 +76,109 @@ export function CourseCard({
   // Get CEFR level (support both cefrLevel and level)
   const level = course.cefrLevel || course.level || "A1";
 
+  if (viewMode === "list") {
+    return (
+      <Link href={`/courses/${course.id}`}>
+        <Card className="group overflow-hidden bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E] transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer flex flex-col md:flex-row min-h-[12rem] h-auto">
+          {/* Thumbnail Image */}
+          <div className="relative w-full md:w-64 h-48 md:h-auto md:min-h-full flex-shrink-0 overflow-hidden bg-[#F8F9FA] dark:bg-[#121212]">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={course.title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                sizes="(max-width: 768px) 100vw, 300px"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <BookOpen className="w-12 h-12 text-[#5F6368] dark:text-[#9AA0A6]" />
+              </div>
+            )}
+
+            {/* CEFR Level Badge */}
+            <div className="absolute top-3 right-3">
+              <Badge
+                className={`${CEFR_COLORS[level] || CEFR_COLORS.A1
+                  } font-semibold shadow-md`}
+              >
+                {level}
+              </Badge>
+            </div>
+
+            {/* Completion Badge */}
+            {isCompleted && (
+              <div className="absolute top-3 left-3">
+                <Badge className="bg-[#34A853] text-white font-semibold shadow-md flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Completed</span>
+                </Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Card Content */}
+          <CardContent className="flex-1 p-5 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold text-[#202124] dark:text-[#E8EAED] group-hover:text-[#1A73E8] dark:group-hover:text-[#8AB4F8] transition-colors">
+                  {course.title}
+                </h3>
+                {course.durationMinutes && (
+                  <div className="flex items-center gap-1 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
+                    <Clock className="w-4 h-4" />
+                    <span>{course.durationMinutes} min</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6] line-clamp-2">
+                {course.description}
+              </p>
+
+              {course.sectionCount !== undefined && (
+                <div className="flex items-center gap-2 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
+                  <BookOpen className="w-4 h-4" />
+                  <span>{course.sectionCount} sections</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center gap-4">
+              {/* Progress Bar */}
+              {isEnrolled ? (
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                    <span className="font-medium">Progress</span>
+                    <span className="font-semibold">
+                      {Math.round(progressPercentage)}%
+                    </span>
+                  </div>
+                  <Progress value={progressPercentage} className="h-2" />
+                </div>
+              ) : (
+                <div className="flex-1"></div>
+              )}
+
+              <Button
+                onClick={handleEnrollClick}
+                className={`${isEnrolled
+                  ? "bg-[#34A853] hover:bg-[#2D9249] dark:bg-[#81C995] dark:hover:bg-[#9DD4A9]"
+                  : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
+                  } text-white dark:text-[#121212] font-medium transition-colors min-w-[140px]`}
+              >
+                {isEnrolled ? "Continue" : "View Detail"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+
   return (
     <Link href={`/courses/${course.id}`}>
-      <Card className="group h-full overflow-hidden bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E] transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+      <Card className="group h-full overflow-hidden bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E] transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer flex flex-col">
         {/* Thumbnail Image */}
         <div className="relative w-full h-48 overflow-hidden bg-[#F8F9FA] dark:bg-[#121212]">
           {imageUrl ? (
@@ -95,9 +198,8 @@ export function CourseCard({
           {/* CEFR Level Badge */}
           <div className="absolute top-3 right-3">
             <Badge
-              className={`${
-                CEFR_COLORS[level] || CEFR_COLORS.A1
-              } font-semibold shadow-md`}
+              className={`${CEFR_COLORS[level] || CEFR_COLORS.A1
+                } font-semibold shadow-md`}
             >
               {level}
             </Badge>
@@ -115,7 +217,7 @@ export function CourseCard({
         </div>
 
         {/* Card Content */}
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="p-5 space-y-3 flex-1">
           {/* Title */}
           <h3 className="text-lg font-semibold text-[#202124] dark:text-[#E8EAED] line-clamp-2 min-h-14 group-hover:text-[#1A73E8] dark:group-hover:text-[#8AB4F8] transition-colors">
             {course.title}
@@ -157,14 +259,13 @@ export function CourseCard({
         </CardContent>
 
         {/* Card Footer */}
-        <CardFooter className="p-5 pt-0">
+        <CardFooter className="p-5 pt-0 mt-auto">
           <Button
             onClick={handleEnrollClick}
-            className={`w-full ${
-              isEnrolled
-                ? "bg-[#34A853] hover:bg-[#2D9249] dark:bg-[#81C995] dark:hover:bg-[#9DD4A9]"
-                : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
-            } text-white dark:text-[#121212] font-medium transition-colors`}
+            className={`w-full ${isEnrolled
+              ? "bg-[#34A853] hover:bg-[#2D9249] dark:bg-[#81C995] dark:hover:bg-[#9DD4A9]"
+              : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
+              } text-white dark:text-[#121212] font-medium transition-colors`}
           >
             {isEnrolled ? "Continue Learning" : "View Detail"}
           </Button>

@@ -4,6 +4,7 @@ import type {
   StreakData,
   DailyActivity,
   ProgressSummary,
+  DashboardOverview,
 } from "@/types/progress";
 
 /**
@@ -97,40 +98,21 @@ const progressService = {
    * Get dashboard statistics for the authenticated user
    * Aggregates data from enrollments and progress
    */
+  /**
+   * Get dashboard overview for the authenticated user
+   * Fetches aggregated data from backend
+   */
+  async getDashboardOverview(signal?: AbortSignal): Promise<DashboardOverview> {
+    const response = await api.get<DashboardOverview>("/progress/dashboard", { signal });
+    return response.data;
+  },
+
+  /**
+   * @deprecated Use getDashboardOverview instead
+   */
   async getDashboardStats(signal?: AbortSignal): Promise<DashboardStats> {
-    // This endpoint doesn't exist yet in backend, so we'll aggregate from available APIs
-    const [enrollmentsResponse, streakResponse] = await Promise.all([
-      api.get("/enrollments", { signal }),
-      api.get<StreakData>("/progress/streak", { signal }),
-    ]);
-
-    const enrollments = enrollmentsResponse.data as Array<{
-      progressPercentage: number;
-      isCompleted: boolean;
-    }>;
-
-    // Calculate stats from enrollments
-    const enrolledCourses = enrollments.length;
-    const completedLessons = enrollments.reduce((total, enrollment) => {
-      // Estimate completed lessons (we don't have exact data without fetching each course progress)
-      // For now, use a rough estimate based on progress percentage
-      // Average course has ~18 lessons (from backend data)
-      const estimatedLessons = Math.round(
-        (enrollment.progressPercentage / 100) * 18
-      );
-      return total + estimatedLessons;
-    }, 0);
-
-    // Estimate total lessons (18 lessons per course average)
-    const totalLessons = enrolledCourses * 18;
-
-    return {
-      enrolledCourses,
-      completedLessons,
-      totalLessons,
-      currentStreak: streakResponse.data.currentStreak,
-      longestStreak: streakResponse.data.longestStreak,
-    };
+    const overview = await this.getDashboardOverview(signal);
+    return overview.stats;
   },
 
   /**
@@ -142,61 +124,11 @@ const progressService = {
     days: number = 30,
     signal?: AbortSignal
   ): Promise<ProgressSummary> {
-    // TODO: Replace with actual backend endpoint when available
-    // For now, generate mock data based on streak information
-    const streakData = await this.getStreak(signal);
-
-    // Generate mock daily activities for the chart
-    const dailyActivities: DailyActivity[] = [];
-    const today = new Date();
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
-
-      // Generate realistic mock data
-      // More activity on recent days if streak is active
-      const isRecentDay = i < 7;
-      const lessonsCompleted =
-        streakData.isActiveToday && isRecentDay
-          ? Math.floor(Math.random() * 3) + 1
-          : Math.random() > 0.7
-          ? Math.floor(Math.random() * 2) + 1
-          : 0;
-
-      const timeSpentMinutes =
-        lessonsCompleted > 0 ? lessonsCompleted * (15 + Math.random() * 30) : 0;
-
-      dailyActivities.push({
-        date: dateStr,
-        lessonsCompleted,
-        timeSpentMinutes: Math.round(timeSpentMinutes),
-      });
-    }
-
-    const totalLessonsCompleted = dailyActivities.reduce(
-      (sum, day) => sum + day.lessonsCompleted,
-      0
-    );
-    const totalTimeSpentMinutes = dailyActivities.reduce(
-      (sum, day) => sum + day.timeSpentMinutes,
-      0
-    );
-    const activeDays = dailyActivities.filter(
-      (day) => day.lessonsCompleted > 0
-    ).length;
-
-    return {
-      totalLessonsCompleted,
-      totalTimeSpentMinutes,
-      averageTimePerLesson:
-        totalLessonsCompleted > 0
-          ? Math.round(totalTimeSpentMinutes / totalLessonsCompleted)
-          : 0,
-      activeDays,
-      dailyActivities,
-    };
+    const response = await api.get<ProgressSummary>("/progress/summary", {
+      params: { days },
+      signal,
+    });
+    return response.data;
   },
 };
 

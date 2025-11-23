@@ -12,58 +12,56 @@ export interface DashboardStats {
   totalLessons: number;
   currentStreak: number;
   longestStreak: number;
+  totalStudyMinutes: number;
+  averageScore: number;
 }
 
-/**
- * Daily progress activity data for charts
- */
+export interface Goal {
+  id: string;
+  title: string;
+  description: string;
+  currentProgress: number;
+  targetProgress: number;
+  unit: string;
+  isCompleted: boolean;
+}
+
+export interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  link: string;
+  score: number;
+}
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  type: "COURSE" | "LESSON" | "TIP" | "CHALLENGE";
+  link?: string;
+  reason: string;
+  imageUrl?: string;
+}
+
+export interface DashboardOverview {
+  stats: DashboardStats;
+  weeklyGoals: Goal[];
+  recentActivities: Activity[];
+  recommendations: Recommendation[];
+}
+
 export interface DailyActivity {
-  date: string; // YYYY-MM-DD
+  date: string;
   lessonsCompleted: number;
   timeSpentMinutes: number;
 }
 
-/**
- * Progress summary for a time period
- */
 export interface ProgressSummary {
   totalLessonsCompleted: number;
   totalTimeSpentMinutes: number;
   averageTimePerLesson: number;
   activeDays: number;
   dailyActivities: DailyActivity[];
-}
-export interface LessonProgress {
-  progressId: string;
-  userId: string;
-  lessonId: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-  completedAt?: string;
-  lastAccessedAt: string;
-  timeSpentMinutes: number;
-  score?: number;
-  attempts: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProgressStats {
-  totalLessons: number;
-  completedLessons: number;
-  inProgressLessons: number;
-  totalTimeSpentMinutes: number;
-  averageScore?: number;
-  progressPercentage: number;
-}
-
-export interface LearningPath {
-  pathId: string;
-  name: string;
-  description: string;
-  level: string;
-  orderIndex: number;
-  isActive: boolean;
-  courses: string[]; // courseIds
-  createdAt: string;
-  updatedAt: string;
 }

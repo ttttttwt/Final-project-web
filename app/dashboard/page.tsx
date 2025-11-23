@@ -7,11 +7,13 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/dashboard/StatsCard";
+import { LearningGoals } from "@/components/dashboard/LearningGoals";
+import { ActivityList } from "@/components/dashboard/ActivityList";
+import { RecommendationCard } from "@/components/dashboard/RecommendationCard";
 import progressService from "@/services/progressService";
-import type { DashboardStats } from "@/types/progress";
-import { BookOpen, CheckCircle, Flame, TrendingUp } from "lucide-react";
+import type { DashboardOverview } from "@/types/progress";
+import { BookOpen, CheckCircle, Flame, Clock, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -19,16 +21,10 @@ import { toast } from "sonner";
  *
  * Main dashboard for authenticated users
  * Shows overview of learning progress and stats
- * Features:
- * - Welcome message with user name
- * - Stats cards (enrolled courses, completed lessons, current streak)
- * - Recent activity section
- * - Loading states
- * - Error handling
  */
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const [stats, setStats] = React.useState<DashboardStats | null>(null);
+  const [data, setData] = React.useState<DashboardOverview | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -36,12 +32,12 @@ export default function DashboardPage() {
   React.useEffect(() => {
     const controller = new AbortController();
 
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await progressService.getDashboardStats(controller.signal);
-        setStats(data);
+        const overview = await progressService.getDashboardOverview(controller.signal);
+        setData(overview);
       } catch (err: unknown) {
         // Ignore cancellation errors
         const code = (err as any)?.code;
@@ -54,16 +50,16 @@ export default function DashboardPage() {
           return;
         }
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to load dashboard stats";
+          err instanceof Error ? err.message : "Failed to load dashboard data";
         setError(errorMessage);
         toast.error("Failed to load dashboard data");
-        console.error("Dashboard stats error:", err);
+        console.error("Dashboard error:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStats();
+    fetchData();
     return () => controller.abort();
   }, []);
 
@@ -75,30 +71,27 @@ export default function DashboardPage() {
     return `${firstName} ${lastName}`.trim() || user.email.split("@")[0];
   }, [user]);
 
-  // Calculate study hours estimate (placeholder until backend implements)
-  const studyHoursEstimate = React.useMemo(
-    () => (stats ? Math.round((stats.completedLessons * 30) / 60) : 0),
-    [stats]
-  );
-
-  const remainingLessons = React.useMemo(
-    () =>
-      stats ? Math.max(stats.totalLessons - stats.completedLessons, 0) : 0,
-    [stats]
-  );
+  const stats = data?.stats;
 
   return (
     <ProtectedRoute>
       <MainLayout showSidebar={true} pageTitle="Dashboard">
-        <div className="space-y-8">
+        <div className="space-y-8 pb-8">
           {/* Welcome Section */}
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#202124] dark:text-[#E8EAED] mb-2">
-              Welcome back, {fullName}!
-            </h1>
-            <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-              Continue your English learning journey
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-[#202124] dark:text-[#E8EAED] mb-2">
+                Welcome back, {fullName}!
+              </h1>
+              <p className="text-[#5F6368] dark:text-[#9AA0A6]">
+                Ready to continue your learning journey?
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild>
+                <Link href="/courses">Browse Courses</Link>
+              </Button>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -110,45 +103,8 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* Stats Cards */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Enrolled Courses */}
-            <StatsCard
-              title="Enrolled Courses"
-              value={stats?.enrolledCourses || 0}
-              icon={BookOpen}
-              color="blue"
-              subtitle={
-                stats?.enrolledCourses === 1
-                  ? "Active course"
-                  : "Active courses"
-              }
-              isLoading={isLoading}
-            />
-
-            {/* Completed Lessons */}
-            <StatsCard
-              title="Completed Lessons"
-              value={stats?.completedLessons || 0}
-              icon={CheckCircle}
-              color="green"
-              subtitle={
-                stats ? `${remainingLessons} remaining` : "Keep learning"
-              }
-              isLoading={isLoading}
-            />
-
-            {/* Study Hours (Estimated) */}
-            <StatsCard
-              title="Study Hours"
-              value={studyHoursEstimate}
-              icon={TrendingUp}
-              color="yellow"
-              subtitle="Total time invested"
-              isLoading={isLoading}
-            />
-
-            {/* Current Streak */}
             <StatsCard
               title="Current Streak"
               value={`${stats?.currentStreak || 0} days`}
@@ -161,47 +117,93 @@ export default function DashboardPage() {
               }
               isLoading={isLoading}
             />
+
+            <StatsCard
+              title="Completed Lessons"
+              value={stats?.completedLessons || 0}
+              icon={CheckCircle}
+              color="green"
+              subtitle={`${stats?.totalLessons ? stats.totalLessons - stats.completedLessons : 0} remaining`}
+              isLoading={isLoading}
+            />
+
+            <StatsCard
+              title="Study Time"
+              value={`${Math.round((stats?.totalStudyMinutes || 0) / 60)}h ${(stats?.totalStudyMinutes || 0) % 60}m`}
+              icon={Clock}
+              color="blue"
+              subtitle="Total time invested"
+              isLoading={isLoading}
+            />
+
+            <StatsCard
+              title="Average Score"
+              value={`${stats?.averageScore || 0}%`}
+              icon={Trophy}
+              color="yellow"
+              subtitle="Across all quizzes"
+              isLoading={isLoading}
+            />
           </div>
 
-          {/* Recent Activity */}
-          <Card className="p-6 bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[#202124] dark:text-[#E8EAED]">
-                Recent Activity
-              </h2>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/courses">Browse Courses</Link>
-              </Button>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column (2/3) */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recommendations */}
+              <RecommendationCard
+                recommendations={data?.recommendations || []}
+                isLoading={isLoading}
+              />
+
+              {/* Recent Activity */}
+              <ActivityList
+                activities={data?.recentActivities || []}
+                isLoading={isLoading}
+              />
             </div>
 
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            ) : stats && stats.enrolledCourses > 0 ? (
-              <div className="text-[#5F6368] dark:text-[#9AA0A6]">
-                <p className="mb-4">
-                  You&apos;re enrolled in {stats.enrolledCourses}{" "}
-                  {stats.enrolledCourses === 1 ? "course" : "courses"} with{" "}
-                  {stats.completedLessons} lessons completed.
-                </p>
-                <Button asChild>
-                  <Link href="/courses">Continue Learning →</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-[#5F6368] dark:text-[#9AA0A6] mb-4">
-                  No courses yet. Start your learning journey today!
-                </p>
-                <Button asChild>
-                  <Link href="/courses">Explore Courses</Link>
-                </Button>
-              </div>
-            )}
-          </Card>
+            {/* Right Column (1/3) */}
+            <div className="space-y-8">
+              {/* Weekly Goals */}
+              <LearningGoals
+                goals={data?.weeklyGoals || []}
+                isLoading={isLoading}
+              />
+
+              {/* Quick Actions / Enrolled Courses Summary */}
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-gray-500" />
+                  My Courses
+                </h3>
+                {isLoading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-10 bg-muted rounded"></div>
+                    <div className="h-10 bg-muted rounded"></div>
+                  </div>
+                ) : stats && stats.enrolledCourses > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      You are enrolled in <span className="font-medium text-foreground">{stats.enrolledCourses}</span> courses.
+                    </p>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/courses">Go to My Courses</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      No active courses.
+                    </p>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href="/courses">Explore Catalog</Link>
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
         </div>
       </MainLayout>
     </ProtectedRoute>
