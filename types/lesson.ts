@@ -44,7 +44,7 @@ export interface ReadingQuestion {
   question: string;
   type: "multiple_choice" | "true_false" | "short_answer";
   options?: string[];
-  correctAnswer: string | number;
+  correctAnswer: string | number | boolean;
   explanation?: string;
 }
 
@@ -67,7 +67,7 @@ export interface ListeningQuestion {
   question: string;
   type: "multiple_choice" | "true_false" | "fill_blank";
   options?: string[];
-  correctAnswer: string | number;
+  correctAnswer: string | number | boolean;
   explanation?: string;
   timestamp?: number;
 }
@@ -93,7 +93,7 @@ export interface QuizQuestion {
   question: string;
   type: QuestionType;
   options?: string[];
-  correctAnswer: string | number | string[];
+  correctAnswer: string | number | string[] | boolean;
   points?: number;
   explanation?: string;
   hint?: string;
@@ -152,6 +152,40 @@ export type SpeakingLesson = ParsedLesson<SpeakingContent>;
 export function parseLessonContent(lesson: Lesson): ParsedLesson {
   try {
     const parsedContent = JSON.parse(lesson.content);
+
+    // Normalize Quiz Content if needed
+    if (lesson.lessonType === "QUIZ" && parsedContent.questions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parsedContent.questions = parsedContent.questions.map((q: any) => ({
+        ...q,
+        question: q.question || q.questionText, // Handle legacy field
+        type: q.type || "multiple_choice", // Default to multiple_choice
+        correctAnswer: q.correctAnswer ?? q.correctOptionIndex, // Handle legacy field
+      }));
+    }
+
+    // Normalize Reading Content if needed
+    if (lesson.lessonType === "READING" && parsedContent.questions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parsedContent.questions = parsedContent.questions.map((q: any) => ({
+        ...q,
+        question: q.question || q.questionText, // Handle legacy field
+        type: q.type || "multiple_choice", // Default to multiple_choice
+        correctAnswer: q.correctAnswer ?? q.correctOptionIndex, // Handle legacy field
+      }));
+    }
+
+    // Normalize Listening Content if needed
+    if (lesson.lessonType === "LISTENING" && parsedContent.questions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parsedContent.questions = parsedContent.questions.map((q: any) => ({
+        ...q,
+        question: q.question || q.questionText, // Handle legacy field
+        type: q.type || "multiple_choice", // Default to multiple_choice
+        correctAnswer: q.correctAnswer ?? q.correctOptionIndex, // Handle legacy field
+      }));
+    }
+
     return {
       ...lesson,
       parsedContent,

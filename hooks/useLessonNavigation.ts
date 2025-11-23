@@ -14,6 +14,7 @@ interface LessonNavigationData {
   nextLessonId: number | null;
   currentIndex: number;
   totalLessons: number;
+  allLessons: LessonDetail[];
   isLoading: boolean;
   error: string | null;
 }
@@ -22,7 +23,7 @@ interface LessonNavigationData {
  * Custom hook to manage lesson navigation
  * @param courseId - Course ID
  * @param currentLessonId - Current lesson ID
- * @returns Navigation data (prev/next IDs, current index, total)
+ * @returns Navigation data (prev/next IDs, current index, total, all lessons)
  */
 export function useLessonNavigation(
   courseId: number,
@@ -33,6 +34,7 @@ export function useLessonNavigation(
     nextLessonId: null,
     currentIndex: 0,
     totalLessons: 0,
+    allLessons: [],
     isLoading: true,
     error: null,
   });
@@ -73,6 +75,7 @@ export function useLessonNavigation(
             nextLessonId: null,
             currentIndex: 0,
             totalLessons: allLessons.length,
+            allLessons,
             isLoading: false,
             error: "Current lesson not found in course structure",
           });
@@ -92,6 +95,7 @@ export function useLessonNavigation(
           nextLessonId,
           currentIndex,
           totalLessons: allLessons.length,
+          allLessons,
           isLoading: false,
           error: null,
         });

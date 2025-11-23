@@ -64,6 +64,12 @@ export default function ContentRenderer({
 // ==================== READING RENDERER ====================
 
 function ReadingContentRenderer({ content }: { content: ReadingContent }) {
+  const [answers, setAnswers] = React.useState<Record<number, any>>({});
+
+  const handleAnswer = (questionIndex: number, answer: any) => {
+    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Passages */}
@@ -133,19 +139,98 @@ function ReadingContentRenderer({ content }: { content: ReadingContent }) {
                 </h4>
                 {question.type === "multiple_choice" && question.options && (
                   <div className="space-y-2">
-                    {question.options.map((option, optIndex) => (
-                      <Button
-                        key={optIndex}
-                        variant="outline"
-                        className="w-full justify-start text-left h-auto py-3"
-                        disabled
-                      >
-                        <span className="mr-2 font-semibold">
-                          {String.fromCharCode(65 + optIndex)}.
-                        </span>
-                        {option}
-                      </Button>
-                    ))}
+                    {question.options.map((option, optIndex) => {
+                      const isSelected = answers[index] === optIndex;
+                      const isCorrect = question.correctAnswer === optIndex;
+                      const showFeedback = answers[index] !== undefined;
+
+                      let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                      let className = "w-full justify-start text-left h-auto py-3";
+
+                      if (showFeedback) {
+                        if (isSelected && isCorrect) {
+                          variant = "default";
+                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                        } else if (isSelected && !isCorrect) {
+                          variant = "destructive";
+                        } else if (!isSelected && isCorrect) {
+                          className += " border-green-500 bg-green-50 text-green-900";
+                        }
+                      } else if (isSelected) {
+                        variant = "default";
+                      }
+
+                      return (
+                        <Button
+                          key={optIndex}
+                          variant={variant}
+                          className={className}
+                          onClick={() => handleAnswer(index, optIndex)}
+                        >
+                          <span className="mr-2 font-semibold">
+                            {String.fromCharCode(65 + optIndex)}.
+                          </span>
+                          {option}
+                          {showFeedback && isSelected && isCorrect && (
+                            <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
+                          )}
+                          {showFeedback && isSelected && !isCorrect && (
+                            <XCircle className="ml-auto h-5 w-5 text-white" />
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+                {question.type === "true_false" && (
+                  <div className="flex gap-4">
+                    {[true, false].map((val) => {
+                      const isSelected = answers[index] === val;
+                      const isCorrect = question.correctAnswer === val;
+                      const showFeedback = answers[index] !== undefined;
+
+                      let variant: "default" | "outline" | "destructive" = "outline";
+                      let className = "flex-1 h-auto py-3";
+
+                      if (showFeedback) {
+                        if (isSelected && isCorrect) {
+                          variant = "default";
+                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                        } else if (isSelected && !isCorrect) {
+                          variant = "destructive";
+                        } else if (!isSelected && isCorrect) {
+                          className += " border-green-500 bg-green-50 text-green-900";
+                        }
+                      } else if (isSelected) {
+                        variant = "default";
+                      }
+
+                      return (
+                        <Button
+                          key={String(val)}
+                          variant={variant}
+                          className={className}
+                          onClick={() => handleAnswer(index, val)}
+                        >
+                          {val ? (
+                            <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="mr-2 h-5 w-5 text-red-600" />
+                          )}
+                          {val ? "True" : "False"}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+                {question.type === "short_answer" && (
+                  <div className="space-y-2">
+                    <textarea
+                      className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Type your answer here..."
+                      value={answers[index] || ""}
+                      onChange={(e) => handleAnswer(index, e.target.value)}
+                    />
                   </div>
                 )}
                 {question.explanation && (
@@ -170,6 +255,11 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
   const [showTranscript, setShowTranscript] = React.useState(
     content.showTranscript || false
   );
+  const [answers, setAnswers] = React.useState<Record<number, any>>({});
+
+  const handleAnswer = (questionIndex: number, answer: any) => {
+    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
+  };
 
   return (
     <div className="space-y-6">
@@ -266,19 +356,99 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
                 </div>
                 {question.type === "multiple_choice" && question.options && (
                   <div className="space-y-2">
-                    {question.options.map((option, optIndex) => (
-                      <Button
-                        key={optIndex}
-                        variant="outline"
-                        className="w-full justify-start text-left h-auto py-3"
-                        disabled
-                      >
-                        <span className="mr-2 font-semibold">
-                          {String.fromCharCode(65 + optIndex)}.
-                        </span>
-                        {option}
-                      </Button>
-                    ))}
+                    {question.options.map((option, optIndex) => {
+                      const isSelected = answers[index] === optIndex;
+                      const isCorrect = question.correctAnswer === optIndex;
+                      const showFeedback = answers[index] !== undefined;
+
+                      let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                      let className = "w-full justify-start text-left h-auto py-3";
+
+                      if (showFeedback) {
+                        if (isSelected && isCorrect) {
+                          variant = "default";
+                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                        } else if (isSelected && !isCorrect) {
+                          variant = "destructive";
+                        } else if (!isSelected && isCorrect) {
+                          className += " border-green-500 bg-green-50 text-green-900";
+                        }
+                      } else if (isSelected) {
+                        variant = "default";
+                      }
+
+                      return (
+                        <Button
+                          key={optIndex}
+                          variant={variant}
+                          className={className}
+                          onClick={() => handleAnswer(index, optIndex)}
+                        >
+                          <span className="mr-2 font-semibold">
+                            {String.fromCharCode(65 + optIndex)}.
+                          </span>
+                          {option}
+                          {showFeedback && isSelected && isCorrect && (
+                            <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
+                          )}
+                          {showFeedback && isSelected && !isCorrect && (
+                            <XCircle className="ml-auto h-5 w-5 text-white" />
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+                {question.type === "true_false" && (
+                  <div className="flex gap-4">
+                    {[true, false].map((val) => {
+                      const isSelected = answers[index] === val;
+                      const isCorrect = question.correctAnswer === val;
+                      const showFeedback = answers[index] !== undefined;
+
+                      let variant: "default" | "outline" | "destructive" = "outline";
+                      let className = "flex-1 h-auto py-3";
+
+                      if (showFeedback) {
+                        if (isSelected && isCorrect) {
+                          variant = "default";
+                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                        } else if (isSelected && !isCorrect) {
+                          variant = "destructive";
+                        } else if (!isSelected && isCorrect) {
+                          className += " border-green-500 bg-green-50 text-green-900";
+                        }
+                      } else if (isSelected) {
+                        variant = "default";
+                      }
+
+                      return (
+                        <Button
+                          key={String(val)}
+                          variant={variant}
+                          className={className}
+                          onClick={() => handleAnswer(index, val)}
+                        >
+                          {val ? (
+                            <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="mr-2 h-5 w-5 text-red-600" />
+                          )}
+                          {val ? "True" : "False"}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+                {question.type === "fill_blank" && (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Type your answer..."
+                      value={answers[index] || ""}
+                      onChange={(e) => handleAnswer(index, e.target.value)}
+                    />
                   </div>
                 )}
                 {question.explanation && (
@@ -300,6 +470,12 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
 // ==================== QUIZ RENDERER ====================
 
 function QuizContentRenderer({ content }: { content: QuizContent }) {
+  const [answers, setAnswers] = React.useState<Record<number, any>>({});
+
+  const handleAnswer = (questionIndex: number, answer: any) => {
+    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Quiz Header */}
@@ -354,39 +530,116 @@ function QuizContentRenderer({ content }: { content: QuizContent }) {
               )}
               {question.type === "multiple_choice" && question.options && (
                 <div className="space-y-2">
-                  {question.options.map((option, optIndex) => (
-                    <Button
-                      key={optIndex}
-                      variant="outline"
-                      className="w-full justify-start text-left h-auto py-3"
-                      disabled
-                    >
-                      <span className="mr-2 font-semibold">
-                        {String.fromCharCode(65 + optIndex)}.
-                      </span>
-                      {option}
-                    </Button>
-                  ))}
+                  {question.options.map((option, optIndex) => {
+                    const isSelected = answers[index] === optIndex;
+                    const isCorrect = question.correctAnswer === optIndex;
+                    const showFeedback = answers[index] !== undefined;
+
+                    let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                    let className = "w-full justify-start text-left h-auto py-3";
+
+                    if (showFeedback) {
+                      if (isSelected && isCorrect) {
+                        variant = "default";
+                        className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                      } else if (isSelected && !isCorrect) {
+                        variant = "destructive";
+                      } else if (!isSelected && isCorrect) {
+                        className += " border-green-500 bg-green-50 text-green-900";
+                      }
+                    } else if (isSelected) {
+                      variant = "default";
+                    }
+
+                    return (
+                      <Button
+                        key={optIndex}
+                        variant={variant}
+                        className={className}
+                        onClick={() => handleAnswer(index, optIndex)}
+                      >
+                        <span className="mr-2 font-semibold">
+                          {String.fromCharCode(65 + optIndex)}.
+                        </span>
+                        {option}
+                        {showFeedback && isSelected && isCorrect && (
+                          <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
+                        )}
+                        {showFeedback && isSelected && !isCorrect && (
+                          <XCircle className="ml-auto h-5 w-5 text-white" />
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
               )}
               {question.type === "true_false" && (
                 <div className="flex gap-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-auto py-3"
-                    disabled
-                  >
-                    <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-                    True
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-auto py-3"
-                    disabled
-                  >
-                    <XCircle className="mr-2 h-5 w-5 text-red-600" />
-                    False
-                  </Button>
+                  {[true, false].map((val) => {
+                    const isSelected = answers[index] === val;
+                    const isCorrect = question.correctAnswer === val;
+                    const showFeedback = answers[index] !== undefined;
+
+                    let variant: "default" | "outline" | "destructive" = "outline";
+                    let className = "flex-1 h-auto py-3";
+
+                    if (showFeedback) {
+                      if (isSelected && isCorrect) {
+                        variant = "default";
+                        className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                      } else if (isSelected && !isCorrect) {
+                        variant = "destructive";
+                      } else if (!isSelected && isCorrect) {
+                        className += " border-green-500 bg-green-50 text-green-900";
+                      }
+                    } else if (isSelected) {
+                      variant = "default";
+                    }
+
+                    return (
+                      <Button
+                        key={String(val)}
+                        variant={variant}
+                        className={className}
+                        onClick={() => handleAnswer(index, val)}
+                      >
+                        {val ? (
+                          <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="mr-2 h-5 w-5 text-red-600" />
+                        )}
+                        {val ? "True" : "False"}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+              {question.type === "fill_blank" && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Type your answer..."
+                    value={answers[index] || ""}
+                    onChange={(e) => handleAnswer(index, e.target.value)}
+                  />
+                </div>
+              )}
+              {question.type === "matching" && question.options && (
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-4 border rounded-md bg-muted/50 text-center text-muted-foreground">
+                    Matching exercise interface placeholder
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {question.options.map((option, optIndex) => (
+                      <div
+                        key={optIndex}
+                        className="p-3 border rounded-md text-sm"
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {question.explanation && (

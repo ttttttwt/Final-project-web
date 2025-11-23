@@ -10,6 +10,7 @@ interface CourseSectionProps {
   section: Section;
   isEnrolled: boolean;
   courseId: number;
+  completedLessonIds?: number[];
 }
 
 /**
@@ -18,12 +19,13 @@ interface CourseSectionProps {
  *
  * @component
  * @example
- * <CourseSection section={section} isEnrolled={true} courseId={1} />
+ * <CourseSection section={section} isEnrolled={true} courseId={1} completedLessonIds={[1, 2]} />
  */
 export function CourseSection({
   section,
   isEnrolled,
   courseId,
+  completedLessonIds = [],
 }: CourseSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -71,6 +73,7 @@ export function CourseSection({
               index={index + 1}
               isEnrolled={isEnrolled}
               courseId={courseId}
+              isCompleted={completedLessonIds.includes(lesson.id)}
             />
           ))}
           {(!section.lessons || section.lessons.length === 0) && (

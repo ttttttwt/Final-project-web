@@ -26,6 +26,26 @@ export interface LessonProgressDTO {
   resultDetails?: string;
 }
 
+export interface LessonProgressSummary {
+  lessonId: number;
+  lessonTitle: string;
+  lessonType: string;
+  sectionTitle: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  score?: number;
+  attempts: number;
+}
+
+export interface CourseProgressDTO {
+  courseId: number;
+  courseTitle: string;
+  cefrLevel: string;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  lessonProgress: LessonProgressSummary[];
+}
+
 /**
  * Progress Service
  *
@@ -53,6 +73,22 @@ const progressService = {
     const response = await api.post<LessonProgressDTO>(
       `/progress/lessons/${lessonId}/complete`,
       { resultDetailsJson: resultDetailsJson || "{}" }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get course progress for the authenticated user
+   * @param courseId Course ID
+   * @returns Course progress details
+   */
+  async getCourseProgress(
+    courseId: number,
+    signal?: AbortSignal
+  ): Promise<CourseProgressDTO> {
+    const response = await api.get<CourseProgressDTO>(
+      `/progress/courses/${courseId}/lessons`,
+      { signal }
     );
     return response.data;
   },

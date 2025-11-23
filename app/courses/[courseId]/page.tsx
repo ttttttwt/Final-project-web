@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { courseService } from "@/services/courseService";
 import { enrollmentService } from "@/services/enrollmentService";
+import progressService from "@/services/progressService";
 import { Course } from "@/types/course";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,8 @@ export default function CourseDetailPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
+  const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
+
   useEffect(() => {
     const fetchCourse = async () => {
       try {
@@ -58,6 +61,20 @@ export default function CourseDetailPage() {
         // Check if user is enrolled
         const enrolled = await enrollmentService.isEnrolled(courseData.id);
         setIsEnrolled(enrolled);
+
+        if (enrolled) {
+          try {
+            const progress = await progressService.getCourseProgress(
+              courseData.id
+            );
+            const completed = progress.lessonProgress
+              .filter((l) => l.status === "COMPLETED")
+              .map((l) => l.lessonId);
+            setCompletedLessonIds(completed);
+          } catch (error) {
+            console.error("Failed to fetch progress:", error);
+          }
+        }
       } catch (error: unknown) {
         console.error("Error fetching course:", error);
         if (
@@ -89,6 +106,17 @@ export default function CourseDetailPage() {
         description: "You can now access all lessons.",
         duration: 4000,
       });
+
+      // Fetch progress after enrollment (will be empty but good to initialize)
+      try {
+        const progress = await progressService.getCourseProgress(course.id);
+        const completed = progress.lessonProgress
+          .filter((l) => l.status === "COMPLETED")
+          .map((l) => l.lessonId);
+        setCompletedLessonIds(completed);
+      } catch (error) {
+        console.error("Failed to fetch progress:", error);
+      }
     } catch (error: unknown) {
       console.error("Error enrolling in course:", error);
       const status = (error as { response?: { status?: number } }).response
@@ -279,6 +307,7 @@ export default function CourseDetailPage() {
                   section={section}
                   isEnrolled={isEnrolled}
                   courseId={course.id}
+                  completedLessonIds={completedLessonIds}
                 />
               ))}
             </div>

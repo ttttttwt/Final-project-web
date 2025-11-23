@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, Loader2, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContentRenderer, LessonNavigation } from "@/components/lessons";
+import { LessonSidebar } from "@/components/lessons/LessonSidebar";
 import { toast } from "sonner";
 import lessonService from "@/services/lessonService";
 import progressService from "@/services/progressService";
@@ -29,6 +30,8 @@ export default function LessonViewerClient({
     const [isLoading, setIsLoading] = useState(true);
     const [isCompleting, setIsCompleting] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
+    const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
     const lessonId = parseInt(lessonIdParam);
     const courseId = parseInt(courseIdParam);
@@ -39,11 +42,13 @@ export default function LessonViewerClient({
         nextLessonId,
         currentIndex,
         totalLessons,
+        allLessons,
         isLoading: isNavLoading,
     } = useLessonNavigation(courseId, lessonId);
 
     useEffect(() => {
         fetchLesson();
+        fetchProgress();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lessonId]);
 
@@ -67,6 +72,23 @@ export default function LessonViewerClient({
         }
     };
 
+    const fetchProgress = async () => {
+        try {
+            const progress = await progressService.getCourseProgress(courseId);
+            const completed = progress.lessonProgress
+                .filter((l) => l.status === "COMPLETED")
+                .map((l) => l.lessonId);
+            setCompletedLessonIds(completed);
+
+            // Check if current lesson is completed
+            if (completed.includes(lessonId)) {
+                setIsCompleted(true);
+            }
+        } catch (error) {
+            console.error("Failed to fetch progress:", error);
+        }
+    };
+
     const handleCompleteLesson = async () => {
         setIsCompleting(true);
         try {
@@ -81,15 +103,7 @@ export default function LessonViewerClient({
             });
 
             setIsCompleted(true);
-
-            toast.success("Lesson completed! 🎉", {
-                description: "Great job! Your progress has been saved.",
-            });
-
-            // Navigate back to course after 2 seconds
-            setTimeout(() => {
-                router.push(`/courses/${courseId}`);
-            }, 2000);
+            setCompletedLessonIds((prev) => [...prev, lessonId]);
         } catch (error: unknown) {
             const err = error as { response?: { status?: number }; message?: string };
             toast.error("Failed to complete lesson", {
@@ -100,127 +114,155 @@ export default function LessonViewerClient({
         }
     };
 
-    if (isLoading) {
+    if (isLoading || isNavLoading) {
         return (
-            <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-                <Skeleton className="h-10 w-32 mb-8" />
-                <div className="space-y-4 mb-8">
-                    <Skeleton className="h-8 w-3/4" />
-                    <Skeleton className="h-6 w-1/2" />
-                </div>
-                <div className="space-y-6">
-                    <Skeleton className="h-64" />
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-32" />
-                </div>
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
-    if (!lesson) {
-        return (
-            <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8 text-center">
-                <h1 className="text-2xl font-bold mb-4">Lesson not found</h1>
-                <Button onClick={() => router.push(`/courses/${courseId}`)}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Course
-                </Button>
-            </div>
-        );
-    }
+    if (!lesson) return null;
 
-    const lessonTypeInfo = LESSON_TYPE_INFO[lesson.lessonType];
-    let parsedLesson;
-    try {
-        parsedLesson = parseLessonContent(lesson);
-    } catch {
-        return (
-            <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8 text-center">
-                <h1 className="text-2xl font-bold mb-4 text-red-600">
-                    Invalid Lesson Content
-                </h1>
-                <p className="text-muted-foreground mb-6">
-                    This lesson&apos;s content could not be loaded. Please contact
-                    support.
-                </p>
-                <Button onClick={() => router.push(`/courses/${courseId}`)}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Course
-                </Button>
-            </div>
-        );
-    }
+    const parsedLesson = parseLessonContent(lesson);
+    const typeInfo = LESSON_TYPE_INFO[lesson.lessonType];
 
     return (
-        <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-            {/* Back Button */}
-            <Button
-                variant="ghost"
-                className="mb-6"
-                onClick={() => router.push(`/courses/${courseId}`)}
-            >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Course
-            </Button>
-
-            {/* Lesson Header */}
-            <div className="mb-8">
-                <div className="flex items-center gap-3 mb-3">
-                    <Badge className={lessonTypeInfo.color}>{lessonTypeInfo.label}</Badge>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {lesson.durationMinutes} min
-                    </div>
-                </div>
-                <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
-                <p className="text-muted-foreground">{lessonTypeInfo.description}</p>
-            </div>
-
-            {/* Lesson Content */}
-            <div className="mb-8">
-                <ContentRenderer
-                    lessonType={lesson.lessonType}
-                    parsedContent={parsedLesson.parsedContent}
-                />
-            </div>
-
-            {/* Lesson Navigation */}
-            {!isNavLoading && totalLessons > 0 && (
-                <LessonNavigation
+        <div className="flex h-screen overflow-hidden bg-background">
+            {/* Sidebar - Desktop */}
+            <div className="hidden md:block w-80 h-full border-r">
+                <LessonSidebar
                     courseId={courseId}
                     currentLessonId={lessonId}
-                    prevLessonId={prevLessonId}
-                    nextLessonId={nextLessonId}
-                    currentIndex={currentIndex}
-                    totalLessons={totalLessons}
+                    lessons={allLessons || []}
+                    completedLessonIds={completedLessonIds}
                 />
+            </div>
+
+            {/* Mobile Sidebar Overlay */}
+            {showMobileSidebar && (
+                <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden">
+                    <div className="fixed inset-y-0 left-0 w-3/4 max-w-sm bg-background border-r shadow-lg">
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h2 className="font-semibold">Course Content</h2>
+                            <Button variant="ghost" size="sm" onClick={() => setShowMobileSidebar(false)}>
+                                Close
+                            </Button>
+                        </div>
+                        <div className="h-full overflow-y-auto pb-20">
+                            <LessonSidebar
+                                courseId={courseId}
+                                currentLessonId={lessonId}
+                                lessons={allLessons || []}
+                                completedLessonIds={completedLessonIds}
+                                className="border-none"
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
 
-            {/* Complete Lesson Button */}
-            <div className="flex justify-center pt-8 border-t mt-8">
-                <Button
-                    size="lg"
-                    onClick={handleCompleteLesson}
-                    disabled={isCompleting || isCompleted}
-                    className="min-w-[200px]"
-                >
-                    {isCompleting ? (
-                        <>
-                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                            Completing...
-                        </>
-                    ) : isCompleted ? (
-                        <>
-                            <CheckCircle2 className="h-5 w-5 mr-2" />
-                            Completed!
-                        </>
-                    ) : (
-                        <>
-                            <CheckCircle2 className="h-5 w-5 mr-2" />
-                            Complete Lesson
-                        </>
-                    )}
-                </Button>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* Header */}
+                <header className="flex items-center justify-between px-6 py-4 border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="md:hidden"
+                            onClick={() => setShowMobileSidebar(true)}
+                        >
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => router.push(`/courses/${courseId}`)}
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Course
+                        </Button>
+                        <div className="h-6 w-px bg-border hidden md:block" />
+                        <div className="flex items-center gap-2">
+                            <Badge
+                                variant="secondary"
+                                className={`${typeInfo.color} border-0`}
+                            >
+                                {typeInfo.label}
+                            </Badge>
+                            <h1 className="text-lg font-semibold truncate max-w-[300px] md:max-w-md">
+                                {lesson.title}
+                            </h1>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{lesson.durationMinutes} min</span>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="max-w-4xl mx-auto space-y-8 pb-20">
+                        <ContentRenderer
+                            lessonType={lesson.lessonType}
+                            parsedContent={parsedLesson.parsedContent}
+                        />
+
+                        <LessonNavigation
+                            courseId={courseId}
+                            currentLessonId={lessonId}
+                            prevLessonId={prevLessonId}
+                            nextLessonId={nextLessonId}
+                            currentIndex={currentIndex}
+                            totalLessons={totalLessons}
+                        />
+
+                        <div className="flex justify-center pt-8">
+                            {isCompleted ? (
+                                nextLessonId ? (
+                                    <Button
+                                        size="lg"
+                                        onClick={() => router.push(`/courses/${courseId}/lessons/${nextLessonId}`)}
+                                        className="min-w-[200px]"
+                                    >
+                                        Next Lesson
+                                        <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        onClick={() => router.push(`/courses/${courseId}`)}
+                                        className="min-w-[200px]"
+                                    >
+                                        Back to Course
+                                    </Button>
+                                )
+                            ) : (
+                                <Button
+                                    size="lg"
+                                    onClick={handleCompleteLesson}
+                                    disabled={isCompleting}
+                                    className="min-w-[200px]"
+                                >
+                                    {isCompleting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Completing...
+                                        </>
+                                    ) : (
+                                        "Complete Lesson"
+                                    )}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
