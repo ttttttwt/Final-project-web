@@ -14,20 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
-import {
-  BookOpen,
-  User,
-  Settings,
-  LogOut,
-  Menu,
-  Search,
-  Bell,
-} from "lucide-react";
+import { BookOpen, User, Settings, LogOut, Menu, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 /**
  * Header Component
@@ -66,7 +58,6 @@ export function Header({
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [notificationCount, setNotificationCount] = React.useState(3); // Placeholder
 
   // Get user's full name
   const getFullName = () => {
@@ -186,24 +177,8 @@ export function Header({
           <div className="flex items-center gap-2 shrink-0">
             {isAuthenticated && (
               <>
-                {/* Notifications */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED]"
-                  onClick={handleNotificationClick}
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-[#EA4335] dark:bg-[#F28B82] text-white dark:text-[#121212]"
-                    >
-                      {notificationCount > 9 ? "9+" : notificationCount}
-                    </Badge>
-                  )}
-                </Button>
+                {/* Real-time Notifications with WebSocket */}
+                <NotificationBell />
               </>
             )}
 

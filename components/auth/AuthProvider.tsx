@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/authStore";
+import { useNotificationStore } from "@/store/notificationStore";
 
 /**
  * AuthProvider Component
@@ -16,6 +17,11 @@ import { useAuthStore } from "@/store/authStore";
  * 3. Backend validates Authorization header using stored tokens
  * 4. If valid: Updates authStore with user data
  * 5. If invalid: Sets isAuthenticated = false
+ *
+ * WebSocket Integration:
+ * - Connects to WebSocket when user is authenticated
+ * - Disconnects when user logs out
+ * - Handles visibility changes (background/foreground)
  *
  * Why needed?
  * - User refreshes page → Session should persist
@@ -33,6 +39,10 @@ import { useAuthStore } from "@/store/authStore";
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUser = useAuthStore((state) => state.loadUser);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { connectWebSocket, disconnectWebSocket, fetchUnreadCount } =
+    useNotificationStore();
+  const wasAuthenticated = useRef(false);
 
   /**
    * Initialize user session on mount
@@ -59,6 +69,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array = run once on mount
+
+  /**
+   * 🔌 WebSocket connection management based on auth state
+   *
+   * - Connects when user becomes authenticated
+   * - Disconnects when user logs out
+   * - Fetches initial unread count after connection
+   */
+  useEffect(() => {
+    if (isAuthenticated && !wasAuthenticated.current) {
+      // User just logged in - connect WebSocket
+      connectWebSocket().then(() => {
+        fetchUnreadCount();
+      });
+      wasAuthenticated.current = true;
+    } else if (!isAuthenticated && wasAuthenticated.current) {
+      // User just logged out - disconnect WebSocket
+      disconnectWebSocket();
+      wasAuthenticated.current = false;
+    }
+  }, [
+    isAuthenticated,
+    connectWebSocket,
+    disconnectWebSocket,
+    fetchUnreadCount,
+  ]);
+
+  /**
+   * 📱 Handle visibility changes for WebSocket reconnection
+   *
+   * When user switches back to the tab:
+   * - Reconnect WebSocket if disconnected
+   * - Refresh unread count
+   */
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && isAuthenticated) {
+        // Tab became visible - reconnect if needed and refresh data
+        connectWebSocket().then(() => {
+          fetchUnreadCount();
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, connectWebSocket, fetchUnreadCount]);
+
+  /**
+   * 🧹 Cleanup on unmount
+   */
+  useEffect(() => {
+    return () => {
+      disconnectWebSocket();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Render children immediately
