@@ -20,17 +20,19 @@ describe("CourseCard", () => {
     expect(screen.getByText(baseCourse.cefrLevel)).toBeInTheDocument();
     expect(screen.getByText(/3 sections/i)).toBeInTheDocument();
     expect(screen.getByText(/90 min/i)).toBeInTheDocument();
+    // Non-enrolled users see "View Detail" button
     expect(
-      screen.getByRole("button", { name: /enroll now/i })
+      screen.getByRole("button", { name: /view detail/i })
     ).toBeInTheDocument();
   });
 
-  it("invokes onEnroll callback when enroll button is clicked", async () => {
+  it("invokes onEnroll callback when view detail button is clicked", async () => {
     const onEnroll = jest.fn();
 
     render(<CourseCard course={baseCourse} onEnroll={onEnroll} />);
 
-    await userEvent.click(screen.getByRole("button", { name: /enroll now/i }));
+    // Component uses "View Detail" for non-enrolled courses
+    await userEvent.click(screen.getByRole("button", { name: /view detail/i }));
 
     expect(onEnroll).toHaveBeenCalledTimes(1);
     expect(onEnroll).toHaveBeenCalledWith(String(baseCourse.id));

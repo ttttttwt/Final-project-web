@@ -40,6 +40,8 @@ describe("RegisterPage", () => {
   };
 
   const fillValidRegistration = async () => {
+    // Fill fullName field (required)
+    await userEvent.type(screen.getByPlaceholderText("John Doe"), "Test User");
     await userEvent.type(
       screen.getByPlaceholderText("your.email@example.com"),
       "new.user@example.com"
@@ -132,6 +134,7 @@ describe("RegisterPage", () => {
       email: "new.user@example.com",
       password: "Password1!",
       confirmPassword: "Password1!",
+      fullName: "Test User",
     });
 
     expect(toastSuccessMock).toHaveBeenCalledWith(
