@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "./ThemeToggle";
 import { BookOpen, User, Settings, LogOut, Menu, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { getFileUrl } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -196,7 +196,7 @@ export function Header({
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src={user?.avatarUrl}
+                          src={getFileUrl(user?.avatarUrl)}
                           alt={`${fullName || "User"} avatar`}
                         />
                         <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">

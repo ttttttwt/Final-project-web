@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Camera, Loader2, Trash2, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { getFileUrl } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -186,7 +187,7 @@ export function AvatarUpload({
       {/* Avatar Display */}
       <div className="relative group">
         <Avatar className="h-32 w-32 border-4 border-gray-200 dark:border-gray-700">
-          <AvatarImage src={avatarUrl} alt={userName} />
+          <AvatarImage src={getFileUrl(avatarUrl)} alt={userName} />
           <AvatarFallback className="text-3xl font-semibold bg-linear-to-br from-blue-500 to-purple-600 text-white">
             {getInitials(userName)}
           </AvatarFallback>
