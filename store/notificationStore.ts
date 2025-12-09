@@ -95,10 +95,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   /**
    * Mark a single notification as read
+   * Skips API call for transient notifications (temporary ids)
    */
   markAsRead: async (id: string) => {
+    // Skip API call for transient notifications with temp id
+    const isTransient = id.startsWith("temp-");
+    
     try {
-      await notificationService.markAsRead(id);
+      if (!isTransient) {
+        await notificationService.markAsRead(id);
+      }
       set((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id
@@ -138,11 +144,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   /**
    * Delete a single notification
+   * Skips API call for transient notifications (temporary ids)
    */
   deleteNotification: async (id: string) => {
     const notification = get().notifications.find((n) => n.id === id);
+    const isTransient = id.startsWith("temp-");
+    
     try {
-      await notificationService.deleteNotification(id);
+      if (!isTransient) {
+        await notificationService.deleteNotification(id);
+      }
       set((state) => ({
         notifications: state.notifications.filter((n) => n.id !== id),
         unreadCount:
@@ -179,23 +190,43 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   /**
    * Add a new notification (from WebSocket)
+   * For broadcast announcements without id, generates a temporary id
+   * and triggers a refresh to get the persisted notification with real id
    */
   addNotification: (notification: Notification) => {
+    // Generate temporary id for announcements that don't have one
+    const notificationWithId: Notification = {
+      ...notification,
+      id: notification.id || `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      isRead: notification.isRead ?? false,
+      readAt: notification.readAt ?? null,
+      expiresAt: notification.expiresAt ?? null,
+    };
+
+    // Check if this is a broadcast announcement (no real id)
+    const isTransient = !notification.id;
+
     set((state) => ({
-      notifications: [notification, ...state.notifications],
+      notifications: [notificationWithId, ...state.notifications],
       unreadCount: state.unreadCount + 1,
       highPriorityCount:
-        notification.priority === "HIGH"
+        notificationWithId.priority === "HIGH"
           ? state.highPriorityCount + 1
           : state.highPriorityCount,
     }));
 
-    // Show toast for high priority notifications
-    if (notification.priority === "HIGH") {
-      toast(notification.title, {
-        description: notification.message,
-        duration: 5000,
-      });
+    // Show toast notification
+    toast(notificationWithId.title, {
+      description: notificationWithId.message,
+      duration: notification.priority === "HIGH" ? 8000 : 5000,
+    });
+
+    // For transient notifications, refresh after a short delay to get persisted data
+    if (isTransient) {
+      setTimeout(() => {
+        get().fetchNotifications(0);
+        get().fetchUnreadCount();
+      }, 2000);
     }
   },
 
