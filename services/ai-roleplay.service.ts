@@ -79,4 +79,37 @@ export const aiRolePlayService = {
     );
     return response.data;
   },
+
+  /**
+   * Get scenario details by ID.
+   */
+  getScenario: async (scenarioId: string): Promise<RolePlayScenarioDTO> => {
+    const response = await api.get<RolePlayScenarioDTO>(
+      `${BASE_URL}/scenarios/${scenarioId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * End/complete a conversation.
+   */
+  endConversation: async (conversationId: string): Promise<void> => {
+    await api.patch(`${BASE_URL}/conversations/${conversationId}/complete`);
+  },
+
+  /**
+   * Send a message with mode override (for switching between immersive/learning).
+   */
+  sendMessageWithMode: async (
+    conversationId: string,
+    data: RolePlaySendMessageDTO,
+    mode: "immersive" | "learning"
+  ): Promise<RolePlayMessageDTO> => {
+    const endpoint =
+      mode === "immersive"
+        ? `${BASE_URL}/conversations/${conversationId}/messages/immersive`
+        : `${BASE_URL}/conversations/${conversationId}/messages/learning`;
+    const response = await api.post<RolePlayMessageDTO>(endpoint, data);
+    return response.data;
+  },
 };

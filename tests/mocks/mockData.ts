@@ -197,6 +197,8 @@ export const mockDashboardStats: DashboardStats = {
   totalLessons: 25,
   currentStreak: 5,
   longestStreak: 12,
+  totalStudyMinutes: 240,
+  averageScore: 85,
 };
 
 /**

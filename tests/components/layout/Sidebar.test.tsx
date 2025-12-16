@@ -37,6 +37,35 @@ describe("Sidebar", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders AI features section with all AI tools", () => {
+    render(<Sidebar isOpen />);
+
+    // Check AI section heading
+    expect(screen.getByText(/ai features/i)).toBeInTheDocument();
+
+    // Check all AI feature links
+    expect(
+      screen.getByRole("link", { name: /ai flashcards generator/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ai grammar practice/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ai conversation roleplay/i })
+    ).toBeInTheDocument();
+  });
+
+  it("highlights active AI feature", () => {
+    usePathnameMock.mockReturnValue("/ai/grammar");
+
+    render(<Sidebar isOpen />);
+
+    const grammarLink = screen.getByRole("link", {
+      name: /ai grammar practice/i,
+    });
+    expect(grammarLink).toHaveAttribute("aria-current", "page");
+  });
+
   it("calls onToggleCollapse when collapse button is clicked", async () => {
     const onToggleCollapse = jest.fn();
 

@@ -65,3 +65,17 @@ export interface ProgressSummary {
   activeDays: number;
   dailyActivities: DailyActivity[];
 }
+
+export interface LessonProgress {
+  progressId: string;
+  userId: string;
+  lessonId: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  completedAt?: string;
+  lastAccessedAt?: string;
+  timeSpentMinutes: number;
+  score?: number;
+  attempts: number;
+  createdAt: string;
+  updatedAt: string;
+}

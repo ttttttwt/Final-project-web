@@ -121,6 +121,46 @@ export interface GrammarAnswerDTO {
   totalTimeSeconds: number;
 }
 
+export interface GrammarTopicDTO {
+  id: number;
+  name: string;
+  category: string;
+  cefrLevels: string[];
+  description?: string;
+  isActive: boolean;
+}
+
+export interface GrammarProgressDTO {
+  id: number;
+  userId: string;
+  exerciseSetId: string;
+  grammarPoint: string;
+  cefrLevel: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  passed: boolean;
+  timeSpentSeconds: number;
+  completedAt: string;
+}
+
+export interface GrammarStatsDTO {
+  userId: string;
+  totalAttempted: number;
+  totalCompleted: number;
+  totalPassed: number;
+  averageScore: number;
+  totalTimeSpentSeconds: number;
+  currentStreak: number;
+  longestStreak: number;
+  topicBreakdown?: Record<string, {
+    attempted: number;
+    passed: number;
+    averageScore: number;
+  }>;
+  recentActivity?: GrammarProgressDTO[];
+}
+
 export interface QuestionFeedback {
   questionIndex: number;
   userAnswer: any;

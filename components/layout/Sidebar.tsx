@@ -13,6 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Sparkles,
+  CreditCard,
+  MessageSquare,
+  BookText,
 } from "lucide-react";
 
 /**
@@ -77,6 +81,27 @@ const navigationItems: NavItem[] = [
     label: "Profile",
     icon: User,
     ariaLabel: "View Your Profile",
+  },
+];
+
+const aiFeatures: NavItem[] = [
+  {
+    href: "/ai/flashcards",
+    label: "AI Flashcards",
+    icon: CreditCard,
+    ariaLabel: "AI Flashcards Generator",
+  },
+  {
+    href: "/ai/grammar",
+    label: "AI Grammar",
+    icon: BookText,
+    ariaLabel: "AI Grammar Practice",
+  },
+  {
+    href: "/ai/roleplay",
+    label: "AI Roleplay",
+    icon: MessageSquare,
+    ariaLabel: "AI Conversation Roleplay",
   },
 ];
 
@@ -184,6 +209,7 @@ export function Sidebar({
             className="flex-1 px-3 py-4 overflow-y-auto"
             aria-label="Main navigation"
           >
+            {/* Main Navigation */}
             <ul className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -216,6 +242,57 @@ export function Sidebar({
                 );
               })}
             </ul>
+
+            {/* AI Features Section */}
+            <div className="mt-6">
+              {!isCollapsed && (
+                <div className="px-3 mb-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-wider">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>AI Features</span>
+                  </div>
+                </div>
+              )}
+              
+              {isCollapsed && (
+                <div className="w-full flex justify-center mb-2">
+                  <Sparkles className="h-4 w-4 text-[#FFB300] dark:text-[#FDD663]" />
+                </div>
+              )}
+
+              <ul className="space-y-1">
+                {aiFeatures.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = isActivePath(item.href);
+
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                          isActive
+                            ? "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
+                            : "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                        )}
+                        aria-label={item.ariaLabel}
+                        aria-current={isActive ? "page" : undefined}
+                        title={isCollapsed ? item.label : undefined}
+                      >
+                        <Icon
+                          className={cn(
+                            "h-5 w-5 shrink-0",
+                            isCollapsed && "mx-auto"
+                          )}
+                        />
+                        {!isCollapsed && <span>{item.label}</span>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </nav>
 
           {/* Collapse Toggle (Desktop only) */}
