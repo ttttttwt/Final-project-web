@@ -21,7 +21,12 @@ import {
   BookText,
   MessageSquare,
   Home,
+  WifiOff,
 } from "lucide-react";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useAiQuota } from "@/hooks/useAiQuota";
+import { QuotaIndicator, QuotaWarning } from "./QuotaWarning";
+import { NetworkOfflineBanner, NetworkReconnectedBanner } from "./AiErrorBoundary";
 
 /**
  * AI Header Component
@@ -254,6 +259,7 @@ export function AiHeader({
  * AI Page Wrapper Component
  *
  * Wraps AI pages with the header for consistent navigation.
+ * Includes network status monitoring and quota warnings.
  */
 interface AiPageWrapperProps {
   /** Page title */
@@ -272,6 +278,12 @@ interface AiPageWrapperProps {
   className?: string;
   /** Content max width */
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "6xl" | "7xl" | "full";
+  /** Show quota indicator in header */
+  showQuota?: boolean;
+  /** Show network status banner */
+  showNetworkStatus?: boolean;
+  /** Feature name for quota tracking */
+  feature?: string;
 }
 
 const maxWidthClasses = {
@@ -295,7 +307,27 @@ export function AiPageWrapper({
   children,
   className,
   maxWidth = "6xl",
+  showQuota = true,
+  showNetworkStatus = true,
+  feature,
 }: AiPageWrapperProps) {
+  const { isOnline, wasOffline, checkConnectivity } = useNetworkStatus();
+  const quota = useAiQuota(feature);
+
+  // Build header actions with quota indicator
+  const combinedActions = (
+    <>
+      {showQuota && !quota.isLoading && (
+        <QuotaIndicator
+          used={quota.usedToday}
+          limit={quota.dailyLimit}
+          className="hidden sm:flex"
+        />
+      )}
+      {headerActions}
+    </>
+  );
+
   return (
     <div className="min-h-screen flex flex-col">
       <AiHeader
@@ -303,8 +335,21 @@ export function AiPageWrapper({
         backHref={backHref}
         backLabel={backLabel}
         showBackButton={showBackButton}
-        actions={headerActions}
+        actions={combinedActions}
       />
+      
+      {/* Quota Warning Banner */}
+      {showQuota && quota.isNearLimit && (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <QuotaWarning
+            used={quota.usedToday}
+            limit={quota.dailyLimit}
+            feature={feature || "AI"}
+            resetTime={quota.dailyResetTime || undefined}
+          />
+        </div>
+      )}
+
       <main
         className={cn(
           "flex-1 container mx-auto py-6 px-4 sm:px-6 lg:px-8",
@@ -314,6 +359,14 @@ export function AiPageWrapper({
       >
         {children}
       </main>
+
+      {/* Network Status Banners */}
+      {showNetworkStatus && !isOnline && (
+        <NetworkOfflineBanner onRetry={checkConnectivity} />
+      )}
+      {showNetworkStatus && wasOffline && isOnline && (
+        <NetworkReconnectedBanner />
+      )}
     </div>
   );
 }

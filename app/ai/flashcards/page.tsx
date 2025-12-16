@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { FlashcardDeckDTO } from "@/types/ai";
 import { aiFlashcardService } from "@/services/ai-flashcard.service";
 import { DeckCard, DeckCardSkeleton } from "@/components/ai/flashcards";
-import { AiErrorCard, AiPageWrapper } from "@/components/ai/common";
+import { AiErrorCard, AiPageWrapper, FlashcardDeckSkeleton, AiLoadingState } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,6 +112,9 @@ export default function FlashcardsPage() {
       backHref="/dashboard"
       backLabel="Dashboard"
       headerActions={headerActions}
+      feature="flashcards"
+      showQuota={true}
+      showNetworkStatus={true}
     >
       {/* Page Description */}
       <div className="mb-6">
@@ -204,10 +207,13 @@ export default function FlashcardsPage() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <DeckCardSkeleton key={i} />
-          ))}
+        <div className="space-y-4">
+          <AiLoadingState variant="studying" message="Loading your flashcard decks..." />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <FlashcardDeckSkeleton key={i} />
+            ))}
+          </div>
         </div>
       )}
 

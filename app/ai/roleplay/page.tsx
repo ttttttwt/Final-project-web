@@ -11,7 +11,9 @@ import {
 import { aiRolePlayService } from "@/services/ai-roleplay.service";
 import { ScenarioCard, ScenarioCardSkeleton } from "@/components/ai/roleplay";
 import { ModeToggle, ModeDescription } from "@/components/ai/roleplay";
-import { AiPageWrapper } from "@/components/ai/common";
+import { AiPageWrapper, AiErrorCard, RoleplaySkeleton, AiLoadingState } from "@/components/ai/common";
+import { RetryButtonWithCountdown } from "@/components/ai/common";
+import { useRetryWithBackoff } from "@/hooks/useRetryWithBackoff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +36,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 const DOMAINS = [
@@ -114,6 +117,9 @@ export default function RolePlayPage() {
       title="AI Roleplay"
       backHref="/dashboard"
       backLabel="Dashboard"
+      feature="roleplay"
+      showQuota={true}
+      showNetworkStatus={true}
     >
       {/* Page Description */}
       <div className="mb-6">
@@ -264,30 +270,22 @@ export default function RolePlayPage() {
 
             {/* Generated Scenario Preview */}
             <div>
-              {isGenerating && <ScenarioCardSkeleton />}
+              {isGenerating && (
+                <div className="space-y-4">
+                  <RoleplaySkeleton />
+                  <AiLoadingState 
+                    variant="generating" 
+                    message="Creating your personalized scenario..."
+                  />
+                </div>
+              )}
 
               {error && !isGenerating && (
-                <Card className="border-destructive">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col items-center text-center gap-4">
-                      <AlertCircle className="w-12 h-12 text-destructive" />
-                      <div>
-                        <h3 className="font-semibold text-lg">Generation Failed</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {error}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleGenerateScenario}
-                        className="gap-2"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        Try Again
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <AiErrorCard
+                  message={error}
+                  onRetry={handleGenerateScenario}
+                  onReset={() => setError(null)}
+                />
               )}
 
               {generatedScenario && !isGenerating && (

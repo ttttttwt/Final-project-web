@@ -17,7 +17,7 @@ import {
   StatsPanel,
   StatsPanelSkeleton,
 } from "@/components/ai/grammar";
-import { AiPageWrapper } from "@/components/ai/common";
+import { AiPageWrapper, AiErrorCard, GrammarExerciseSkeleton, AiLoadingState } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -164,6 +164,9 @@ export default function GrammarPage() {
       title="AI Grammar"
       backHref="/dashboard"
       backLabel="Dashboard"
+      feature="grammar"
+      showQuota={true}
+      showNetworkStatus={true}
     >
       {/* Page Description */}
       <div className="mb-6">
