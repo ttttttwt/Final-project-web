@@ -3,3 +3,4 @@ export { AiLoadingState, AiLoadingInline, AiCardSkeleton } from "./AiLoadingStat
 export { AiErrorBoundary, AiErrorCard, AiErrorInline } from "./AiErrorBoundary";
 export { RetryButton } from "./RetryButton";
 export { QuotaWarning, QuotaIndicator } from "./QuotaWarning";
+export { AiHeader, AiPageWrapper } from "./AiHeader";

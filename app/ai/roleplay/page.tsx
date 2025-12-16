@@ -11,6 +11,7 @@ import {
 import { aiRolePlayService } from "@/services/ai-roleplay.service";
 import { ScenarioCard, ScenarioCardSkeleton } from "@/components/ai/roleplay";
 import { ModeToggle, ModeDescription } from "@/components/ai/roleplay";
+import { AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,15 +110,13 @@ export default function RolePlayPage() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <MessageSquare className="w-6 h-6 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold">Role-Play Practice</h1>
-        </div>
+    <AiPageWrapper
+      title="AI Roleplay"
+      backHref="/dashboard"
+      backLabel="Dashboard"
+    >
+      {/* Page Description */}
+      <div className="mb-6">
         <p className="text-muted-foreground">
           Practice English conversations in realistic business scenarios with AI.
         </p>
@@ -326,7 +325,7 @@ export default function RolePlayPage() {
           <ConversationHistory onResume={(id) => router.push(`/ai/roleplay/${id}`)} />
         </TabsContent>
       </Tabs>
-    </div>
+    </AiPageWrapper>
   );
 }
 

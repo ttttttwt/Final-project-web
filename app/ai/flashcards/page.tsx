@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { FlashcardDeckDTO } from "@/types/ai";
 import { aiFlashcardService } from "@/services/ai-flashcard.service";
 import { DeckCard, DeckCardSkeleton } from "@/components/ai/flashcards";
-import { AiErrorCard } from "@/components/ai/common";
+import { AiErrorCard, AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,28 +89,35 @@ export default function FlashcardsPage() {
 
   const dueDecks = decks.filter((d) => (d.dueCount ?? 0) > 0);
 
+  // Header actions
+  const headerActions = (
+    <div className="flex items-center gap-3">
+      {totalDue > 0 && (
+        <Badge variant="default" className="text-sm py-1 px-3 hidden sm:flex">
+          <Clock className="w-4 h-4 mr-1" />
+          {totalDue} cards due
+        </Badge>
+      )}
+      <Button onClick={handleCreateDeck} size="sm">
+        <Plus className="w-4 h-4 mr-2" />
+        <span className="hidden sm:inline">Create Deck</span>
+        <span className="sm:hidden">Create</span>
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="container max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Flashcards</h1>
-          <p className="text-muted-foreground mt-1">
-            Study vocabulary with spaced repetition
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {totalDue > 0 && (
-            <Badge variant="default" className="text-sm py-1 px-3">
-              <Clock className="w-4 h-4 mr-1" />
-              {totalDue} cards due
-            </Badge>
-          )}
-          <Button onClick={handleCreateDeck}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Deck
-          </Button>
-        </div>
+    <AiPageWrapper
+      title="AI Flashcards"
+      backHref="/dashboard"
+      backLabel="Dashboard"
+      headerActions={headerActions}
+    >
+      {/* Page Description */}
+      <div className="mb-6">
+        <p className="text-muted-foreground">
+          Study vocabulary with spaced repetition
+        </p>
       </div>
 
       {/* Quick Study Card */}
@@ -254,6 +261,6 @@ export default function FlashcardsPage() {
           ))}
         </div>
       )}
-    </div>
+    </AiPageWrapper>
   );
 }

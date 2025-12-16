@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { FlashcardDeckDTO, FlashcardCardDTO } from "@/types/ai";
 import { aiFlashcardService } from "@/services/ai-flashcard.service";
 import { FlashCard, MasteryIndicator, MasteryBar } from "@/components/ai/flashcards";
-import { AiLoadingState, AiErrorCard } from "@/components/ai/common";
+import { AiLoadingState, AiErrorCard, AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,46 +128,41 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl mx-auto py-12 px-4">
+      <AiPageWrapper
+        title="AI Flashcards"
+        backHref="/ai/flashcards"
+        backLabel="Flashcards"
+      >
         <AiLoadingState variant="studying" message="Loading deck..." />
-      </div>
+      </AiPageWrapper>
     );
   }
 
   if (error || !deck) {
     return (
-      <div className="container max-w-4xl mx-auto py-12 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/ai/flashcards")}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Decks
-        </Button>
+      <AiPageWrapper
+        title="AI Flashcards"
+        backHref="/ai/flashcards"
+        backLabel="Flashcards"
+      >
         <AiErrorCard
           title="Failed to load deck"
           message={error || "Deck not found"}
           onRetry={loadDeck}
           onReset={() => router.push("/ai/flashcards")}
         />
-      </div>
+      </AiPageWrapper>
     );
   }
 
   const hasDueCards = (deck.dueCount ?? 0) > 0;
 
   return (
-    <div className="container max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push("/ai/flashcards")}
-        className="mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Decks
-      </Button>
+    <AiPageWrapper
+      title={deck.title}
+      backHref="/ai/flashcards"
+      backLabel="Flashcards"
+    >
 
       {/* Deck Header */}
       <Card className="mb-6">
@@ -357,6 +352,6 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AiPageWrapper>
   );
 }

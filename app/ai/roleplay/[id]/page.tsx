@@ -10,6 +10,7 @@ import {
 } from "@/types/ai";
 import { aiRolePlayService } from "@/services/ai-roleplay.service";
 import { ConversationChat } from "@/components/ai/roleplay";
+import { AiHeader } from "@/components/ai/common";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -169,14 +170,11 @@ export default function ConversationPage() {
   if (isLoading) {
     return (
       <div className="h-screen flex flex-col">
-        {/* Header skeleton */}
-        <div className="flex items-center gap-4 px-4 py-3 border-b">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        </div>
+        <AiHeader
+          title="AI Roleplay"
+          backHref="/ai/roleplay"
+          backLabel="Roleplay"
+        />
         {/* Chat area skeleton */}
         <div className="flex-1 p-4 space-y-4">
           {[1, 2, 3].map((i) => (
@@ -200,45 +198,59 @@ export default function ConversationPage() {
   // Error state
   if (error || !conversation) {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="p-4 bg-destructive/10 rounded-full">
-                <AlertCircle className="w-12 h-12 text-destructive" />
+      <div className="h-screen flex flex-col">
+        <AiHeader
+          title="AI Roleplay"
+          backHref="/ai/roleplay"
+          backLabel="Roleplay"
+        />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="p-4 bg-destructive/10 rounded-full">
+                  <AlertCircle className="w-12 h-12 text-destructive" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Conversation Not Found</h2>
+                  <p className="text-muted-foreground mt-2">
+                    {error || "The conversation you're looking for doesn't exist."}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={handleBack}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                  <Button onClick={loadConversation}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">Conversation Not Found</h2>
-                <p className="text-muted-foreground mt-2">
-                  {error || "The conversation you're looking for doesn't exist."}
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <Button onClick={loadConversation}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <ConversationChat
-        conversation={conversation}
-        scenario={scenario}
-        onSendMessage={handleSendMessage}
-        onEndConversation={handleEndConversation}
-        onBack={handleBack}
+      <AiHeader
+        title={scenario?.title || "AI Roleplay"}
+        backHref="/ai/roleplay"
+        backLabel="Roleplay"
       />
+      <div className="flex-1 overflow-hidden">
+        <ConversationChat
+          conversation={conversation}
+          scenario={scenario}
+          onSendMessage={handleSendMessage}
+          onEndConversation={handleEndConversation}
+          onBack={handleBack}
+        />
+      </div>
     </div>
   );
 }

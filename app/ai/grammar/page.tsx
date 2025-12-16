@@ -17,6 +17,7 @@ import {
   StatsPanel,
   StatsPanelSkeleton,
 } from "@/components/ai/grammar";
+import { AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,15 +160,13 @@ export default function GrammarPage() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <GraduationCap className="w-6 h-6 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold">Grammar Practice</h1>
-        </div>
+    <AiPageWrapper
+      title="AI Grammar"
+      backHref="/dashboard"
+      backLabel="Dashboard"
+    >
+      {/* Page Description */}
+      <div className="mb-6">
         <p className="text-muted-foreground">
           Master English grammar with AI-generated exercises tailored to your level.
         </p>
@@ -509,6 +508,6 @@ export default function GrammarPage() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </AiPageWrapper>
   );
 }

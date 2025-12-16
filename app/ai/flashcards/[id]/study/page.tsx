@@ -16,7 +16,7 @@ import {
   StudyProgress,
   MasteryIndicator,
 } from "@/components/ai/flashcards";
-import { AiLoadingState, AiErrorCard } from "@/components/ai/common";
+import { AiLoadingState, AiErrorCard, AiPageWrapper } from "@/components/ai/common";
 import {
   useFlashcardKeyboard,
   KeyboardShortcutsHelp,
@@ -251,49 +251,47 @@ export default function StudyPage({ params }: StudyPageProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <AiLoadingState
-          variant="studying"
-          message="Preparing your study session..."
-        />
-      </div>
+      <AiPageWrapper
+        title="Study Session"
+        backHref={`/ai/flashcards/${id}`}
+        backLabel="Deck"
+      >
+        <div className="flex items-center justify-center py-12">
+          <AiLoadingState
+            variant="studying"
+            message="Preparing your study session..."
+          />
+        </div>
+      </AiPageWrapper>
     );
   }
 
   // Error state
   if (error || !deck || !session) {
     return (
-      <div className="container max-w-2xl mx-auto py-12 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/ai/flashcards")}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Decks
-        </Button>
+      <AiPageWrapper
+        title="Study Session"
+        backHref="/ai/flashcards"
+        backLabel="Flashcards"
+      >
         <AiErrorCard
           title="Failed to load study session"
           message={error || "Session not found"}
           onRetry={loadSession}
           onReset={() => router.push(`/ai/flashcards/${id}`)}
         />
-      </div>
+      </AiPageWrapper>
     );
   }
 
   // Empty session state
   if (totalCards === 0) {
     return (
-      <div className="container max-w-2xl mx-auto py-12 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push(`/ai/flashcards/${id}`)}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Deck
-        </Button>
+      <AiPageWrapper
+        title="Study Session"
+        backHref={`/ai/flashcards/${id}`}
+        backLabel="Deck"
+      >
         <Card className="p-8">
           <CardContent className="flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
@@ -308,7 +306,7 @@ export default function StudyPage({ params }: StudyPageProps) {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AiPageWrapper>
     );
   }
 

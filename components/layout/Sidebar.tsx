@@ -6,12 +6,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   BookOpen,
   Home,
   TrendingUp,
   User,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   Sparkles,
   CreditCard,
@@ -243,55 +249,72 @@ export function Sidebar({
               })}
             </ul>
 
-            {/* AI Features Section */}
-            <div className="mt-6">
-              {!isCollapsed && (
-                <div className="px-3 mb-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-wider">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>AI Features</span>
-                  </div>
-                </div>
-              )}
-              
-              {isCollapsed && (
-                <div className="w-full flex justify-center mb-2">
-                  <Sparkles className="h-4 w-4 text-[#FFB300] dark:text-[#FDD663]" />
-                </div>
-              )}
-
-              <ul className="space-y-1">
-                {aiFeatures.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = isActivePath(item.href);
-
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={onClose}
+            {/* AI Features Section - Collapsible Dropdown */}
+            <div className="mt-2">
+              <Collapsible defaultOpen={pathname?.startsWith("/ai")}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED]",
+                      "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]",
+                      pathname?.startsWith("/ai") &&
+                        "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
+                    )}
+                    aria-label="Toggle AI Features menu"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Sparkles
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                          isActive
-                            ? "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
-                            : "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                          "h-5 w-5 shrink-0",
+                          pathname?.startsWith("/ai")
+                            ? "text-[#FFB300] dark:text-[#FDD663]"
+                            : "text-[#5F6368] dark:text-[#9AA0A6]"
                         )}
-                        aria-label={item.ariaLabel}
-                        aria-current={isActive ? "page" : undefined}
-                        title={isCollapsed ? item.label : undefined}
-                      >
-                        <Icon
-                          className={cn(
-                            "h-5 w-5 shrink-0",
-                            isCollapsed && "mx-auto"
-                          )}
-                        />
-                        {!isCollapsed && <span>{item.label}</span>}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+                      />
+                      {!isCollapsed && <span>AI Features</span>}
+                    </div>
+                    {!isCollapsed && (
+                      <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                  <ul className="ml-3 mt-1 space-y-1 border-l-2 border-[#E0E0E0] dark:border-[#2E2E2E] pl-3">
+                    {aiFeatures.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = isActivePath(item.href);
+
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={onClose}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                              isActive
+                                ? "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
+                                : "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]"
+                            )}
+                            aria-label={item.ariaLabel}
+                            aria-current={isActive ? "page" : undefined}
+                            title={isCollapsed ? item.label : undefined}
+                          >
+                            <Icon
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                isCollapsed && "mx-auto"
+                              )}
+                            />
+                            {!isCollapsed && <span>{item.label}</span>}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </nav>
 

@@ -11,6 +11,7 @@ import {
 } from "@/types/ai";
 import { aiGrammarService } from "@/services/ai-grammar.service";
 import { ExerciseCard, ResultCard, PracticeTimer } from "@/components/ai/grammar";
+import { AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -192,7 +193,11 @@ export default function GrammarPracticePage() {
   // Loading state
   if (pageState === "loading") {
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <AiPageWrapper
+        title="AI Grammar"
+        backHref="/ai/grammar"
+        backLabel="Grammar"
+      >
         <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-96" />
@@ -207,14 +212,18 @@ export default function GrammarPracticePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </AiPageWrapper>
     );
   }
 
   // Error state
   if (pageState === "error") {
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <AiPageWrapper
+        title="AI Grammar"
+        backHref="/ai/grammar"
+        backLabel="Grammar"
+      >
         <Card className="border-destructive">
           <CardContent className="py-12 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
@@ -231,7 +240,7 @@ export default function GrammarPracticePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AiPageWrapper>
     );
   }
 
@@ -239,17 +248,11 @@ export default function GrammarPracticePage() {
   if (pageState === "results" && (result || hasSubmitted)) {
     if (result) {
       return (
-        <div className="container max-w-4xl mx-auto py-8 px-4">
-          {/* Back Button */}
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => router.push("/ai/grammar")}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Grammar
-          </Button>
-
+        <AiPageWrapper
+          title="AI Grammar - Results"
+          backHref="/ai/grammar"
+          backLabel="Grammar"
+        >
           {/* Result Card */}
           <ResultCard
             result={result}
@@ -278,13 +281,17 @@ export default function GrammarPracticePage() {
               })}
             </div>
           )}
-        </div>
+        </AiPageWrapper>
       );
     }
 
     // Already submitted but no result loaded
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <AiPageWrapper
+        title="AI Grammar"
+        backHref="/ai/grammar"
+        backLabel="Grammar"
+      >
         <Card>
           <CardContent className="py-12 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
@@ -298,24 +305,20 @@ export default function GrammarPracticePage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AiPageWrapper>
     );
   }
 
   // Practice state
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/ai/grammar")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Exit
-        </Button>
-
-        {/* Timer - isolated component to prevent re-renders */}
+    <AiPageWrapper
+      title={exerciseSet?.grammarPoint || "AI Grammar Practice"}
+      backHref="/ai/grammar"
+      backLabel="Grammar"
+      showBackButton={true}
+    >
+      {/* Timer - isolated component to prevent re-renders */}
+      <div className="mb-6">
         <PracticeTimer
           initialTimeSeconds={exerciseSet?.timeLimitSeconds ?? null}
           onTimeUp={handleTimeUp}
@@ -474,6 +477,6 @@ export default function GrammarPracticePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AiPageWrapper>
   );
 }
