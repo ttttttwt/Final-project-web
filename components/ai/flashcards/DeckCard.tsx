@@ -16,6 +16,7 @@ import {
   Sparkles,
   User,
   Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -69,8 +70,8 @@ export function DeckCard({
       className={cn(
         "group h-full flex flex-col hover:shadow-lg transition-all duration-300 cursor-pointer border-2",
         hasDueCards
-          ? "border-primary/30 hover:border-primary/60"
-          : "hover:border-primary/50",
+          ? "border-primary/30 hover:border-primary/60 bg-card"
+          : "border-green-200/50 dark:border-green-900/20 bg-green-50/30 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-800",
         className
       )}
       onClick={() => onView?.(deck)}>
@@ -95,7 +96,7 @@ export function DeckCard({
                 {SOURCE_ICONS[deck.sourceType]}
                 {SOURCE_LABELS[deck.sourceType]}
               </Badge>
-              {hasDueCards && (
+              {hasDueCards ? (
                 <Badge
                   variant="default"
                   className="text-xs bg-primary/10 text-primary border-primary/30"
@@ -103,11 +104,22 @@ export function DeckCard({
                   <Clock className="w-3 h-3 mr-1" />
                   {deck.dueCount} due
                 </Badge>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+                >
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Completed
+                </Badge>
               )}
             </div>
 
             {/* Title */}
-            <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1 min-h-[1.75rem]">
+            <h3 className={cn(
+              "font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1 min-h-[1.75rem]",
+              !hasDueCards && "text-muted-foreground group-hover:text-primary/80"
+            )}>
               {deck.title}
             </h3>
 
@@ -119,8 +131,17 @@ export function DeckCard({
 
           {/* Icon */}
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Layers className="w-5 h-5 text-primary" />
+            <div className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+              hasDueCards 
+                ? "bg-primary/10 group-hover:bg-primary/20" 
+                : "bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50"
+            )}>
+              {hasDueCards ? (
+                <Layers className="w-5 h-5 text-primary" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+              )}
             </div>
           </div>
         </div>

@@ -159,4 +159,11 @@ export const aiGrammarService = {
       throw err;
     }
   },
+
+  /**
+   * Reset progress for an exercise set (allows retry).
+   */
+  resetProgress: async (exerciseSetId: string): Promise<void> => {
+    await api.delete(`${BASE_URL}/exercises/${exerciseSetId}/progress`);
+  },
 };

@@ -10,6 +10,11 @@ import {
   GrammarResultDTO,
 } from "@/types/ai";
 import { aiGrammarService } from "@/services/ai-grammar.service";
+import {
+  saveUserAnswers,
+  getUserAnswers,
+  clearUserAnswers,
+} from "@/lib/grammarStorage";
 import { ExerciseCard, ResultCard, PracticeTimer } from "@/components/ai/grammar";
 import { AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
@@ -36,6 +41,7 @@ import {
   ArrowLeft,
   Info,
   CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,13 +73,16 @@ export default function GrammarPracticePage() {
   // Navigation state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showRetryDialog, setShowRetryDialog] = useState(false);
+  const [showRetryConfirmDialog, setShowRetryConfirmDialog] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Load exercise set
   useEffect(() => {
     const loadExerciseSet = async () => {
       try {
         setPageState("loading");
-        
+
         // Check if already submitted
         const submitted = await aiGrammarService.hasSubmitted(exerciseSetId);
         if (submitted) {
@@ -84,10 +93,23 @@ export default function GrammarPracticePage() {
             // We don't have full result data, so just show a message
             toast.info("You have already completed this exercise set");
           }
+          // Clear any saved answers since already submitted
+          clearUserAnswers();
         }
 
         const data = await aiGrammarService.getExerciseSet(exerciseSetId);
         setExerciseSet(data);
+
+        // Restore saved answers if not submitted
+        if (!submitted) {
+          const savedData = getUserAnswers(exerciseSetId);
+          if (savedData) {
+            setUserAnswers(savedData.answers);
+            setCurrentQuestionIndex(savedData.currentQuestionIndex);
+            timeSpentRef.current = savedData.timeSpent;
+            toast.info("Restored your previous progress");
+          }
+        }
 
         setPageState(submitted ? "results" : "practice");
         startTimeRef.current = Date.now();
@@ -100,6 +122,34 @@ export default function GrammarPracticePage() {
 
     loadExerciseSet();
   }, [exerciseSetId]);
+
+  // Auto-save answers to localStorage
+  useEffect(() => {
+    if (pageState === "practice" && Object.keys(userAnswers).length > 0) {
+      saveUserAnswers(
+        exerciseSetId,
+        userAnswers,
+        currentQuestionIndex,
+        timeSpentRef.current
+      );
+    }
+  }, [userAnswers, currentQuestionIndex, exerciseSetId, pageState]);
+
+  // Warn before leaving page with unsaved answers
+  useEffect(() => {
+    const hasAnswers = Object.values(userAnswers).some(a => a !== undefined && a !== "");
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pageState === "practice" && hasAnswers) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [userAnswers, pageState]);
 
   // Handle timer time up
   const handleTimeUp = useCallback(() => {
@@ -137,7 +187,7 @@ export default function GrammarPracticePage() {
     try {
       // Calculate time spent
       const totalTimeSpent = timeSpentRef.current || Math.round((Date.now() - startTimeRef.current) / 1000);
-      
+
       // Build answer submission
       const answers: GrammarAnswerItem[] = exerciseSet.exercises.map((_, idx) => ({
         questionIndex: idx,
@@ -152,6 +202,10 @@ export default function GrammarPracticePage() {
       };
 
       const resultData = await aiGrammarService.submitAnswers(exerciseSetId, submission);
+
+      // Clear saved answers on successful submit
+      clearUserAnswers();
+
       setResult(resultData);
       setPageState("results");
 
@@ -171,6 +225,7 @@ export default function GrammarPracticePage() {
     }
   };
 
+
   // Wrapper to handle submit from UI (force = true to skip confirmation)
   const handleSubmit = useCallback((force: boolean = false) => {
     handleSubmitInternal(force);
@@ -180,9 +235,59 @@ export default function GrammarPracticePage() {
     return Object.values(userAnswers).filter((a) => a !== undefined && a !== "").length;
   };
 
+  // Handle retry - reset progress and reload
+  const handleRetry = async () => {
+    setIsResetting(true);
+    try {
+      await aiGrammarService.resetProgress(exerciseSetId);
+      // Clear saved local data
+      clearUserAnswers();
+      toast.success("Progress reset successfully!", {
+        description: "You can now retry this exercise.",
+      });
+      // Reload the page to start fresh
+      window.location.reload();
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Failed to reset progress";
+      toast.error("Reset failed", { description: message });
+    } finally {
+      setIsResetting(false);
+      setShowRetryDialog(false);
+    }
+  };
+
+  // Handle retry during practice - check for unsaved answers first
+  const handleRetryDuringPractice = () => {
+    const hasAnswers = Object.values(userAnswers).some(a => a !== undefined && a !== "");
+    if (hasAnswers) {
+      setShowRetryConfirmDialog(true);
+    } else {
+      // No answers, just reset
+      clearUserAnswers();
+      setUserAnswers({});
+      setCurrentQuestionIndex(0);
+      timeSpentRef.current = 0;
+      startTimeRef.current = Date.now();
+      toast.info("Exercise reset");
+    }
+  };
+
+  // Confirm retry during practice - clears answers and restarts
+  const confirmRetryDuringPractice = () => {
+    clearUserAnswers();
+    setUserAnswers({});
+    setCurrentQuestionIndex(0);
+    timeSpentRef.current = 0;
+    startTimeRef.current = Date.now();
+    setShowRetryConfirmDialog(false);
+    toast.success("Exercise reset!", {
+      description: "You can start fresh now.",
+    });
+  };
+
   const navigateQuestion = (direction: "prev" | "next") => {
     if (!exerciseSet) return;
-    
+
     if (direction === "prev" && currentQuestionIndex > 0) {
       setCurrentQuestionIndex((prev) => prev - 1);
     } else if (direction === "next" && currentQuestionIndex < exerciseSet.exercises.length - 1) {
@@ -272,7 +377,7 @@ export default function GrammarPracticePage() {
                     exercise={exercise}
                     index={idx}
                     userAnswer={feedback?.userAnswer}
-                    onAnswerChange={() => {}}
+                    onAnswerChange={() => { }}
                     showResult={true}
                     isCorrect={feedback?.correct}
                     disabled={true}
@@ -296,15 +401,47 @@ export default function GrammarPracticePage() {
           <CardContent className="py-12 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Already Completed</h2>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-6">
               You have already submitted answers for this exercise set.
             </p>
-            <Button onClick={() => router.push("/ai/grammar")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Grammar
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button variant="outline" onClick={() => router.push("/ai/grammar")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Grammar
+              </Button>
+              <Button onClick={() => setShowRetryDialog(true)} disabled={isResetting}>
+                <RefreshCw className={cn("w-4 h-4 mr-2", isResetting && "animate-spin")} />
+                Retry Exercise
+              </Button>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Retry Confirmation Dialog */}
+        <AlertDialog open={showRetryDialog} onOpenChange={setShowRetryDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Retry this exercise?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your previous progress for this exercise will be deleted. You will start fresh
+                and can submit a new result. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isResetting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRetry} disabled={isResetting}>
+                {isResetting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Resetting...
+                  </>
+                ) : (
+                  "Reset & Retry"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </AiPageWrapper>
     );
   }
@@ -330,13 +467,25 @@ export default function GrammarPracticePage() {
       {/* Exercise Info */}
       {exerciseSet && (
         <>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-1">{exerciseSet.grammarPoint}</h1>
-            <p className="text-muted-foreground">
-              Level: {exerciseSet.cefrLevel}
-              {exerciseSet.theme && ` • Theme: ${exerciseSet.theme}`}
-            </p>
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold mb-1">{exerciseSet.grammarPoint}</h1>
+              <p className="text-muted-foreground">
+                Level: {exerciseSet.cefrLevel}
+                {exerciseSet.theme && ` • Theme: ${exerciseSet.theme}`}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetryDuringPractice}
+              className="flex-shrink-0"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Làm lại
+            </Button>
           </div>
+
 
           {/* Explanation */}
           {exerciseSet.explanation && (
@@ -383,7 +532,7 @@ export default function GrammarPracticePage() {
               value={((currentQuestionIndex + 1) / exerciseSet.exercises.length) * 100}
               className="h-2"
             />
-            
+
             {/* Question indicators */}
             <div className="flex flex-wrap gap-2 mt-3">
               {exerciseSet.exercises.map((_, idx) => {
@@ -473,6 +622,24 @@ export default function GrammarPracticePage() {
             <AlertDialogCancel>Review Answers</AlertDialogCancel>
             <AlertDialogAction onClick={() => handleSubmit(true)}>
               Submit Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Retry During Practice Confirmation Dialog */}
+      <AlertDialog open={showRetryConfirmDialog} onOpenChange={setShowRetryConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc muốn làm lại bài tập?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Kết quả hiện tại sẽ bị xóa và không thể khôi phục. Bạn có {getAnsweredCount()} câu trả lời chưa được lưu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tiếp tục làm bài</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRetryDuringPractice} className="bg-destructive hover:bg-destructive/90">
+              Làm lại từ đầu
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

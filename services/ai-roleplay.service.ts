@@ -32,7 +32,7 @@ export const aiRolePlayService = {
     data: RolePlayStartConversationDTO
   ): Promise<RolePlayConversationDTO> => {
     const response = await api.post<RolePlayConversationDTO>(
-      `${BASE_URL}/conversations/start`,
+      `${BASE_URL}/conversations`,
       data
     );
     return response.data;

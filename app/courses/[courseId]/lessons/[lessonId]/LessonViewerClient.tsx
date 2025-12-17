@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, CheckCircle2, Loader2, Menu } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, Loader2, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +11,7 @@ import { LessonSidebar } from "@/components/lessons/LessonSidebar";
 import { toast } from "sonner";
 import lessonService from "@/services/lessonService";
 import progressService from "@/services/progressService";
+import { aiFlashcardService } from "@/services/ai-flashcard.service";
 import { useLessonNavigation } from "@/hooks/useLessonNavigation";
 import type { Lesson } from "@/types/lesson";
 import { parseLessonContent, LESSON_TYPE_INFO } from "@/types/lesson";
@@ -32,6 +33,9 @@ export default function LessonViewerClient({
     const [isCompleted, setIsCompleted] = useState(false);
     const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+    const [hasFlashcards, setHasFlashcards] = useState(false);
+    const [flashcardDeckId, setFlashcardDeckId] = useState<string | null>(null);
+    const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
 
     const lessonId = parseInt(lessonIdParam);
     const courseId = parseInt(courseIdParam);
@@ -49,8 +53,42 @@ export default function LessonViewerClient({
     useEffect(() => {
         fetchLesson();
         fetchProgress();
+        checkFlashcards();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lessonId]);
+
+    const checkFlashcards = async () => {
+        try {
+            const { exists, deckId } = await aiFlashcardService.checkLessonDeck(lessonId);
+            setHasFlashcards(exists);
+            setFlashcardDeckId(deckId ? deckId.toString() : null);
+        } catch (error) {
+            console.error("Failed to check flashcards:", error);
+        }
+    };
+
+    const handleFlashcards = async () => {
+        if (hasFlashcards && flashcardDeckId) {
+            router.push(`/ai/flashcards/${flashcardDeckId}`);
+            return;
+        }
+
+        setIsGeneratingFlashcards(true);
+        try {
+            const deck = await aiFlashcardService.generateFlashcards({
+                lessonId: lessonId,
+                // cefrLevel will be determined by backend if not provided
+            });
+            toast.success("Flashcards generated successfully!");
+            router.push(`/ai/flashcards/${deck.id}`);
+        } catch (error: any) {
+            toast.error("Failed to generate flashcards", {
+                description: error.response?.data?.message || "Please try again later.",
+            });
+        } finally {
+            setIsGeneratingFlashcards(false);
+        }
+    };
 
     const fetchLesson = async () => {
         setIsLoading(true);
@@ -198,6 +236,20 @@ export default function LessonViewerClient({
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="hidden sm:flex gap-2"
+                            onClick={handleFlashcards}
+                            disabled={isGeneratingFlashcards}
+                        >
+                            {isGeneratingFlashcards ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4 text-yellow-500" />
+                            )}
+                            {hasFlashcards ? "Study Flashcards" : "Create Flashcards"}
+                        </Button>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
                             <span>{lesson.durationMinutes} min</span>

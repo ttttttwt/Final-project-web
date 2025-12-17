@@ -1,11 +1,13 @@
 "use client";
 
 import { memo, useCallback } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { FlashcardCardDTO } from "@/types/ai";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Volume2, Lightbulb, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon } from "lucide-react";
 
 interface FlashCardProps {
   card: FlashcardCardDTO;
@@ -42,6 +44,14 @@ export const FlashCard = memo(function FlashCard({
     [onFlip]
   );
 
+  const playAudio = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (card.back.audioUrl) {
+      const audio = new Audio(card.back.audioUrl);
+      audio.play().catch(err => console.error("Audio playback failed:", err));
+    }
+  }, [card.back.audioUrl]);
+
   return (
     <div
       className={cn("flashcard-container w-full h-full", className)}
@@ -55,14 +65,27 @@ export const FlashCard = memo(function FlashCard({
       <div className={cn("flashcard-inner", isFlipped && "flipped")}>
         {/* Front Face */}
         <Card className="flashcard-face flashcard-front flex flex-col items-center justify-center p-8 bg-card border-2 border-border hover:border-primary/50 transition-colors cursor-pointer">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+          <div className="text-center space-y-4 w-full">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground break-words">
               {card.front}
             </h2>
             {card.back.pronunciation && (
-              <p className="text-lg text-muted-foreground font-mono">
-                {card.back.pronunciation}
-              </p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-lg text-muted-foreground font-mono">
+                  {card.back.pronunciation}
+                </p>
+                {card.back.audioUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full hover:bg-primary/10"
+                    onClick={playAudio}
+                    aria-label="Play pronunciation"
+                  >
+                    <Volume2 className="w-4 h-4 text-primary" />
+                  </Button>
+                )}
+              </div>
             )}
             {card.back.partOfSpeech && (
               <Badge variant="secondary" className="text-sm">
@@ -70,7 +93,7 @@ export const FlashCard = memo(function FlashCard({
               </Badge>
             )}
             {showHint && (
-              <div className="flex items-center gap-2 text-muted-foreground mt-4">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
                 <Lightbulb className="w-4 h-4" />
                 <span className="text-sm">Tap or press Space to reveal</span>
               </div>
@@ -84,20 +107,42 @@ export const FlashCard = memo(function FlashCard({
             {/* Term and pronunciation */}
             <div className="text-center border-b border-border pb-4">
               <h3 className="text-2xl font-bold text-foreground">{card.front}</h3>
-              {card.back.pronunciation && (
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <Volume2 className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center justify-center gap-2 mt-2">
+                {card.back.pronunciation && (
                   <span className="text-muted-foreground font-mono">
                     {card.back.pronunciation}
                   </span>
-                </div>
-              )}
+                )}
+                {card.back.audioUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-full hover:bg-primary/10"
+                    onClick={playAudio}
+                  >
+                    <Volume2 className="w-3 h-3 text-primary" />
+                  </Button>
+                )}
+              </div>
               {card.back.partOfSpeech && (
                 <Badge variant="outline" className="mt-2">
                   {card.back.partOfSpeech}
                 </Badge>
               )}
             </div>
+
+            {/* Image */}
+            {card.back.imageUrl && (
+              <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted/30 border border-border">
+                <Image
+                  src={card.back.imageUrl}
+                  alt={card.front}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 300px"
+                />
+              </div>
+            )}
 
             {/* Definition */}
             <div>
@@ -153,6 +198,25 @@ export const FlashCard = memo(function FlashCard({
                     </Badge>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {card.back.notes && card.back.notes.length > 0 && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-lg p-4 border border-yellow-100 dark:border-yellow-900/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                  <h4 className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">
+                    Notes
+                  </h4>
+                </div>
+                <ul className="list-disc list-inside space-y-1">
+                  {card.back.notes.map((note, index) => (
+                    <li key={index} className="text-sm text-foreground/90">
+                      {note}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

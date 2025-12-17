@@ -21,6 +21,7 @@ import {
   TrendingUp,
   RefreshCw,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -254,16 +255,54 @@ export default function FlashcardsPage() {
         </Card>
       )}
 
-      {/* Deck Grid */}
+      {/* Deck Grid - Grouped */}
       {!isLoading && !error && filteredDecks.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-          {filteredDecks.map((deck) => (
-            <DeckCard
-              key={deck.id}
-              deck={deck}
-              onStudy={handleStudy}
-              onView={handleView}
-            />
+        <div className="space-y-8">
+          {Object.entries(
+            filteredDecks.reduce((acc, deck) => {
+              const courseTitle = deck.courseTitle || "Other Decks";
+              const lessonTitle = deck.lessonTitle || "General";
+
+              if (!acc[courseTitle]) {
+                acc[courseTitle] = {};
+              }
+              if (!acc[courseTitle][lessonTitle]) {
+                acc[courseTitle][lessonTitle] = [];
+              }
+              acc[courseTitle][lessonTitle].push(deck);
+              return acc;
+            }, {} as Record<string, Record<string, FlashcardDeckDTO[]>>)
+          ).map(([courseTitle, lessons]) => (
+            <div key={courseTitle} className="space-y-4">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-primary">
+                <Layers className="w-5 h-5" />
+                {courseTitle}
+              </h2>
+              
+              <div className="pl-4 border-l-2 border-muted space-y-6">
+                {Object.entries(lessons).map(([lessonTitle, decks]) => (
+                  <div key={lessonTitle} className="space-y-3">
+                    {lessonTitle !== "General" && (
+                      <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        {lessonTitle}
+                      </h3>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+                      {decks.map((deck) => (
+                        <DeckCard
+                          key={deck.id}
+                          deck={deck}
+                          onStudy={handleStudy}
+                          onView={handleView}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

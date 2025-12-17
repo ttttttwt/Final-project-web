@@ -226,6 +226,8 @@ export interface FlashcardDeckDTO {
   description?: string;
   sourceType: "LESSON" | "AI_GENERATED" | "USER_CREATED";
   sourceId?: number;
+  courseTitle?: string;
+  lessonTitle?: string;
   cefrLevel?: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   cards: FlashcardCardDTO[];
   cardCount: number;
@@ -233,6 +235,9 @@ export interface FlashcardDeckDTO {
   updatedAt: string;
   // Optional progress fields from backend
   dueCount?: number;
+  newCount?: number;
+  masteredCount?: number;
+  accuracyRate?: number;
   masteryLevel?: number;
   nextReview?: string;
 }

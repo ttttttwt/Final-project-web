@@ -117,18 +117,20 @@ function VocabularyItem({ item, isExpanded, onToggle }: VocabularyItemProps) {
         isExpanded ? "shadow-sm" : ""
       )}
     >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors rounded-lg cursor-pointer"
-        aria-expanded={isExpanded}
-      >
-        <ChevronRight
-          className={cn(
-            "w-4 h-4 text-muted-foreground transition-transform duration-200",
-            isExpanded ? "rotate-90" : ""
-          )}
-        />
-        <span className="font-medium text-sm flex-1">{item.term}</span>
+      <div className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors rounded-lg">
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+          aria-expanded={isExpanded}
+        >
+          <ChevronRight
+            className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform duration-200",
+              isExpanded ? "rotate-90" : ""
+            )}
+          />
+          <span className="font-medium text-sm">{item.term}</span>
+        </button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -155,7 +157,7 @@ function VocabularyItem({ item, isExpanded, onToggle }: VocabularyItemProps) {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </button>
+      </div>
 
       {isExpanded && (
         <div className="px-3 pb-3 space-y-2 animate-in slide-in-from-top-1 duration-200">

@@ -11,6 +11,11 @@ import {
 } from "@/types/ai";
 import { aiGrammarService } from "@/services/ai-grammar.service";
 import {
+  saveGeneratedExercise,
+  getGeneratedExercise,
+  clearGeneratedExercise,
+} from "@/lib/grammarStorage";
+import {
   TopicSelector,
   ExerciseSetCard,
   ExerciseSetCardSkeleton,
@@ -41,6 +46,7 @@ import {
   Clock,
   GraduationCap,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -87,11 +93,35 @@ export default function GrammarPage() {
   const [stats, setStats] = useState<GrammarStatsDTO | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
-  // Load history when tab changes
+  // Load stats on initial render for consistent "Your Progress" display
+  useEffect(() => {
+    loadStats();
+    // Restore saved generated exercise from localStorage
+    const savedExercise = getGeneratedExercise();
+    if (savedExercise) {
+      setGeneratedSet(savedExercise);
+      toast.info("Restored your previously generated exercise");
+    }
+  }, []);
+
+  // Warn before leaving page with generated but not started exercise
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (generatedSet) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [generatedSet]);
+
+  // Load history when switching to history tab
   useEffect(() => {
     if (activeTab === "history" && history.length === 0) {
       loadHistory();
-      loadStats();
     }
   }, [activeTab]);
 
@@ -141,6 +171,8 @@ export default function GrammarPage() {
     try {
       const exerciseSet = await aiGrammarService.generateExercises(formData);
       setGeneratedSet(exerciseSet);
+      // Save to localStorage for persistence
+      saveGeneratedExercise(exerciseSet);
       toast.success("Exercises generated!", {
         description: `${exerciseSet.exerciseCount} exercises on ${exerciseSet.grammarPoint}`,
       });
@@ -155,8 +187,16 @@ export default function GrammarPage() {
 
   const handleStartPractice = () => {
     if (generatedSet) {
+      // Clear localStorage since user is starting the exercise
+      clearGeneratedExercise();
       router.push(`/ai/grammar/${generatedSet.id}`);
     }
+  };
+
+  const handleClearGeneratedExercise = () => {
+    clearGeneratedExercise();
+    setGeneratedSet(null);
+    toast.info("Generated exercise cleared");
   };
 
   return (
@@ -189,8 +229,8 @@ export default function GrammarPage() {
         </TabsList>
 
         {/* Generate Tab */}
-        <TabsContent value="generate" className="space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
+        <TabsContent value="generate" className="space-y-4">
+          <div className="grid lg:grid-cols-3 gap-4">
             {/* Form Section */}
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -199,7 +239,7 @@ export default function GrammarPage() {
                   Create Your Exercise Set
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* CEFR Level */}
                 <div className="space-y-2">
                   <Label htmlFor="cefr-level">Your Level</Label>
@@ -223,14 +263,14 @@ export default function GrammarPage() {
                           {level === "A1"
                             ? "Beginner"
                             : level === "A2"
-                            ? "Elementary"
-                            : level === "B1"
-                            ? "Intermediate"
-                            : level === "B2"
-                            ? "Upper Intermediate"
-                            : level === "C1"
-                            ? "Advanced"
-                            : "Proficient"}
+                              ? "Elementary"
+                              : level === "B1"
+                                ? "Intermediate"
+                                : level === "B2"
+                                  ? "Upper Intermediate"
+                                  : level === "C1"
+                                    ? "Advanced"
+                                    : "Proficient"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -408,9 +448,9 @@ export default function GrammarPage() {
                 </Card>
               ) : (
                 <Card className="border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                      <Sparkles className="w-8 h-8 text-muted-foreground" />
+                  <CardContent className="py-8 text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-muted-foreground" />
                     </div>
                     <h3 className="font-medium mb-1">No Exercise Set Yet</h3>
                     <p className="text-sm text-muted-foreground">

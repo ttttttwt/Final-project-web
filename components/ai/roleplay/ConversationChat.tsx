@@ -232,7 +232,14 @@ export function ConversationChat({
             ))}
 
             {/* Typing Indicator */}
-            {isSending && <TypingIndicator />}
+            {isSending && (
+              <div className="flex gap-3 max-w-[85%] mr-auto">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <TypingIndicator />
+              </div>
+            )}
 
             {/* Conversation Ended Badge */}
             {isConversationEnded && (

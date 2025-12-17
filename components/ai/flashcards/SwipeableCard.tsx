@@ -46,12 +46,39 @@ export function SwipeableCard({
   const rotation = deltaX * ROTATION_FACTOR;
   const isSwipingLeft = deltaX < -50;
   const isSwipingRight = deltaX > 50;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-focus the card container for keyboard support
+  useEffect(() => {
+    if (!disabled && containerRef.current) {
+      containerRef.current.focus();
+    }
+  }, [card, disabled]);
 
   const handleFlip = useCallback(() => {
     const newFlipped = !isFlipped;
     setIsFlipped(newFlipped);
     onFlip?.(newFlipped);
   }, [isFlipped, onFlip]);
+
+  // Keyboard handler for direct card interaction
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (disabled) return;
+
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        handleFlip();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        onSwipeLeft();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        onSwipeRight();
+      }
+    },
+    [disabled, handleFlip, onSwipeLeft, onSwipeRight]
+  );
 
   const handleDragStart = useCallback(
     (clientX: number) => {
@@ -149,11 +176,16 @@ export function SwipeableCard({
     handleDragEnd();
   }, [handleDragEnd]);
 
-  // Note: Keyboard handling is done by useFlashcardKeyboard hook in the parent component
-  // This component only handles touch/mouse gestures
+  // Note: Keyboard handling is also done by useFlashcardKeyboard hook in the parent component
+  // This component provides direct keyboard handling for better focus management
 
   return (
-    <div className={cn("relative", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative outline-none", className)}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       {/* Swipe indicators */}
       <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-between px-4">
         <div
