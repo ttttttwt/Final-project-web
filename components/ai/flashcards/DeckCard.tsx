@@ -67,14 +67,14 @@ export function DeckCard({
   return (
     <Card
       className={cn(
-        "group hover:shadow-lg transition-all duration-300 cursor-pointer border-2",
+        "group h-full flex flex-col hover:shadow-lg transition-all duration-300 cursor-pointer border-2",
         hasDueCards
           ? "border-primary/30 hover:border-primary/60"
           : "hover:border-primary/50",
         className
       )}
-      onClick={() => onView?.(deck)}
-    >
+      onClick={() => onView?.(deck)}>
+
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -107,16 +107,14 @@ export function DeckCard({
             </div>
 
             {/* Title */}
-            <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1 min-h-[1.75rem]">
               {deck.title}
             </h3>
 
             {/* Description */}
-            {deck.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {deck.description}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-[2.5rem]">
+              {deck.description || "\u00A0"}
+            </p>
           </div>
 
           {/* Icon */}
@@ -128,7 +126,7 @@ export function DeckCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pb-3 space-y-3">
+      <CardContent className="pb-3 space-y-3 flex-1">
         {/* Stats row */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
@@ -157,7 +155,7 @@ export function DeckCard({
         )}
       </CardContent>
 
-      <CardFooter className="pt-3 flex gap-2">
+      <CardFooter className="pt-3 flex gap-2 mt-auto">
         <Button
           variant={hasDueCards ? "default" : "outline"}
           size="sm"
@@ -192,7 +190,7 @@ export function DeckCard({
  */
 export function DeckCardSkeleton({ className }: { className?: string }) {
   return (
-    <Card className={cn("animate-pulse", className)}>
+    <Card className={cn("animate-pulse h-full flex flex-col", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 space-y-2">

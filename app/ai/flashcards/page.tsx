@@ -209,7 +209,7 @@ export default function FlashcardsPage() {
       {isLoading && (
         <div className="space-y-4">
           <AiLoadingState variant="studying" message="Loading your flashcard decks..." />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <FlashcardDeckSkeleton key={i} />
             ))}
@@ -228,15 +228,15 @@ export default function FlashcardsPage() {
               {searchQuery
                 ? "No matching decks found"
                 : activeTab === "due"
-                ? "No cards due for review"
-                : "No flashcard decks yet"}
+                  ? "No cards due for review"
+                  : "No flashcard decks yet"}
             </h3>
             <p className="text-muted-foreground mb-4 max-w-md">
               {searchQuery
                 ? "Try a different search term."
                 : activeTab === "due"
-                ? "Great job! You're all caught up. Check back later."
-                : "Create your first deck or generate flashcards from a lesson to get started."}
+                  ? "Great job! You're all caught up. Check back later."
+                  : "Create your first deck or generate flashcards from a lesson to get started."}
             </p>
             {!searchQuery && activeTab === "all" && (
               <div className="flex gap-3">
@@ -256,7 +256,7 @@ export default function FlashcardsPage() {
 
       {/* Deck Grid */}
       {!isLoading && !error && filteredDecks.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {filteredDecks.map((deck) => (
             <DeckCard
               key={deck.id}
