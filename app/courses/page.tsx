@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Grid3x3, List, SlidersHorizontal } from "lucide-react";
+import { Search, Grid3x3, List, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { MainLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { CourseCard } from "@/components/courses";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { courseService, CourseSearchParams } from "@/services/courseService";
 import { enrollmentService } from "@/services/enrollmentService";
+import { useAuth } from "@/hooks/useAuth";
 import { Course, Enrollment } from "@/types/course";
 import { toast } from "sonner";
 import axios from "axios";
@@ -51,6 +52,7 @@ export default function CoursesPage() {
 function CoursesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   // State
   const [courses, setCourses] = React.useState<Course[]>([]);
@@ -230,6 +232,15 @@ function CoursesPageContent() {
    * Handle view detail click
    */
   const handleEnroll = (courseId: string) => {
+    const enrollment = getEnrollmentForCourse(Number(courseId));
+    
+    // If not enrolled and no placement test result, block access
+    if (!enrollment && !user?.currentLevel) {
+      toast.error("Please complete the placement test to enroll in courses");
+      router.push("/placement-test");
+      return;
+    }
+    
     router.push(`/courses/${courseId}`);
   };
 
@@ -256,6 +267,29 @@ function CoursesPageContent() {
           Browse and enroll in English learning courses
         </p>
       </div>
+
+      {/* Placement Test Banner */}
+      {!isLoading && !user?.currentLevel && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="p-2 bg-yellow-100 dark:bg-yellow-900/40 rounded-full text-yellow-700 dark:text-yellow-400 shrink-0">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
+              Placement Test Required
+            </h3>
+            <p className="text-yellow-700 dark:text-yellow-400 mb-3 text-sm md:text-base">
+              To ensure you get the most out of your learning journey, please complete our quick placement test. This helps us recommend the right courses for your level. You cannot enroll in new courses until you complete this test.
+            </p>
+            <Button 
+              onClick={() => router.push("/placement-test")}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white border-none shadow-sm"
+            >
+              Take Placement Test
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Search and Controls */}
       <div className="flex flex-col md:flex-row gap-4">
