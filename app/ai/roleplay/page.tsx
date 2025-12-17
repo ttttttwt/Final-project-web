@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +34,9 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Trash2,
+  Search,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -102,7 +105,7 @@ export default function RolePlayPage() {
         mode,
       };
       const conversation = await aiRolePlayService.startConversation(data);
-      
+
       // Navigate to the conversation page
       router.push(`/ai/roleplay/${conversation.id}`);
     } catch (err: any) {
@@ -273,8 +276,8 @@ export default function RolePlayPage() {
               {isGenerating && (
                 <div className="space-y-4">
                   <RoleplaySkeleton />
-                  <AiLoadingState 
-                    variant="generating" 
+                  <AiLoadingState
+                    variant="generating"
                     message="Creating your personalized scenario..."
                   />
                 </div>
@@ -327,34 +330,89 @@ export default function RolePlayPage() {
   );
 }
 
-// Helper component for conversation history
+// Helper component for conversation history with filters
+type StatusFilter = "all" | "in_progress" | "completed";
+
 function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Load conversations on mount
-  useState(() => {
-    loadConversations();
-  });
-
-  async function loadConversations() {
+  // Load conversations on mount and when filter changes
+  const loadConversations = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const response = await aiRolePlayService.getConversations(0, 20);
+      const status = statusFilter === "all" ? undefined : statusFilter;
+      const response = await aiRolePlayService.getConversations(0, 50);
       setConversations(response.content || []);
     } catch (err) {
       setError("Failed to load conversations");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [statusFilter]);
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  // Delete conversation handler
+  const handleDelete = async (e: React.MouseEvent, convId: string, status: string) => {
+    e.stopPropagation();
+
+    if (status === "in_progress") {
+      toast.error("Cannot delete", {
+        description: "Please complete or end this conversation first.",
+      });
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingId(convId);
+    try {
+      await aiRolePlayService.deleteConversation(convId);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      toast.success("Conversation deleted");
+    } catch (err) {
+      toast.error("Failed to delete conversation");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Filter conversations
+  const filteredConversations = conversations.filter((conv) => {
+    // Status filter
+    if (statusFilter !== "all" && conv.status !== statusFilter) {
+      return false;
+    }
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const firstMessage = conv.messages?.[0]?.content?.toLowerCase() || "";
+      return firstMessage.includes(query);
+    }
+    return true;
+  });
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <ScenarioCardSkeleton key={i} />
-        ))}
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <div className="h-10 w-64 bg-muted animate-pulse rounded-md" />
+          <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <ScenarioCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -365,58 +423,132 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
         <CardContent className="pt-6 text-center">
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="pt-6 text-center py-12">
-          <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-semibold text-lg">No Conversations Yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Start a new conversation to see it here.
-          </p>
+          <Button variant="outline" onClick={loadConversations} className="mt-4">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {conversations.map((conv) => (
-        <Card
-          key={conv.id}
-          className="cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => onResume(conv.id)}
-        >
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span
-                className={cn(
-                  "text-xs px-2 py-1 rounded-full",
-                  conv.status === "in_progress"
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {conv.status === "in_progress" ? "In Progress" : "Completed"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {conv.mode === "learning" ? "Learning" : "Immersive"}
-              </span>
-            </div>
-            <p className="text-sm font-medium line-clamp-2">
-              {conv.messages?.[0]?.content || "No messages yet"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              {conv.messages?.length || 0} messages
+    <div className="space-y-4">
+      {/* Filters and Search */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          {[
+            { value: "all", label: "All" },
+            { value: "in_progress", label: "Ongoing" },
+            { value: "completed", label: "Completed" },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value as StatusFilter)}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                statusFilter === tab.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Empty State */}
+      {filteredConversations.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="pt-6 text-center py-12">
+            <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold text-lg">
+              {conversations.length === 0 ? "No Conversations Yet" : "No Matches"}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {conversations.length === 0
+                ? "Start a new conversation to see it here."
+                : "No conversations match your filter."}
             </p>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredConversations.map((conv) => (
+            <Card
+              key={conv.id}
+              className="cursor-pointer hover:border-primary/50 transition-colors group relative"
+              onClick={() => onResume(conv.id)}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-full",
+                      conv.status === "in_progress"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                        : conv.status === "completed"
+                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                          : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {conv.status === "in_progress" ? "Ongoing" : conv.status === "completed" ? "Completed" : "Ended"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {conv.mode === "learning" ? "Learning" : "Immersive"}
+                  </span>
+                </div>
+                <p className="text-sm font-medium line-clamp-2 pr-8">
+                  {conv.messages?.[0]?.content || "No messages yet"}
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    {conv.messages?.length || 0} messages
+                  </p>
+                  {conv.createdAt && (
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(conv.createdAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+
+                {/* Delete Button */}
+                <button
+                  onClick={(e) => handleDelete(e, conv.id, conv.status)}
+                  disabled={deletingId === conv.id}
+                  className={cn(
+                    "absolute top-3 right-3 p-1.5 rounded-md transition-all",
+                    "opacity-0 group-hover:opacity-100",
+                    conv.status === "in_progress"
+                      ? "text-muted-foreground cursor-not-allowed"
+                      : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  )}
+                  title={conv.status === "in_progress" ? "Complete conversation first" : "Delete conversation"}
+                >
+                  {deletingId === conv.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

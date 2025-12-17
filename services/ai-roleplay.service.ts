@@ -112,4 +112,23 @@ export const aiRolePlayService = {
     const response = await api.post<RolePlayMessageDTO>(endpoint, data);
     return response.data;
   },
+
+  /**
+   * Delete a conversation (only completed or abandoned).
+   */
+  deleteConversation: async (conversationId: string): Promise<void> => {
+    await api.delete(`${BASE_URL}/conversations/${conversationId}`);
+  },
+
+  /**
+   * Generate dynamic prompts based on conversation context.
+   */
+  getDynamicPrompts: async (conversationId: string): Promise<string[]> => {
+    const response = await api.post<string[]>(
+      `${BASE_URL}/conversations/${conversationId}/suggest-prompts`
+    );
+    return response.data;
+  },
 };
+
+

@@ -8,6 +8,7 @@ import {
   RolePlayScenarioDTO,
   RolePlaySendMessageDTO,
 } from "@/types/ai";
+import { aiRolePlayService } from "@/services/ai-roleplay.service";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 import { RolePlaySidebar } from "./RolePlaySidebar";
@@ -56,6 +57,8 @@ export function ConversationChat({
   const [showSidebar, setShowSidebar] = useState(true);
   const [mode, setMode] = useState<"immersive" | "learning">(conversation.mode);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [dynamicPrompts, setDynamicPrompts] = useState<string[]>([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -98,9 +101,11 @@ export function ConversationChat({
     setInput("");
 
     try {
-      // Pass current mode to the send handler
       const response = await onSendMessage({ content: trimmedInput }, mode);
-      if (!response) {
+      if (response) {
+        // Fetch dynamic prompts after AI responds
+        fetchDynamicPrompts();
+      } else {
         toast.error("Failed to send message", {
           description: "Please try again.",
         });
@@ -152,6 +157,30 @@ export function ConversationChat({
   };
 
   const isConversationEnded = conversation.status !== "in_progress";
+
+  // Fetch dynamic prompts based on conversation context
+  const fetchDynamicPrompts = useCallback(async () => {
+    if (!conversation.id || isConversationEnded) return;
+
+    setIsLoadingPrompts(true);
+    try {
+      const prompts = await aiRolePlayService.getDynamicPrompts(conversation.id);
+      setDynamicPrompts(prompts);
+    } catch (error) {
+      // Silently fail - keep using scenario default prompts
+      console.warn("Failed to fetch dynamic prompts:", error);
+    } finally {
+      setIsLoadingPrompts(false);
+    }
+  }, [conversation.id, isConversationEnded]);
+
+  // Fetch initial dynamic prompts when conversation has AI messages
+  useEffect(() => {
+    const hasAiMessage = conversation.messages?.some(m => m.role === "ai");
+    if (hasAiMessage && dynamicPrompts.length === 0) {
+      fetchDynamicPrompts();
+    }
+  }, [conversation.messages, fetchDynamicPrompts, dynamicPrompts.length]);
 
   return (
     <div className={cn("flex h-full overflow-hidden", className)}>
@@ -340,6 +369,7 @@ export function ConversationChat({
         <RolePlaySidebar
           scenario={scenario}
           vocabulary={scenario?.keyVocabulary}
+          suggestedPrompts={dynamicPrompts.length > 0 ? dynamicPrompts : undefined}
           onSelectPrompt={(prompt: string) => setInput(prompt)}
           isOpen={showSidebar}
           onToggle={() => setShowSidebar(!showSidebar)}
@@ -365,6 +395,7 @@ export function ConversationChat({
             <RolePlaySidebar
               scenario={scenario}
               vocabulary={scenario?.keyVocabulary}
+              suggestedPrompts={dynamicPrompts.length > 0 ? dynamicPrompts : undefined}
               onSelectPrompt={(prompt: string) => setInput(prompt)}
               isOpen={true}
               onToggle={() => setShowSidebar(false)}
