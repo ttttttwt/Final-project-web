@@ -77,8 +77,8 @@ export function useAiQuota(feature?: string): AiQuota {
       setError(null);
 
       const endpoint = feature 
-        ? `/api/v1/ai/quota?feature=${feature}`
-        : "/api/v1/ai/quota";
+        ? `/ai/quota?feature=${feature}`
+        : "/ai/quota";
 
       const response = await api.get<AiQuotaResponse>(endpoint);
       const data = response.data;
