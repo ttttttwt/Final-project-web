@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { RolePlayMessageDTO } from "@/types/ai";
-import { User, Bot, AlertCircle, Lightbulb, BookOpen } from "lucide-react";
+import { User, Bot, AlertCircle, Lightbulb, BookOpen, Languages } from "lucide-react";
 import { format } from "date-fns";
 import {
   Tooltip,
@@ -10,6 +11,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { TranslationPopover } from "./TranslationPopover";
 
 interface MessageBubbleProps {
   message: RolePlayMessageDTO;
@@ -20,6 +23,7 @@ interface MessageBubbleProps {
 /**
  * Chat message bubble component for role-play conversations.
  * Displays user/AI messages with different styling and optional feedback.
+ * Supports text selection translation for AI messages.
  */
 export function MessageBubble({
   message,
@@ -28,57 +32,147 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const hasFeedback = isLearningMode && message.feedback && !isUser;
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  // Translation state
+  const [selectedText, setSelectedText] = useState<string>("");
+  const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [showFullTranslation, setShowFullTranslation] = useState(false);
 
   const formattedTime = message.timestamp
     ? format(new Date(message.timestamp), "HH:mm")
     : "";
 
+  // Handle text selection for translation
+  const handleMouseUp = useCallback(() => {
+    if (isUser) return; // Only allow translation for AI messages
+
+    const selection = window.getSelection();
+    const text = selection?.toString()?.trim();
+
+    if (text && text.length > 0 && text.length <= 500) {
+      const range = selection?.getRangeAt(0);
+      if (range) {
+        const rect = range.getBoundingClientRect();
+        setSelectedText(text);
+        setPopoverPosition({
+          x: rect.left + rect.width / 2 - 140, // Center popover
+          y: rect.bottom,
+        });
+      }
+    }
+  }, [isUser]);
+
+  // Close translation popover
+  const handleClosePopover = useCallback(() => {
+    setSelectedText("");
+    setPopoverPosition(null);
+    setShowFullTranslation(false);
+    // Clear selection
+    window.getSelection()?.removeAllRanges();
+  }, []);
+
+  // Translate full message
+  const handleTranslateFullMessage = useCallback(() => {
+    if (messageRef.current) {
+      const rect = messageRef.current.getBoundingClientRect();
+      setSelectedText(message.content);
+      setPopoverPosition({
+        x: rect.left,
+        y: rect.bottom,
+      });
+      setShowFullTranslation(true);
+    }
+  }, [message.content]);
+
   return (
-    <div
-      className={cn(
-        "flex gap-3 max-w-[85%] group",
-        isUser ? "ml-auto flex-row-reverse" : "mr-auto",
-        className
-      )}
-    >
-      {/* Avatar */}
+    <>
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+          "flex gap-3 max-w-[85%] group",
+          isUser ? "ml-auto flex-row-reverse" : "mr-auto",
+          className
         )}
-        aria-hidden="true"
       >
-        {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-      </div>
-
-      {/* Message Content */}
-      <div className="flex flex-col gap-1">
+        {/* Avatar */}
         <div
           className={cn(
-            "px-4 py-3 rounded-2xl text-sm leading-relaxed",
-            isUser
-              ? "bg-primary text-primary-foreground rounded-br-md"
-              : "bg-muted text-foreground rounded-bl-md"
+            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+            isUser ? "bg-primary text-primary-foreground" : "bg-muted"
           )}
+          aria-hidden="true"
         >
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
         </div>
 
-        {/* Timestamp */}
-        <span
-          className={cn(
-            "text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity",
-            isUser ? "text-right" : "text-left"
-          )}
-        >
-          {formattedTime}
-        </span>
+        {/* Message Content */}
+        <div className="flex flex-col gap-1">
+          <div
+            ref={messageRef}
+            onMouseUp={handleMouseUp}
+            className={cn(
+              "px-4 py-3 rounded-2xl text-sm leading-relaxed relative",
+              isUser
+                ? "bg-primary text-primary-foreground rounded-br-md"
+                : "bg-muted text-foreground rounded-bl-md cursor-text select-text"
+            )}
+          >
+            <p className="whitespace-pre-wrap">{message.content}</p>
 
-        {/* Learning Mode Feedback */}
-        {hasFeedback && <FeedbackSection feedback={message.feedback!} />}
+            {/* Translate button for AI messages */}
+            {!isUser && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -right-2 -bottom-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background shadow-sm border"
+                      onClick={handleTranslateFullMessage}
+                      aria-label="Translate message"
+                    >
+                      <Languages className="w-3.5 h-3.5 text-primary" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Translate to Vietnamese</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+
+          {/* Hint for text selection */}
+          {!isUser && (
+            <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-70 transition-opacity">
+              💡 Select text to translate
+            </span>
+          )}
+
+          {/* Timestamp */}
+          <span
+            className={cn(
+              "text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity",
+              isUser ? "text-right" : "text-left"
+            )}
+          >
+            {formattedTime}
+          </span>
+
+          {/* Learning Mode Feedback */}
+          {hasFeedback && <FeedbackSection feedback={message.feedback!} />}
+        </div>
       </div>
-    </div>
+
+      {/* Translation Popover */}
+      {selectedText && popoverPosition && (
+        <TranslationPopover
+          text={selectedText}
+          position={popoverPosition}
+          onClose={handleClosePopover}
+        />
+      )}
+    </>
   );
 }
 

@@ -29,6 +29,8 @@ export interface RolePlayScenarioDTO {
   objectives: string[];
   keyVocabulary: RolePlayVocabularyItemDTO[];
   openingLine?: string;
+  suggestedPrompts?: string[];
+  agenda?: string[];
   suggestedDuration?: number;
   isFallback?: boolean;
   createdAt?: string;
@@ -198,6 +200,17 @@ export interface GenerateFlashcardsDTO {
   includePronunciation?: boolean;
   includeSynonyms?: boolean;
   customTitle?: string;
+}
+
+export interface GenerateFlashcardsByTopicDTO {
+  topic: string;
+  customTitle?: string;
+  description?: string;
+  cefrLevel?: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  cardCount?: number;
+  focusAreas?: string[];
+  includeExamples?: boolean;
+  includePronunciation?: boolean;
 }
 
 export interface FlashcardBackDTO {

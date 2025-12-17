@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { RolePlayVocabularyItemDTO } from "@/types/ai";
-import { BookOpen, Volume2, ChevronRight, X } from "lucide-react";
+import { BookOpen, Volume2, ChevronRight, X, Languages, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -11,7 +11,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { translateText } from "@/services/translationService";
 
 interface VocabularyPanelProps {
   vocabulary: RolePlayVocabularyItemDTO[];
@@ -110,6 +111,33 @@ interface VocabularyItemProps {
 }
 
 function VocabularyItem({ item, isExpanded, onToggle }: VocabularyItemProps) {
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+
+  // Handle translate button click
+  const handleTranslate = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // If already translated, just toggle visibility
+    if (translation) {
+      setShowTranslation((prev) => !prev);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const result = await translateText(item.term, "vi", "en");
+      setTranslation(result);
+      setShowTranslation(true);
+    } catch {
+      setTranslation("Translation failed");
+      setShowTranslation(true);
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [item.term, translation]);
+
   return (
     <div
       className={cn(
@@ -131,6 +159,36 @@ function VocabularyItem({ item, isExpanded, onToggle }: VocabularyItemProps) {
           />
           <span className="font-medium text-sm">{item.term}</span>
         </button>
+
+        {/* Translate Button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-6 w-6 opacity-50 hover:opacity-100",
+                  showTranslation && "opacity-100 text-primary"
+                )}
+                onClick={handleTranslate}
+                disabled={isTranslating}
+                aria-label={`Translate ${item.term}`}
+              >
+                {isTranslating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Languages className="w-3.5 h-3.5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{showTranslation ? "Hide translation" : "Translate to Vietnamese"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* Pronounce Button */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -158,6 +216,23 @@ function VocabularyItem({ item, isExpanded, onToggle }: VocabularyItemProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Translation Display */}
+      {showTranslation && translation && (
+        <div className="px-3 pb-2 animate-in slide-in-from-top-1 duration-200">
+          <div className="pl-6 py-1.5 px-2 bg-primary/5 rounded-md border-l-2 border-primary relative group/translation">
+            <button
+              onClick={() => setShowTranslation(false)}
+              className="absolute top-1 right-1 p-0.5 rounded hover:bg-muted opacity-0 group-hover/translation:opacity-100 transition-opacity"
+              aria-label="Hide translation"
+            >
+              <X className="w-3 h-3 text-muted-foreground" />
+            </button>
+            <p className="text-xs text-muted-foreground">🇻🇳 Vietnamese:</p>
+            <p className="text-sm font-medium pr-4">{translation}</p>
+          </div>
+        </div>
+      )}
 
       {isExpanded && (
         <div className="px-3 pb-3 space-y-2 animate-in slide-in-from-top-1 duration-200">

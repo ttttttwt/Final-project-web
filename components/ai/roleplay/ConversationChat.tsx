@@ -12,9 +12,9 @@ import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 import { VocabularyPanel } from "./VocabularyPanel";
 import { ModeToggle, ModeDescription } from "./ModeToggle";
+import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
   Send,
@@ -56,18 +56,31 @@ export function ConversationChat({
   const [isEnding, setIsEnding] = useState(false);
   const [showVocabulary, setShowVocabulary] = useState(true);
   const [mode, setMode] = useState<"immersive" | "learning">(conversation.mode);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when new messages arrive
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((force = false) => {
+    // Don't auto-scroll if user is reading history, unless forced
+    if (!force && isUserScrolling) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [isUserScrolling]);
+
+  // Track user scroll position
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setIsUserScrolling(!isNearBottom);
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [conversation.messages, scrollToBottom]);
+    // Force scroll to bottom when new messages arrive and user is at bottom
+    if (!isUserScrolling) {
+      scrollToBottom(true);
+    }
+  }, [conversation.messages, scrollToBottom, isUserScrolling]);
 
   // Handle send message
   const handleSend = async () => {
@@ -126,14 +139,27 @@ export function ConversationChat({
     }
   };
 
+  // Check if user has a leadership role (should lead the conversation)
+  const isUserLeader = (roleName: string | undefined): boolean => {
+    if (!roleName) return false;
+    const leadershipKeywords = [
+      "manager", "lead", "leader", "director", "supervisor", "head",
+      "chair", "host", "interviewer", "doctor", "teacher", "instructor",
+      "moderator", "facilitator", "coordinator", "chief", "executive",
+      "president", "captain", "principal", "boss"
+    ];
+    const lowerRole = roleName.toLowerCase();
+    return leadershipKeywords.some(keyword => lowerRole.includes(keyword));
+  };
+
   const isConversationEnded = conversation.status !== "in_progress";
 
   return (
-    <div className={cn("flex h-full", className)}>
+    <div className={cn("flex h-full overflow-hidden", className)}>
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/50 backdrop-blur-sm">
+        <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center gap-3 min-w-0">
             <Button
               variant="ghost"
@@ -203,12 +229,16 @@ export function ConversationChat({
         </header>
 
         {/* Mode Description */}
-        <div className="px-4 py-2 border-b border-border bg-muted/30">
+        <div className="flex-shrink-0 px-4 py-2 border-b border-border bg-muted/30">
           <ModeDescription mode={mode} />
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+        {/* Messages - Scrollable Area */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto overscroll-contain p-4"
+        >
           <div className="space-y-4 max-w-3xl mx-auto">
             {/* Opening Line from Scenario */}
             {scenario?.openingLine && conversation.messages.length === 0 && (
@@ -250,9 +280,18 @@ export function ConversationChat({
               </div>
             )}
 
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="h-1" />
           </div>
-        </ScrollArea>
+        </div>
+
+        {/* Suggested Prompts */}
+        {!isConversationEnded && scenario?.suggestedPrompts && scenario.suggestedPrompts.length > 0 && (
+          <SuggestedPrompts
+            prompts={scenario.suggestedPrompts}
+            onSelect={(prompt) => setInput(prompt)}
+            isLeader={isUserLeader(scenario.yourRole)}
+          />
+        )}
 
         {/* Input Area */}
         {!isConversationEnded && (

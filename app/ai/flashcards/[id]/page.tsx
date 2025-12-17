@@ -205,7 +205,12 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" aria-label="Edit deck">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Edit deck"
+                onClick={() => router.push(`/ai/flashcards/${id}/edit`)}
+              >
                 <Edit className="w-4 h-4" />
               </Button>
               <Button

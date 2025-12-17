@@ -144,6 +144,11 @@ export default function FlashcardsPage() {
             <Button
               size="lg"
               onClick={() => {
+                // Guard against empty array
+                if (dueDecks.length === 0) {
+                  toast.error("No cards due", { description: "All decks are up to date!" });
+                  return;
+                }
                 // Start with the deck that has the most due cards
                 const deckWithMostDue = dueDecks.reduce((prev, current) =>
                   (current.dueCount ?? 0) > (prev.dueCount ?? 0) ? current : prev

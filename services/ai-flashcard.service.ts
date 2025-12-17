@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import { PaginatedResponse } from "@/types/common";
 import {
   GenerateFlashcardsDTO,
+  GenerateFlashcardsByTopicDTO,
   FlashcardDeckDTO,
   CreateFlashcardDeckDTO,
   UpdateFlashcardDeckDTO,
@@ -22,6 +23,19 @@ export const aiFlashcardService = {
   ): Promise<FlashcardDeckDTO> => {
     const response = await api.post<FlashcardDeckDTO>(
       `${BASE_URL}/generate`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate flashcards from a topic using AI.
+   */
+  generateFlashcardsByTopic: async (
+    data: GenerateFlashcardsByTopicDTO
+  ): Promise<FlashcardDeckDTO> => {
+    const response = await api.post<FlashcardDeckDTO>(
+      `${BASE_URL}/generate-by-topic`,
       data
     );
     return response.data;
