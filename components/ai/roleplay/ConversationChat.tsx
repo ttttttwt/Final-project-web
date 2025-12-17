@@ -10,9 +10,8 @@ import {
 } from "@/types/ai";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
-import { VocabularyPanel } from "./VocabularyPanel";
+import { RolePlaySidebar } from "./RolePlaySidebar";
 import { ModeToggle, ModeDescription } from "./ModeToggle";
-import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +53,7 @@ export function ConversationChat({
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
-  const [showVocabulary, setShowVocabulary] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [mode, setMode] = useState<"immersive" | "learning">(conversation.mode);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -195,16 +194,16 @@ export function ConversationChat({
               disabled={isConversationEnded}
             />
 
-            {/* Vocabulary Toggle (mobile) */}
+            {/* Sidebar Toggle (mobile) */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowVocabulary(!showVocabulary)}
+              onClick={() => setShowSidebar(!showSidebar)}
               className="lg:hidden"
-              aria-label={showVocabulary ? "Hide vocabulary" : "Show vocabulary"}
+              aria-label={showSidebar ? "Hide sidebar" : "Show sidebar"}
             >
               <BookOpen
-                className={cn("w-5 h-5", showVocabulary && "text-primary")}
+                className={cn("w-5 h-5", showSidebar && "text-primary")}
               />
             </Button>
 
@@ -232,6 +231,8 @@ export function ConversationChat({
         <div className="flex-shrink-0 px-4 py-2 border-b border-border bg-muted/30">
           <ModeDescription mode={mode} />
         </div>
+
+
 
         {/* Messages - Scrollable Area */}
         <div
@@ -284,14 +285,7 @@ export function ConversationChat({
           </div>
         </div>
 
-        {/* Suggested Prompts */}
-        {!isConversationEnded && scenario?.suggestedPrompts && scenario.suggestedPrompts.length > 0 && (
-          <SuggestedPrompts
-            prompts={scenario.suggestedPrompts}
-            onSelect={(prompt) => setInput(prompt)}
-            isLeader={isUserLeader(scenario.yourRole)}
-          />
-        )}
+
 
         {/* Input Area */}
         {!isConversationEnded && (
@@ -341,42 +335,39 @@ export function ConversationChat({
         )}
       </div>
 
-      {/* Vocabulary Panel (Desktop) */}
-      <div
-        className={cn(
-          "hidden lg:block transition-all duration-300",
-          showVocabulary ? "w-80" : "w-0 overflow-hidden"
-        )}
-      >
-        {scenario?.keyVocabulary && (
-          <VocabularyPanel
-            vocabulary={scenario.keyVocabulary}
-            isOpen={showVocabulary}
-            onClose={() => setShowVocabulary(false)}
-          />
-        )}
+      {/* Unified Sidebar (Desktop) */}
+      <div className="hidden lg:block">
+        <RolePlaySidebar
+          scenario={scenario}
+          vocabulary={scenario?.keyVocabulary}
+          onSelectPrompt={(prompt: string) => setInput(prompt)}
+          isOpen={showSidebar}
+          onToggle={() => setShowSidebar(!showSidebar)}
+        />
       </div>
 
-      {/* Vocabulary Panel (Mobile - Sheet/Drawer) */}
-      {showVocabulary && scenario?.keyVocabulary && (
+      {/* Sidebar (Mobile - Sheet/Drawer) */}
+      {showSidebar && (
         <div
           className="lg:hidden fixed inset-0 z-50"
           role="dialog"
           aria-modal="true"
-          aria-label="Vocabulary panel"
+          aria-label="Role play sidebar"
         >
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setShowVocabulary(false)}
+            onClick={() => setShowSidebar(false)}
             aria-hidden="true"
           />
           {/* Panel - slides in from right */}
           <div className="absolute right-0 top-0 h-full w-[min(320px,85vw)] bg-card shadow-xl animate-in slide-in-from-right duration-300">
-            <VocabularyPanel
-              vocabulary={scenario.keyVocabulary}
+            <RolePlaySidebar
+              scenario={scenario}
+              vocabulary={scenario?.keyVocabulary}
+              onSelectPrompt={(prompt: string) => setInput(prompt)}
               isOpen={true}
-              onClose={() => setShowVocabulary(false)}
+              onToggle={() => setShowSidebar(false)}
             />
           </div>
         </div>

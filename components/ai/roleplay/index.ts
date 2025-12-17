@@ -1,6 +1,8 @@
 export { ConversationChat } from "./ConversationChat";
+export { ContextPanel } from "./ContextPanel";
 export { MessageBubble } from "./MessageBubble";
 export { ModeToggle, ModeDescription } from "./ModeToggle";
+export { RolePlaySidebar } from "./RolePlaySidebar";
 export { ScenarioCard, ScenarioCardSkeleton } from "./ScenarioCard";
 export { SuggestedPrompts } from "./SuggestedPrompts";
 export { TranslationPopover } from "./TranslationPopover";

@@ -142,8 +142,8 @@ export default function RegisterPage() {
         description: "Welcome to LEXIA. Let's start your learning journey.",
       });
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to placement test
+      router.push("/placement-test");
     } catch (error) {
       // Error handling with specific messages
       const apiError = error as {

@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileForm, AvatarUpload } from "@/components/profile";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -24,6 +26,7 @@ import {
   Globe,
   Clock,
   Award,
+  RotateCcw,
 } from "lucide-react";
 import type { User } from "@/types/auth";
 
@@ -34,6 +37,7 @@ import type { User } from "@/types/auth";
  */
 export default function ProfilePage() {
   const { user, loadUser } = useAuth();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<typeof user>(null);
@@ -178,6 +182,26 @@ export default function ProfilePage() {
                       <Badge variant="secondary">
                         {profileData.currentLevel}
                       </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 text-xs ml-2"
+                        onClick={() => router.push("/placement-test")}
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" /> Retake Test
+                      </Button>
+                    </div>
+                  )}
+
+                  {!profileData.currentLevel && (
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => router.push("/placement-test")}
+                      >
+                        <Award className="w-4 h-4 mr-2" /> Take Placement Test
+                      </Button>
                     </div>
                   )}
 
