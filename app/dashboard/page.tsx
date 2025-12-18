@@ -18,6 +18,7 @@ import progressService from "@/services/progressService";
 import type { DashboardOverview } from "@/types/progress";
 import { BookOpen, CheckCircle, Flame, Clock, Trophy } from "lucide-react";
 import { toast } from "sonner";
+import { AiUsageSection } from "@/components/dashboard/AiUsageSection";
 
 /**
  * Dashboard Page
@@ -177,6 +178,9 @@ export default function DashboardPage() {
 
             {/* Right Column (1/3) */}
             <div className="space-y-8">
+              {/* AI Usage Section */}
+              <AiUsageSection compact />
+
               {/* Learning Path Section */}
               <LearningPathSection />
 

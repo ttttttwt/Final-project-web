@@ -333,8 +333,26 @@ export interface LessonDeckCheckResponse {
   deckId?: string;
 }
 
+// ==========================================
+// Quota Types
+// ==========================================
+
+/** Quota usage stats for a single feature */
+export interface QuotaUsage {
+  used: number;
+  limit: number;
+  percentage: number;
+  isWarning: boolean;   // > 80%
+  isCritical: boolean;  // > 95%
+  isExceeded: boolean;  // >= 100%
+}
+
+export type PlanType = 'FREE' | 'MONTHLY' | 'YEARLY';
+
 export interface UserAiQuota {
   userId: string;
+  
+  // Legacy daily/monthly limits
   dailyLimit: number;
   dailyUsed: number;
   lastResetDaily: string;
@@ -345,6 +363,26 @@ export interface UserAiQuota {
   suspended: boolean;
   isUnlimited: boolean;
   
+  // Subscription-based quota
+  planType: PlanType;
+  quotaResetDate: string;
+  daysUntilReset: number;
+  
+  // Session/Deck/Exercise counters with limits
+  roleplaySessionsUsed: number;
+  roleplaySessionsLimit: number;
+  flashcardDecksUsed: number;
+  flashcardDecksLimit: number;
+  grammarExercisesUsed: number;
+  grammarExercisesLimit: number;
+  totalRequestsUsed: number;
+  totalRequestsLimit: number;
+  
+  // Warning flags
+  quotaWarning: boolean;   // Any quota > 80%
+  quotaCritical: boolean;  // Any quota > 95%
+  
+  // Legacy feature-specific fields (daily)
   rolePlayDailyLimit: number;
   rolePlayUsedToday: number;
   rolePlayMonthlyLimit: number;
@@ -363,3 +401,33 @@ export interface UserAiQuota {
   totalUsedToday: number;
   totalDailyLimit: number;
 }
+
+/** Helper to calculate quota usage stats */
+export function calculateQuotaUsage(used: number, limit: number): QuotaUsage {
+  const percentage = limit > 0 ? (used / limit) * 100 : 0;
+  return {
+    used,
+    limit,
+    percentage,
+    isWarning: percentage >= 80 && percentage < 95,
+    isCritical: percentage >= 95 && percentage < 100,
+    isExceeded: percentage >= 100,
+  };
+}
+
+/** Quota limits by plan type */
+export const QUOTA_LIMITS = {
+  FREE: {
+    roleplaySessions: 10,
+    flashcardDecks: 10,
+    grammarExercises: 75,
+    totalRequests: 100,
+  },
+  PRO: {
+    roleplaySessions: 50,
+    flashcardDecks: 30,
+    grammarExercises: 300,
+    totalRequests: 300,
+  },
+} as const;
+
