@@ -47,3 +47,19 @@ export interface RefreshTokenRequest {
 }
 
 export interface RefreshTokenResponse extends AuthTokens {}
+
+/**
+ * Change password request - matches backend ChangePasswordDTO
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+/**
+ * Change password response - matches backend LogoutResponseDTO
+ */
+export interface ChangePasswordResponse {
+  message: string;
+}

@@ -432,6 +432,91 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="border-t bg-muted/50 py-20 md:py-28">
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">
+              Choose Your Plan
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+              Upgrade to Pro – Unlock unlimited learning and AI features.
+            </p>
+          </div>
+
+          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+            {/* Monthly Plan */}
+            <div className="flex flex-col rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-md">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold">Monthly</h3>
+                <p className="text-sm text-muted-foreground">
+                  Flexible plan for short-term learning
+                </p>
+              </div>
+              <div className="mb-6 flex items-baseline">
+                <span className="text-4xl font-bold">$9.99</span>
+                <span className="ml-2 text-muted-foreground">/mo</span>
+              </div>
+              <ul className="mb-8 flex-1 space-y-4 text-sm">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  50 Daily Usage Limit
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  AI Pronunciation Feedback
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  Priority Support
+                </li>
+              </ul>
+              <Link href="/pricing">
+                <Button className="w-full" variant="outline">
+                  Subscribe Monthly
+                </Button>
+              </Link>
+            </div>
+
+            {/* Yearly Plan */}
+            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-primary bg-card p-8 shadow-lg transition-all hover:shadow-xl">
+              <div className="absolute right-0 top-0 rounded-bl-xl bg-primary px-4 py-1 text-xs font-bold text-primary-foreground">
+                SAVE 20%
+              </div>
+              <div className="mb-6">
+                <h3 className="text-xl font-bold">Yearly</h3>
+                <p className="text-sm text-muted-foreground">
+                  Best value for committed learners
+                </p>
+              </div>
+              <div className="mb-6 flex items-baseline">
+                <span className="text-4xl font-bold">$95.99</span>
+                <span className="ml-2 text-muted-foreground">/yr</span>
+              </div>
+              <ul className="mb-8 flex-1 space-y-4 text-sm">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  Everything in Monthly
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  2 Months Free
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  Early Access to New Features
+                </li>
+              </ul>
+              <Link href="/pricing">
+                <Button className="w-full" size="lg">
+                  Subscribe Yearly
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative overflow-hidden border-t">
         <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-blue-500/10" />

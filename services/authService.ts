@@ -6,6 +6,8 @@ import {
   RefreshTokenRequest,
   RefreshTokenResponse,
   User,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
 } from "@/types/auth";
 
 // 🔐 SECURITY: Temporary localStorage token strategy (Sprint 3)
@@ -61,6 +63,22 @@ export const authService = {
    */
   getProfile: async (): Promise<User> => {
     const response = await api.get<User>("/users/profile");
+    return response.data;
+  },
+
+  /**
+   * Change password for authenticated user
+   * @param data - current password, new password, and confirmation
+   * @returns Success message
+   * @throws 400 if current password is incorrect or validation fails
+   */
+  changePassword: async (
+    data: ChangePasswordRequest
+  ): Promise<ChangePasswordResponse> => {
+    const response = await api.post<ChangePasswordResponse>(
+      "/auth/change-password",
+      data
+    );
     return response.data;
   },
 };

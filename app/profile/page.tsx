@@ -14,9 +14,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProfileForm, AvatarUpload } from "@/components/profile";
+import { ProfileForm, AvatarUpload, AIUsageStats } from "@/components/profile";
 import { userService } from "@/services/userService";
 import { subscriptionService, Subscription } from "@/services/subscriptionService";
+import { aiQuotaService } from "@/services/aiQuotaService";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { User } from "@/types/auth";
+import type { UserAiQuota } from "@/types/ai";
 
 /**
  * Profile Page
@@ -44,11 +46,13 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<typeof user>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [aiQuota, setAiQuota] = useState<UserAiQuota | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     fetchProfile();
     fetchSubscription();
+    fetchAiQuota();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,6 +75,15 @@ export default function ProfilePage() {
       setSubscription(data);
     } catch (error) {
       console.error("Failed to fetch subscription:", error);
+    }
+  };
+
+  const fetchAiQuota = async () => {
+    try {
+      const data = await aiQuotaService.getMyQuota();
+      setAiQuota(data);
+    } catch (error) {
+      console.error("Failed to fetch AI quota:", error);
     }
   };
 
@@ -208,9 +221,9 @@ export default function ProfilePage() {
                       <Badge variant="secondary">
                         {profileData.currentLevel}
                       </Badge>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-6 text-xs ml-2"
                         onClick={() => router.push("/placement-test")}
                       >
@@ -221,9 +234,9 @@ export default function ProfilePage() {
 
                   {!profileData.currentLevel && (
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => router.push("/placement-test")}
                       >
                         <Award className="w-4 h-4 mr-2" /> Take Placement Test
@@ -281,13 +294,13 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {subscription?.planType === "FREE" 
-                      ? "Upgrade to unlock unlimited usage and AI features." 
+                    {subscription?.planType === "FREE"
+                      ? "Upgrade to unlock unlimited usage and AI features."
                       : `Your plan renews on ${subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "..."}`
                     }
                   </p>
                 </div>
-                
+
                 {subscription?.planType === "FREE" ? (
                   <Button onClick={() => router.push("/pricing")}>
                     Upgrade to Pro
@@ -298,6 +311,13 @@ export default function ProfilePage() {
                   </Button>
                 )}
               </div>
+
+              {aiQuota && (
+                <AIUsageStats
+                  quota={aiQuota}
+                  nextBillingDate={subscription?.currentPeriodEnd}
+                />
+              )}
             </CardContent>
           </Card>
 

@@ -33,7 +33,9 @@ import {
   Palette,
   Save,
   Loader2,
+  Lock,
 } from "lucide-react";
+import { ChangePasswordForm } from "@/components/profile";
 
 interface UserSettings {
   language: string;
@@ -213,10 +215,9 @@ export default function SettingsPage() {
                     onClick={() => handleThemeChange("light")}
                     className={`
                       relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all
-                      ${
-                        theme === "light"
-                          ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      ${theme === "light"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                       }
                     `}
                   >
@@ -250,10 +251,9 @@ export default function SettingsPage() {
                     onClick={() => handleThemeChange("dark")}
                     className={`
                       relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all
-                      ${
-                        theme === "dark"
-                          ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      ${theme === "dark"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                       }
                     `}
                   >
@@ -285,10 +285,9 @@ export default function SettingsPage() {
                     onClick={() => handleThemeChange("system")}
                     className={`
                       relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all
-                      ${
-                        theme === "system"
-                          ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      ${theme === "system"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                       }
                     `}
                   >
@@ -495,6 +494,22 @@ export default function SettingsPage() {
                   functionality.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Settings */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <CardTitle>Security</CardTitle>
+              </div>
+              <CardDescription>
+                Manage your password and account security
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangePasswordForm />
             </CardContent>
           </Card>
 

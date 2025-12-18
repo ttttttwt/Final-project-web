@@ -259,7 +259,7 @@ export function Sidebar({
                       "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED]",
                       "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]",
                       pathname?.startsWith("/ai") &&
-                        "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
+                      "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
                     )}
                     aria-label="Toggle AI Features menu"
                   >
@@ -279,7 +279,7 @@ export function Sidebar({
                     )}
                   </button>
                 </CollapsibleTrigger>
-                
+
                 <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                   <ul className="ml-3 mt-1 space-y-1 border-l-2 border-[#E0E0E0] dark:border-[#2E2E2E] pl-3">
                     {aiFeatures.map((item) => {

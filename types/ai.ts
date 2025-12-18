@@ -332,3 +332,34 @@ export interface LessonDeckCheckResponse {
   exists: boolean;
   deckId?: string;
 }
+
+export interface UserAiQuota {
+  userId: string;
+  dailyLimit: number;
+  dailyUsed: number;
+  lastResetDaily: string;
+  monthlyLimit: number;
+  monthlyUsed: number;
+  lastResetMonthly: string;
+  isPremium: boolean;
+  suspended: boolean;
+  isUnlimited: boolean;
+  
+  rolePlayDailyLimit: number;
+  rolePlayUsedToday: number;
+  rolePlayMonthlyLimit: number;
+  rolePlayUsedMonth: number;
+  
+  grammarDailyLimit: number;
+  grammarUsedToday: number;
+  grammarMonthlyLimit: number;
+  grammarUsedMonth: number;
+  
+  flashcardDailyLimit: number;
+  flashcardUsedToday: number;
+  flashcardMonthlyLimit: number;
+  flashcardUsedMonth: number;
+  
+  totalUsedToday: number;
+  totalDailyLimit: number;
+}
