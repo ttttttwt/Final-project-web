@@ -14,6 +14,7 @@ import { ModeToggle, ModeDescription } from "@/components/ai/roleplay";
 import { AiPageWrapper, AiErrorCard, RoleplaySkeleton, AiLoadingState } from "@/components/ai/common";
 import { RetryButtonWithCountdown } from "@/components/ai/common";
 import { useRetryWithBackoff } from "@/hooks/useRetryWithBackoff";
+import { useCefrLevelRestriction } from "@/hooks/useCefrLevelRestriction";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +38,8 @@ import {
   Trash2,
   Search,
   Filter,
+  Lock,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -59,6 +62,7 @@ const DOMAINS = [
  */
 export default function RolePlayPage() {
   const router = useRouter();
+  const { userLevel, isAccessible, getWarning, allLevels, hasPlacementLevel } = useCefrLevelRestriction();
   const [activeTab, setActiveTab] = useState("generate");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isStarting, setIsStarting] = useState<string | null>(null);
@@ -66,13 +70,23 @@ export default function RolePlayPage() {
   const [mode, setMode] = useState<"immersive" | "learning">("learning");
   const [error, setError] = useState<string | null>(null);
 
-  // Form state for scenario generation
-  const [formData, setFormData] = useState<RolePlayRequestDTO>({
-    cefrLevel: "B1",
+  // Form state for scenario generation - default to user's level or A1
+  const [formData, setFormData] = useState<RolePlayRequestDTO>(() => ({
+    cefrLevel: (userLevel as "A1" | "A2" | "B1" | "B2" | "C1" | "C2") || "A1",
     domain: "meetings",
     industry: "",
     userContext: "",
-  });
+  }));
+
+  // Update form level when user level loads
+  useEffect(() => {
+    if (userLevel) {
+      setFormData((prev) => ({
+        ...prev,
+        cefrLevel: userLevel as typeof prev.cefrLevel,
+      }));
+    }
+  }, [userLevel]);
 
   // Generate a new scenario
   const handleGenerateScenario = async () => {
@@ -173,27 +187,58 @@ export default function RolePlayPage() {
               <CardContent className="space-y-4">
                 {/* CEFR Level */}
                 <div className="space-y-2">
-                  <Label htmlFor="cefrLevel">CEFR Level</Label>
+                  <Label htmlFor="cefrLevel">
+                    CEFR Level
+                    {hasPlacementLevel && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (Recommended: {userLevel})
+                      </span>
+                    )}
+                  </Label>
                   <Select
                     value={formData.cefrLevel}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const warning = getWarning(value);
+                      if (warning) {
+                        toast.warning("Level above your proficiency", {
+                          description: warning,
+                          duration: 5000,
+                        });
+                      }
                       setFormData((prev) => ({
                         ...prev,
                         cefrLevel: value as RolePlayRequestDTO["cefrLevel"],
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     <SelectTrigger id="cefrLevel">
                       <SelectValue placeholder="Select level" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CEFR_LEVELS.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level} - {getLevelDescription(level)}
-                        </SelectItem>
-                      ))}
+                      {allLevels.map((level) => {
+                        const accessible = isAccessible(level);
+                        return (
+                          <SelectItem key={level} value={level}>
+                            <div className="flex items-center gap-2">
+                              {accessible ? (
+                                <Check className="w-3 h-3 text-green-500" />
+                              ) : (
+                                <Lock className="w-3 h-3 text-amber-500" />
+                              )}
+                              <span className={!accessible ? "text-muted-foreground" : ""}>
+                                {level} - {getLevelDescription(level)}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
+                  {!hasPlacementLevel && (
+                    <p className="text-xs text-amber-600">
+                      Take the Placement Test for personalized recommendations.
+                    </p>
+                  )}
                 </div>
 
                 {/* Domain */}

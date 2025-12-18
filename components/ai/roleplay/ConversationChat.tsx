@@ -25,7 +25,15 @@ import {
   Bot,
   ArrowLeft,
   ChevronRight,
+  Mic,
+  MicOff,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 interface ConversationChatProps {
@@ -59,9 +67,70 @@ export function ConversationChat({
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [dynamicPrompts, setDynamicPrompts] = useState<string[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+
+  // Speech-to-Text state
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Check speech recognition support on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      setSpeechSupported(!!SpeechRecognition);
+
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event: any) => {
+          const transcript = Array.from(event.results)
+            .map((result: any) => result[0].transcript)
+            .join("");
+          setInput(transcript);
+        };
+
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = () => {
+          setIsListening(false);
+          toast.error("Speech recognition failed", {
+            description: "Please try again or check microphone permissions.",
+          });
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Speech-to-Text handler
+  const toggleListening = useCallback(() => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+      toast.info("Listening...", {
+        description: "Speak now. Click again to stop.",
+        duration: 2000,
+      });
+    }
+  }, [isListening]);
 
   // Scroll to bottom when new messages arrive
   const scrollToBottom = useCallback((force = false) => {
@@ -342,6 +411,37 @@ export function ConversationChat({
                     {input.length}/500
                   </span>
                 </div>
+
+                {/* Mic button for Speech-to-Text */}
+                {speechSupported && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={toggleListening}
+                          disabled={isSending || isLoading}
+                          size="icon"
+                          variant={isListening ? "default" : "outline"}
+                          className={cn(
+                            "h-12 w-12 flex-shrink-0 transition-colors",
+                            isListening && "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                          )}
+                          aria-label={isListening ? "Stop listening" : "Start voice input"}
+                        >
+                          {isListening ? (
+                            <MicOff className="w-5 h-5" />
+                          ) : (
+                            <Mic className="w-5 h-5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{isListening ? "Stop listening" : "Speak to type"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
                 <Button
                   onClick={handleSend}
                   disabled={!input.trim() || isSending || isLoading}
@@ -370,6 +470,7 @@ export function ConversationChat({
           scenario={scenario}
           vocabulary={scenario?.keyVocabulary}
           suggestedPrompts={dynamicPrompts.length > 0 ? dynamicPrompts : undefined}
+          isLoadingPrompts={isLoadingPrompts}
           onSelectPrompt={(prompt: string) => setInput(prompt)}
           isOpen={showSidebar}
           onToggle={() => setShowSidebar(!showSidebar)}
@@ -396,6 +497,7 @@ export function ConversationChat({
               scenario={scenario}
               vocabulary={scenario?.keyVocabulary}
               suggestedPrompts={dynamicPrompts.length > 0 ? dynamicPrompts : undefined}
+              isLoadingPrompts={isLoadingPrompts}
               onSelectPrompt={(prompt: string) => setInput(prompt)}
               isOpen={true}
               onToggle={() => setShowSidebar(false)}

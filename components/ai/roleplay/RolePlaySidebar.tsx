@@ -40,6 +40,7 @@ interface RolePlaySidebarProps {
     scenario: RolePlayScenarioDTO | null;
     vocabulary?: RolePlayVocabularyItemDTO[];
     suggestedPrompts?: string[];
+    isLoadingPrompts?: boolean;
     onSelectPrompt?: (prompt: string) => void;
     isOpen?: boolean;
     onToggle?: () => void;
@@ -54,6 +55,7 @@ export function RolePlaySidebar({
     scenario,
     vocabulary = [],
     suggestedPrompts: dynamicPrompts,
+    isLoadingPrompts = false,
     onSelectPrompt,
     isOpen = true,
     onToggle,
@@ -263,38 +265,77 @@ export function RolePlaySidebar({
         return (
             <div
                 className={cn(
-                    "flex-shrink-0 w-12 border-l border-border",
+                    "flex-shrink-0 w-14 h-full border-l border-border",
                     "bg-gradient-to-b from-card to-muted/30",
-                    "flex flex-col items-center justify-start pt-4 gap-4",
+                    "flex flex-col items-center justify-start py-4 gap-3",
                     className
                 )}
             >
-                <button
-                    onClick={onToggle}
-                    className={cn(
-                        "w-10 h-10 rounded-lg",
-                        "bg-primary/10 hover:bg-primary/20 border border-primary/30",
-                        "flex items-center justify-center",
-                        "text-primary hover:text-primary transition-all",
-                        "shadow-sm hover:shadow-md"
-                    )}
-                    aria-label="Open sidebar"
-                    title="Open sidebar"
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
+                {/* Main expand button - more prominent */}
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={onToggle}
+                                className={cn(
+                                    "w-11 h-11 rounded-xl",
+                                    "bg-primary/10 hover:bg-primary/20 border border-primary/30",
+                                    "flex items-center justify-center",
+                                    "text-primary hover:text-primary transition-all",
+                                    "shadow-sm hover:shadow-md hover:scale-105"
+                                )}
+                                aria-label="Open sidebar"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                            <p>Open Tools Panel</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
 
+                {/* Separator */}
+                <div className="w-8 h-px bg-border" />
+
+                {/* Tab icons with tooltips */}
                 <div className="flex flex-col gap-2">
                     {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={onToggle}
-                            className="w-8 h-8 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                            title={tab.label}
-                        >
-                            {tab.icon}
-                        </button>
+                        <TooltipProvider key={tab.id}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            onToggle?.();
+                                        }}
+                                        className={cn(
+                                            "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+                                            "hover:bg-muted border border-transparent hover:border-border",
+                                            activeTab === tab.id
+                                                ? "text-primary bg-primary/5 border-primary/20"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        {tab.icon}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                    <p>{tab.label}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     ))}
+                </div>
+
+                {/* Tools label */}
+                <div className="mt-auto">
+                    <span
+                        className="text-xs text-muted-foreground font-medium"
+                        style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                    >
+                        Tools
+                    </span>
                 </div>
             </div>
         );
@@ -495,7 +536,19 @@ export function RolePlaySidebar({
                 {/* Prompts Tab */}
                 {activeTab === "prompts" && (
                     <div className="p-4 space-y-2">
-                        {suggestedPrompts.length > 0 ? (
+                        {/* Loading state */}
+                        {isLoadingPrompts ? (
+                            <div className="space-y-3 py-4">
+                                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <p className="text-sm">Generating suggestions...</p>
+                                </div>
+                                {/* Skeleton prompts */}
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
+                                ))}
+                            </div>
+                        ) : suggestedPrompts.length > 0 ? (
                             <>
                                 <p className="text-xs text-muted-foreground mb-3">
                                     Click to use a suggestion, or translate:

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { RolePlayMessageDTO } from "@/types/ai";
-import { User, Bot, AlertCircle, Lightbulb, BookOpen, Languages } from "lucide-react";
+import { User, Bot, AlertCircle, Lightbulb, BookOpen, Languages, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import {
   Tooltip,
@@ -39,9 +39,46 @@ export function MessageBubble({
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [showFullTranslation, setShowFullTranslation] = useState(false);
 
+  // TTS state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
   const formattedTime = message.timestamp
     ? format(new Date(message.timestamp), "HH:mm")
     : "";
+
+  // Text-to-Speech handler
+  const handleSpeak = useCallback(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+    if (isSpeaking) {
+      // Stop speaking
+      speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(message.content);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9; // Slightly slower for learning
+    utterance.pitch = 1;
+
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    utteranceRef.current = utterance;
+    setIsSpeaking(true);
+    speechSynthesis.speak(utterance);
+  }, [message.content, isSpeaking]);
+
+  // Cleanup TTS on unmount
+  useEffect(() => {
+    return () => {
+      if (isSpeaking) {
+        speechSynthesis.cancel();
+      }
+    };
+  }, [isSpeaking]);
 
   // Handle text selection for translation
   const handleMouseUp = useCallback(() => {
@@ -119,26 +156,56 @@ export function MessageBubble({
           >
             <p className="whitespace-pre-wrap">{message.content}</p>
 
-            {/* Translate button for AI messages */}
+            {/* Action buttons for AI messages */}
             {!isUser && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -right-2 -bottom-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background shadow-sm border"
-                      onClick={handleTranslateFullMessage}
-                      aria-label="Translate message"
-                    >
-                      <Languages className="w-3.5 h-3.5 text-primary" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Translate to Vietnamese</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="absolute -right-2 -bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Speak button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-6 w-6 bg-background shadow-sm border",
+                          isSpeaking && "text-primary bg-primary/10"
+                        )}
+                        onClick={handleSpeak}
+                        aria-label={isSpeaking ? "Stop speaking" : "Read aloud"}
+                      >
+                        {isSpeaking ? (
+                          <VolumeX className="w-3.5 h-3.5 text-primary" />
+                        ) : (
+                          <Volume2 className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{isSpeaking ? "Stop" : "Read aloud"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Translate button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 bg-background shadow-sm border"
+                        onClick={handleTranslateFullMessage}
+                        aria-label="Translate message"
+                      >
+                        <Languages className="w-3.5 h-3.5 text-primary" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Translate</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             )}
           </div>
 

@@ -240,6 +240,28 @@ function CoursesPageContent() {
       router.push("/placement-test");
       return;
     }
+
+    // Check if course level is higher than user level
+    if (!enrollment && user?.currentLevel) {
+      const course = courses.find(c => String(c.id) === courseId);
+      if (course) {
+        const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+        const userLevelIndex = levels.indexOf(user.currentLevel);
+        const courseLevelIndex = levels.indexOf(course.cefrLevel);
+
+        if (courseLevelIndex > userLevelIndex) {
+          toast.warning(`This course is level ${course.cefrLevel}, which is higher than your current level (${user.currentLevel}).`, {
+            description: "We recommend starting with courses at your level.",
+            action: {
+              label: "Enroll Anyway",
+              onClick: () => router.push(`/courses/${courseId}`)
+            },
+            duration: 5000,
+          });
+          return;
+        }
+      }
+    }
     
     router.push(`/courses/${courseId}`);
   };

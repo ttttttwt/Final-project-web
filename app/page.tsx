@@ -1,5 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowRight,
   BookOpen,
@@ -12,9 +24,52 @@ import {
   Quote,
   TrendingUp,
   Award,
+  User,
+  Settings,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { getFileUrl } from "@/lib/utils";
+import { toast } from "sonner";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export default function Home() {
+  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+  // Get user's full name
+  const getFullName = () => {
+    if (!user) return "";
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    return `${firstName} ${lastName}`.trim() || user.email.split("@")[0];
+  };
+
+  // Get user initials from name
+  const getUserInitials = () => {
+    if (!user) return "U";
+    if (user.firstName && user.lastName) {
+      return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
+    }
+    if (user.firstName) return user.firstName.charAt(0).toUpperCase();
+    return user.email.charAt(0).toUpperCase();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
+    }
+  };
+
+  const userInitials = getUserInitials();
+  const fullName = getFullName();
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header/Navigation */}
@@ -37,22 +92,78 @@ export default function Home() {
             >
               Learning Paths
             </Link>
-            <Link
-              href="/about"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              About
-            </Link>
           </nav>
           <div className="flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Get Started</Button>
-            </Link>
+            <ThemeToggle />
+            {isAuthenticated ? (
+              <>
+                {/* Dashboard Link */}
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </Button>
+                </Link>
+                {/* User Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-9 w-9 rounded-full"
+                      aria-label="User menu"
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage
+                          src={getFileUrl(user?.avatarUrl)}
+                          alt={`${fullName || "User"} avatar`}
+                        />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {userInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>{fullName || "My Account"}</DropdownMenuLabel>
+                    <p className="px-2 pb-2 text-sm text-muted-foreground">
+                      {user?.email}
+                    </p>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm">Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -399,11 +510,6 @@ export default function Home() {
             <div>
               <h3 className="mb-4 text-sm font-semibold">Company</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/about" className="hover:text-foreground">
-                    About Us
-                  </Link>
-                </li>
                 <li>
                   <Link href="/contact" className="hover:text-foreground">
                     Contact

@@ -47,8 +47,11 @@ import {
   GraduationCap,
   ChevronRight,
   Trash2,
+  Lock,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useCefrLevelRestriction } from "@/hooks/useCefrLevelRestriction";
 
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
@@ -67,6 +70,7 @@ const THEMES = [
  */
 export default function GrammarPage() {
   const router = useRouter();
+  const { userLevel, isAccessible, getWarning, allLevels, hasPlacementLevel } = useCefrLevelRestriction();
   const [activeTab, setActiveTab] = useState("generate");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,14 +78,24 @@ export default function GrammarPage() {
   // Generated exercise set
   const [generatedSet, setGeneratedSet] = useState<GrammarExerciseSetDTO | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState<GrammarRequestDTO>({
+  // Form state - default to user's level or A1 if not set
+  const [formData, setFormData] = useState<GrammarRequestDTO>(() => ({
     grammarTopic: "",
-    cefrLevel: "B1",
+    cefrLevel: (userLevel as "A1" | "A2" | "B1" | "B2" | "C1" | "C2") || "A1",
     theme: "workplace",
     exerciseCount: 5,
     timeLimitSeconds: 600,
-  });
+  }));
+
+  // Update form level when user level loads
+  useEffect(() => {
+    if (userLevel && !formData.grammarTopic) {
+      setFormData((prev) => ({
+        ...prev,
+        cefrLevel: userLevel as typeof prev.cefrLevel,
+      }));
+    }
+  }, [userLevel]);
 
   // History state
   const [history, setHistory] = useState<GrammarProgressDTO[]>([]);
@@ -242,39 +256,70 @@ export default function GrammarPage() {
               <CardContent className="space-y-4">
                 {/* CEFR Level */}
                 <div className="space-y-2">
-                  <Label htmlFor="cefr-level">Your Level</Label>
+                  <Label htmlFor="cefr-level">
+                    Your Level
+                    {hasPlacementLevel && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (Based on Placement Test: {userLevel})
+                      </span>
+                    )}
+                  </Label>
                   <Select
                     value={formData.cefrLevel}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const warning = getWarning(value);
+                      if (warning) {
+                        toast.warning("Level above your current proficiency", {
+                          description: warning,
+                          duration: 5000,
+                        });
+                      }
                       setFormData((prev) => ({
                         ...prev,
                         cefrLevel: value as typeof prev.cefrLevel,
                         grammarTopic: "", // Reset topic when level changes
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     <SelectTrigger id="cefr-level">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CEFR_LEVELS.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level} -{" "}
-                          {level === "A1"
-                            ? "Beginner"
-                            : level === "A2"
-                              ? "Elementary"
-                              : level === "B1"
-                                ? "Intermediate"
-                                : level === "B2"
-                                  ? "Upper Intermediate"
-                                  : level === "C1"
-                                    ? "Advanced"
-                                    : "Proficient"}
-                        </SelectItem>
-                      ))}
+                      {allLevels.map((level) => {
+                        const accessible = isAccessible(level);
+                        return (
+                          <SelectItem key={level} value={level}>
+                            <div className="flex items-center gap-2">
+                              {accessible ? (
+                                <Check className="w-3 h-3 text-green-500" />
+                              ) : (
+                                <Lock className="w-3 h-3 text-amber-500" />
+                              )}
+                              <span className={!accessible ? "text-muted-foreground" : ""}>
+                                {level} -{" "}
+                                {level === "A1"
+                                  ? "Beginner"
+                                  : level === "A2"
+                                    ? "Elementary"
+                                    : level === "B1"
+                                      ? "Intermediate"
+                                      : level === "B2"
+                                        ? "Upper Intermediate"
+                                        : level === "C1"
+                                          ? "Advanced"
+                                          : "Proficient"}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
+                  {!hasPlacementLevel && (
+                    <p className="text-xs text-amber-600">
+                      Take the Placement Test to get personalized level recommendations.
+                    </p>
+                  )}
                 </div>
 
                 {/* Grammar Topic */}
