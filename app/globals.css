@@ -351,3 +351,30 @@
     transform: none;
   }
 }
+
+/* ==========================================
+   Pro Badge Shimmer Animation
+   ========================================== */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Pro gradient utilities */
+.pro-gradient {
+  background: linear-gradient(135deg, #FFB300 0%, #FFD54F 50%, #FFB300 100%);
+}
+
+.pro-border {
+  border: 2px solid #FFB300;
+}
+
+.pro-glow {
+  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
+}
+

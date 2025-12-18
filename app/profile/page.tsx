@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProBadge } from "@/components/ui/ProBadge";
 import { ProfileForm, AvatarUpload, AIUsageStats } from "@/components/profile";
 import { userService } from "@/services/userService";
 import { subscriptionService, Subscription } from "@/services/subscriptionService";
@@ -30,6 +31,9 @@ import {
   Award,
   RotateCcw,
   CreditCard,
+  Crown,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import type { User } from "@/types/auth";
 import type { UserAiQuota } from "@/types/ai";
@@ -276,21 +280,33 @@ export default function ProfilePage() {
           </Card>
 
           {/* Subscription Card */}
-          <Card>
+          <Card className={subscription?.planType !== "FREE" && subscription?.status === "ACTIVE"
+            ? "border-2 border-[#FFB300] bg-gradient-to-br from-[#FFF8E1]/50 to-white dark:from-[#2E2E2E] dark:to-[#1E1E1E] shadow-lg"
+            : ""
+          }>
             <CardHeader>
-              <CardTitle>Subscription Plan</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle>Subscription Plan</CardTitle>
+                {subscription?.planType !== "FREE" && subscription?.status === "ACTIVE" && (
+                  <ProBadge size="md" />
+                )}
+              </div>
               <CardDescription>Manage your billing and subscription</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
+                    {subscription?.planType !== "FREE" ? (
+                      <Crown className="h-5 w-5 text-[#FFB300]" />
+                    ) : (
+                      <CreditCard className="h-5 w-5 text-primary" />
+                    )}
                     <span className="font-semibold text-lg">
                       {subscription?.planType === "FREE" ? "Free Plan" : "Pro Plan"}
                     </span>
                     {subscription?.status === "ACTIVE" && subscription.planType !== "FREE" && (
-                      <Badge variant="default">Active</Badge>
+                      <Badge className="bg-[#FFB300] text-[#5D4037] hover:bg-[#FFA000]">Active</Badge>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -302,7 +318,8 @@ export default function ProfilePage() {
                 </div>
 
                 {subscription?.planType === "FREE" ? (
-                  <Button onClick={() => router.push("/pricing")}>
+                  <Button onClick={() => router.push("/pricing")} className="bg-[#FFB300] text-[#5D4037] hover:bg-[#FFA000]">
+                    <Sparkles className="h-4 w-4 mr-2" />
                     Upgrade to Pro
                   </Button>
                 ) : (
@@ -312,10 +329,33 @@ export default function ProfilePage() {
                 )}
               </div>
 
+              {/* Premium Features List - Only for Pro users */}
+              {subscription?.planType !== "FREE" && subscription?.status === "ACTIVE" && (
+                <div className="border-t border-[#FFB300]/30 pt-4">
+                  <h4 className="text-sm font-semibold text-[#5D4037] dark:text-[#FFD54F] mb-3 flex items-center gap-2">
+                    <Crown className="h-4 w-4" />
+                    Premium Features Unlocked
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {[
+                      "Unlimited AI Flashcards",
+                      "Unlimited AI Grammar Practice",
+                      "Unlimited AI Roleplay Conversations",
+                      "Priority Support",
+                    ].map((feature) => (
+                      <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-[#FFB300]" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {aiQuota && (
                 <AIUsageStats
                   quota={aiQuota}
-                  nextBillingDate={subscription?.currentPeriodEnd}
+                  nextBillingDate={subscription?.currentPeriodEnd ?? undefined}
                 />
               )}
             </CardContent>

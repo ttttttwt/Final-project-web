@@ -18,8 +18,11 @@ import { ThemeToggle } from "./ThemeToggle";
 import { BookOpen, User, Settings, LogOut, Menu, Search } from "lucide-react";
 import { getFileUrl } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { toast } from "sonner";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ProBadge } from "@/components/ui/ProBadge";
+import { ProTooltip } from "@/components/ui/ProTooltip";
 
 /**
  * Header Component
@@ -30,6 +33,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
  * - Navigation links
  * - Theme toggle (light/dark mode)
  * - User menu with avatar
+ * - Pro badge for premium users
  * - Mobile menu toggle for sidebar
  * - Responsive design
  * - Version B color scheme
@@ -57,7 +61,15 @@ export function Header({
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { isPro, fetchSubscription } = useSubscriptionStore();
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Fetch subscription status on mount if authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      fetchSubscription();
+    }
+  }, [isAuthenticated, fetchSubscription]);
 
   // Get user's full name
   const getFullName = () => {
@@ -191,10 +203,10 @@ export function Header({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="relative h-9 w-9 rounded-full"
-                      aria-label="User menu"
+                      className={`relative h-9 w-9 rounded-full ${isPro ? "hover:ring-2 hover:ring-[#FFB300]/50" : ""}`}
+                      aria-label={isPro ? "User menu - Pro member" : "User menu"}
                     >
-                      <Avatar className="h-9 w-9">
+                      <Avatar className={`h-9 w-9 ${isPro ? "ring-2 ring-[#FFB300] ring-offset-2 ring-offset-background" : ""}`}>
                         <AvatarImage
                           src={getFileUrl(user?.avatarUrl)}
                           alt={`${fullName || "User"} avatar`}
@@ -203,14 +215,16 @@ export function Header({
                           {userInitials}
                         </AvatarFallback>
                       </Avatar>
+                      {isPro && <ProBadge size="sm" showLabel={false} className="absolute -top-1 -right-1" />}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
                     className="w-56 bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
                   >
-                    <DropdownMenuLabel className="text-[#202124] dark:text-[#E8EAED]">
+                    <DropdownMenuLabel className="text-[#202124] dark:text-[#E8EAED] flex items-center gap-2">
                       {fullName || "My Account"}
+                      {isPro && <ProBadge size="sm" />}
                     </DropdownMenuLabel>
                     <p className="px-2 pb-2 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
                       {userEmail}

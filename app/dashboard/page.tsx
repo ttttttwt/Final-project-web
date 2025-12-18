@@ -5,12 +5,15 @@ import Link from "next/link";
 import { MainLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { LearningGoals } from "@/components/dashboard/LearningGoals";
 import { ActivityList } from "@/components/dashboard/ActivityList";
 import { RecommendationCard } from "@/components/dashboard/RecommendationCard";
+import { ProWelcomeBanner } from "@/components/dashboard/ProWelcomeBanner";
+import { LearningPathSection } from "@/components/dashboard/LearningPathSection";
 import progressService from "@/services/progressService";
 import type { DashboardOverview } from "@/types/progress";
 import { BookOpen, CheckCircle, Flame, Clock, Trophy } from "lucide-react";
@@ -24,9 +27,15 @@ import { toast } from "sonner";
  */
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { isPro, fetchSubscription } = useSubscriptionStore();
   const [data, setData] = React.useState<DashboardOverview | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Fetch subscription status on mount
+  React.useEffect(() => {
+    fetchSubscription();
+  }, [fetchSubscription]);
 
   // Fetch dashboard stats on mount
   React.useEffect(() => {
@@ -93,6 +102,9 @@ export default function DashboardPage() {
               </Button>
             </div>
           </div>
+
+          {/* Pro Welcome Banner */}
+          {isPro && <ProWelcomeBanner />}
 
           {/* Error Message */}
           {error && (
@@ -165,6 +177,9 @@ export default function DashboardPage() {
 
             {/* Right Column (1/3) */}
             <div className="space-y-8">
+              {/* Learning Path Section */}
+              <LearningPathSection />
+
               {/* Weekly Goals */}
               <LearningGoals
                 goals={data?.weeklyGoals || []}
