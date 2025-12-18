@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileForm, AvatarUpload } from "@/components/profile";
 import { userService } from "@/services/userService";
+import { subscriptionService, Subscription } from "@/services/subscriptionService";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ import {
   Clock,
   Award,
   RotateCcw,
+  CreditCard,
 } from "lucide-react";
 import type { User } from "@/types/auth";
 
@@ -41,9 +43,12 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<typeof user>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     fetchProfile();
+    fetchSubscription();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,6 +62,27 @@ export default function ProfilePage() {
       toast.error("Failed to load profile");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const data = await subscriptionService.getStatus();
+      setSubscription(data);
+    } catch (error) {
+      console.error("Failed to fetch subscription:", error);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      setIsPortalLoading(true);
+      const { url } = await subscriptionService.createPortalSession();
+      window.location.href = url;
+    } catch (error) {
+      toast.error("Failed to open billing portal");
+    } finally {
+      setIsPortalLoading(false);
     }
   };
 
@@ -232,6 +258,45 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscription Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Plan</CardTitle>
+              <CardDescription>Manage your billing and subscription</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    <span className="font-semibold text-lg">
+                      {subscription?.planType === "FREE" ? "Free Plan" : "Pro Plan"}
+                    </span>
+                    {subscription?.status === "ACTIVE" && subscription.planType !== "FREE" && (
+                      <Badge variant="default">Active</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {subscription?.planType === "FREE" 
+                      ? "Upgrade to unlock unlimited usage and AI features." 
+                      : `Your plan renews on ${subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "..."}`
+                    }
+                  </p>
+                </div>
+                
+                {subscription?.planType === "FREE" ? (
+                  <Button onClick={() => router.push("/pricing")}>
+                    Upgrade to Pro
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={handleManageSubscription} disabled={isPortalLoading}>
+                    {isPortalLoading ? "Loading..." : "Manage Subscription"}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
