@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
     BookOpen,
@@ -31,13 +31,23 @@ import { toast } from "sonner";
 export default function LearningPathDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const pathId = Number(params.id);
+    const from = searchParams.get("from");
 
     const [path, setPath] = useState<LearningPath | null>(null);
     const [userProgress, setUserProgress] = useState<UserPathProgress | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isStarting, setIsStarting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const handleBack = () => {
+        if (from === "dashboard") {
+            router.push("/dashboard");
+        } else {
+            router.push("/learning-paths");
+        }
+    };
 
     useEffect(() => {
         if (pathId) {
@@ -128,11 +138,11 @@ export default function LearningPathDetailPage() {
             <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
                 <Button
                     variant="ghost"
-                    onClick={() => router.push("/learning-paths")}
+                    onClick={handleBack}
                     className="mb-6"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Learning Paths
+                    {from === "dashboard" ? "Back to Dashboard" : "Back to Learning Paths"}
                 </Button>
                 <Card className="max-w-md mx-auto">
                     <CardContent className="pt-6 text-center">
@@ -163,11 +173,11 @@ export default function LearningPathDetailPage() {
             {/* Back Button */}
             <Button
                 variant="ghost"
-                onClick={() => router.push("/learning-paths")}
+                onClick={handleBack}
                 className="mb-6"
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Learning Paths
+                {from === "dashboard" ? "Back to Dashboard" : "Back to Learning Paths"}
             </Button>
 
             {/* Header */}

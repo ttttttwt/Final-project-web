@@ -64,6 +64,11 @@ export function Header({
   const { isPro, fetchSubscription } = useSubscriptionStore();
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  // Avatar error handling with retry
+  const [avatarError, setAvatarError] = React.useState(false);
+  const [avatarRetryCount, setAvatarRetryCount] = React.useState(0);
+  const MAX_AVATAR_RETRIES = 2;
+
   // Fetch subscription status on mount if authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -71,27 +76,60 @@ export function Header({
     }
   }, [isAuthenticated, fetchSubscription]);
 
-  // Get user's full name
-  const getFullName = () => {
+  // Memoize avatar URL to prevent recalculation and ensure stability
+  const avatarUrl = React.useMemo(() => {
+    if (!user?.avatarUrl) return null;
+    return getFileUrl(user.avatarUrl);
+  }, [user?.avatarUrl]);
+
+  // Reset avatar error state when user or avatar URL changes
+  React.useEffect(() => {
+    setAvatarError(false);
+    setAvatarRetryCount(0);
+  }, [user?.userId, avatarUrl]);
+
+  // Memoize user's full name
+  const fullName = React.useMemo(() => {
     if (!user) return "";
     const firstName = user.firstName || "";
     const lastName = user.lastName || "";
     return `${firstName} ${lastName}`.trim() || user.email.split("@")[0];
-  };
+  }, [user?.firstName, user?.lastName, user?.email]);
 
-  // Get user initials from name
-  const getUserInitials = () => {
+  // Memoize user initials
+  const userInitials = React.useMemo(() => {
     if (!user) return "U";
     if (user.firstName && user.lastName) {
       return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
     }
     if (user.firstName) return user.firstName.charAt(0).toUpperCase();
     return user.email.charAt(0).toUpperCase();
-  };
+  }, [user?.firstName, user?.lastName, user?.email]);
 
-  const userInitials = getUserInitials();
   const userEmail = user?.email || "";
-  const fullName = getFullName();
+
+  // Handle avatar load error with retry
+  const handleAvatarError = React.useCallback(() => {
+    if (avatarRetryCount < MAX_AVATAR_RETRIES) {
+      // Retry loading avatar
+      setAvatarRetryCount(prev => prev + 1);
+      setAvatarError(false);
+    } else {
+      // Max retries reached, show fallback
+      setAvatarError(true);
+    }
+  }, [avatarRetryCount]);
+
+  // Generate avatar src with cache busting for retry
+  const avatarSrc = React.useMemo(() => {
+    if (!avatarUrl || avatarError) return undefined;
+    if (avatarRetryCount > 0) {
+      // Add cache-busting param for retry
+      const separator = avatarUrl.includes('?') ? '&' : '?';
+      return `${avatarUrl}${separator}_retry=${avatarRetryCount}`;
+    }
+    return avatarUrl;
+  }, [avatarUrl, avatarError, avatarRetryCount]);
 
   const navigationLinks = [
     { href: "/dashboard", label: "Dashboard" },
@@ -206,10 +244,16 @@ export function Header({
                       className={`relative h-9 w-9 rounded-full ${isPro ? "hover:ring-2 hover:ring-[#FFB300]/50" : ""}`}
                       aria-label={isPro ? "User menu - Pro member" : "User menu"}
                     >
-                      <Avatar className={`h-9 w-9 ${isPro ? "ring-2 ring-[#FFB300] ring-offset-2 ring-offset-background" : ""}`}>
+                      <Avatar
+                        key={user?.userId || 'guest'}
+                        className={`h-9 w-9 ${isPro ? "ring-2 ring-[#FFB300] ring-offset-2 ring-offset-background" : ""}`}
+                      >
                         <AvatarImage
-                          src={getFileUrl(user?.avatarUrl)}
+                          src={avatarSrc}
                           alt={`${fullName || "User"} avatar`}
+                          onLoadingStatusChange={(status) => {
+                            if (status === 'error') handleAvatarError();
+                          }}
                         />
                         <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">
                           {userInitials}

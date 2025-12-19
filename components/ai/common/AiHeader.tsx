@@ -102,12 +102,12 @@ export function AiHeader({
 
     // If we're in a nested AI route, go back to the parent
     const pathParts = pathname?.split("/").filter(Boolean) || [];
-    
+
     if (pathParts.length > 2) {
       // e.g., /ai/flashcards/123 -> /ai/flashcards
       return `/${pathParts.slice(0, -1).join("/")}`;
     }
-    
+
     // Default to dashboard
     return "/dashboard";
   };
@@ -194,11 +194,11 @@ export function AiHeader({
                 AI Features
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              
+
               {aiFeatures.map((feature) => {
                 const Icon = feature.icon;
                 const isActive = isActiveFeature(feature.href);
-                
+
                 return (
                   <DropdownMenuItem
                     key={feature.href}
@@ -319,8 +319,9 @@ export function AiPageWrapper({
     <>
       {showQuota && !quota.isLoading && (
         <QuotaIndicator
-          used={quota.usedToday}
-          limit={quota.dailyLimit}
+          used={quota.totalUsed}
+          limit={quota.totalLimit}
+          planType={quota.planType}
           className="hidden sm:flex"
         />
       )}
@@ -337,15 +338,17 @@ export function AiPageWrapper({
         showBackButton={showBackButton}
         actions={combinedActions}
       />
-      
+
       {/* Quota Warning Banner */}
       {showQuota && quota.isNearLimit && (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <QuotaWarning
-            used={quota.usedToday}
-            limit={quota.dailyLimit}
+            used={quota.totalUsed}
+            limit={quota.totalLimit}
             feature={feature || "AI"}
-            resetTime={quota.dailyResetTime || undefined}
+            resetTime={quota.monthlyResetTime || undefined}
+            daysUntilReset={quota.daysUntilReset}
+            planType={quota.planType}
           />
         </div>
       )}

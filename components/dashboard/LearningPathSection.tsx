@@ -130,7 +130,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
 
                     {/* Action Button */}
                     <Button asChild className="w-full">
-                        <Link href={`/learning-paths/${activePath.pathId}`}>
+                        <Link href={`/learning-paths/${activePath.pathId}?from=dashboard`}>
                             {activePath.isCompleted ? "View Achievements" : "Continue Learning"}
                             <ChevronRight className="h-4 w-4 ml-1" />
                         </Link>
@@ -172,7 +172,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                         </div>
 
                         <Button asChild className="w-full">
-                            <Link href={`/learning-paths/${recommendedPath.id}`}>
+                            <Link href={`/learning-paths/${recommendedPath.id}?from=dashboard`}>
                                 Start This Path
                                 <ChevronRight className="h-4 w-4 ml-1" />
                             </Link>

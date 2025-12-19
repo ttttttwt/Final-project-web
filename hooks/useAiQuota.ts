@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import api from "@/lib/api";
+import { aiQuotaService } from "@/services/aiQuotaService";
+import { UserAiQuota, QUOTA_LIMITS } from "@/types/ai";
 
-export interface AiQuota {
-  /** Number of AI requests used today */
+export interface AiQuotaResult {
+  /** Number of AI requests used today (legacy) */
   usedToday: number;
-  /** Daily limit for AI requests */
+  /** Daily limit for AI requests (legacy) */
   dailyLimit: number;
   /** Number of AI requests used this month */
   usedMonth: number;
@@ -16,11 +17,13 @@ export interface AiQuota {
   dailyResetTime: Date | null;
   /** When the monthly quota resets */
   monthlyResetTime: Date | null;
-  /** Percentage of daily quota used (0-100) */
-  dailyPercentage: number;
-  /** Whether user is near daily limit (>=80%) */
+  /** Percentage of monthly quota used (0-100) */
+  monthlyPercentage: number;
+  /** Whether user is near monthly limit (>=80%) */
   isNearLimit: boolean;
-  /** Whether user has reached daily limit (100%) */
+  /** Whether user is at critical monthly limit (>=95%) */
+  isCriticalLimit: boolean;
+  /** Whether user has reached monthly limit (>=100%) */
   isAtLimit: boolean;
   /** Whether quota is loading */
   isLoading: boolean;
@@ -28,46 +31,45 @@ export interface AiQuota {
   error: string | null;
   /** Refresh quota data */
   refetch: () => Promise<void>;
-}
-
-export interface AiQuotaResponse {
-  dailyUsed: number;
-  dailyLimit: number;
-  monthlyUsed: number;
-  monthlyLimit: number;
-  dailyResetAt: string;
-  monthlyResetAt: string;
+  
+  // Feature-specific quotas (subscription-based)
+  /** Role play sessions used this month */
+  roleplayUsed: number;
+  /** Role play sessions limit this month */
+  roleplayLimit: number;
+  /** Flashcard decks created this month */
+  flashcardUsed: number;
+  /** Flashcard decks limit this month */
+  flashcardLimit: number;
+  /** Grammar exercises created this month */
+  grammarUsed: number;
+  /** Grammar exercises limit this month */
+  grammarLimit: number;
+  /** Total AI requests this month */
+  totalUsed: number;
+  /** Total AI requests limit this month */
+  totalLimit: number;
+  /** User's plan type */
+  planType: 'FREE' | 'MONTHLY' | 'YEARLY';
+  /** Days until quota resets */
+  daysUntilReset: number;
 }
 
 /**
  * Hook to fetch and manage AI usage quota.
  * Provides real-time quota information and warnings.
+ * Uses subscription-based monthly quotas.
  * 
  * @example
  * ```tsx
- * const { usedToday, dailyLimit, isNearLimit, isAtLimit } = useAiQuota();
+ * const { totalUsed, totalLimit, isNearLimit, isAtLimit } = useAiQuota();
  * 
  * if (isAtLimit) return <QuotaExhausted />;
- * if (isNearLimit) return <QuotaWarning used={usedToday} limit={dailyLimit} />;
+ * if (isNearLimit) return <QuotaWarning used={totalUsed} limit={totalLimit} />;
  * ```
  */
-export function useAiQuota(feature?: string): AiQuota {
-  const [quota, setQuota] = useState<{
-    usedToday: number;
-    dailyLimit: number;
-    usedMonth: number;
-    monthlyLimit: number;
-    dailyResetTime: Date | null;
-    monthlyResetTime: Date | null;
-  }>({
-    usedToday: 0,
-    dailyLimit: 50, // Default limit
-    usedMonth: 0,
-    monthlyLimit: 500, // Default limit
-    dailyResetTime: null,
-    monthlyResetTime: null,
-  });
-
+export function useAiQuota(feature?: string): AiQuotaResult {
+  const [quota, setQuota] = useState<UserAiQuota | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,55 +78,109 @@ export function useAiQuota(feature?: string): AiQuota {
       setIsLoading(true);
       setError(null);
 
-      const endpoint = feature 
-        ? `/ai/quota?feature=${feature}`
-        : "/ai/quota";
-
-      const response = await api.get<AiQuotaResponse>(endpoint);
-      const data = response.data;
-
-      setQuota({
-        usedToday: data.dailyUsed,
-        dailyLimit: data.dailyLimit,
-        usedMonth: data.monthlyUsed,
-        monthlyLimit: data.monthlyLimit,
-        dailyResetTime: data.dailyResetAt ? new Date(data.dailyResetAt) : null,
-        monthlyResetTime: data.monthlyResetAt ? new Date(data.monthlyResetAt) : null,
-      });
+      const data = await aiQuotaService.getMyQuota();
+      setQuota(data);
     } catch (err: any) {
       // If quota endpoint doesn't exist yet, use defaults silently
       if (err.response?.status === 404) {
-        setError(null); // Don't show error for missing endpoint
+        setError(null);
       } else {
         setError(err.response?.data?.message || "Failed to load quota");
       }
     } finally {
       setIsLoading(false);
     }
-  }, [feature]);
+  }, []);
 
   useEffect(() => {
     fetchQuota();
   }, [fetchQuota]);
 
-  const dailyPercentage = Math.min(
-    (quota.usedToday / quota.dailyLimit) * 100,
-    100
-  );
+  // Default values if quota not loaded
+  const defaults = {
+    roleplayUsed: 0,
+    roleplayLimit: QUOTA_LIMITS.FREE.roleplaySessions,
+    flashcardUsed: 0,
+    flashcardLimit: QUOTA_LIMITS.FREE.flashcardDecks,
+    grammarUsed: 0,
+    grammarLimit: QUOTA_LIMITS.FREE.grammarExercises,
+    totalUsed: 0,
+    totalLimit: QUOTA_LIMITS.FREE.totalRequests,
+    planType: 'FREE' as const,
+    daysUntilReset: 30,
+  };
+
+  // Extract values from quota, using new fields with fallback to legacy
+  const roleplayUsed = quota?.roleplaySessionsUsed ?? quota?.rolePlayUsedMonth ?? defaults.roleplayUsed;
+  const roleplayLimit = quota?.roleplaySessionsLimit ?? quota?.rolePlayMonthlyLimit ?? defaults.roleplayLimit;
+  const flashcardUsed = quota?.flashcardDecksUsed ?? quota?.flashcardUsedMonth ?? defaults.flashcardUsed;
+  const flashcardLimit = quota?.flashcardDecksLimit ?? quota?.flashcardMonthlyLimit ?? defaults.flashcardLimit;
+  const grammarUsed = quota?.grammarExercisesUsed ?? quota?.grammarUsedMonth ?? defaults.grammarUsed;
+  const grammarLimit = quota?.grammarExercisesLimit ?? quota?.grammarMonthlyLimit ?? defaults.grammarLimit;
+  const totalUsed = quota?.totalRequestsUsed ?? quota?.monthlyUsed ?? defaults.totalUsed;
+  const totalLimit = quota?.totalRequestsLimit ?? quota?.monthlyLimit ?? defaults.totalLimit;
+  const planType = quota?.planType ?? defaults.planType;
+  const daysUntilReset = quota?.daysUntilReset ?? defaults.daysUntilReset;
+
+  // Calculate feature-specific usage if feature is specified
+  let featureUsed = totalUsed;
+  let featureLimit = totalLimit;
+  
+  if (feature === 'roleplay') {
+    featureUsed = roleplayUsed;
+    featureLimit = roleplayLimit;
+  } else if (feature === 'flashcard' || feature === 'flashcards') {
+    featureUsed = flashcardUsed;
+    featureLimit = flashcardLimit;
+  } else if (feature === 'grammar') {
+    featureUsed = grammarUsed;
+    featureLimit = grammarLimit;
+  }
+
+  const monthlyPercentage = Math.min((featureUsed / featureLimit) * 100, 100);
+  const isNearLimit = monthlyPercentage >= 80;
+  const isCriticalLimit = monthlyPercentage >= 95;
+  const isAtLimit = monthlyPercentage >= 100;
+
+  // Legacy daily values for backwards compatibility
+  const usedToday = quota?.dailyUsed ?? 0;
+  const dailyLimit = quota?.dailyLimit ?? 50;
+  const dailyResetTime = quota?.lastResetDaily ? new Date(quota.lastResetDaily) : null;
+  const monthlyResetTime = quota?.quotaResetDate 
+    ? new Date(quota.quotaResetDate) 
+    : quota?.lastResetMonthly 
+      ? new Date(quota.lastResetMonthly) 
+      : null;
 
   return {
-    usedToday: quota.usedToday,
-    dailyLimit: quota.dailyLimit,
-    usedMonth: quota.usedMonth,
-    monthlyLimit: quota.monthlyLimit,
-    dailyResetTime: quota.dailyResetTime,
-    monthlyResetTime: quota.monthlyResetTime,
-    dailyPercentage,
-    isNearLimit: dailyPercentage >= 80,
-    isAtLimit: dailyPercentage >= 100,
+    // Legacy fields
+    usedToday,
+    dailyLimit,
+    usedMonth: totalUsed,
+    monthlyLimit: totalLimit,
+    dailyResetTime,
+    monthlyResetTime,
+    
+    // New subscription-based fields
+    monthlyPercentage,
+    isNearLimit,
+    isCriticalLimit,
+    isAtLimit,
     isLoading,
     error,
     refetch: fetchQuota,
+    
+    // Feature-specific quotas
+    roleplayUsed,
+    roleplayLimit,
+    flashcardUsed,
+    flashcardLimit,
+    grammarUsed,
+    grammarLimit,
+    totalUsed,
+    totalLimit,
+    planType,
+    daysUntilReset,
   };
 }
 
@@ -134,14 +190,47 @@ export function useAiQuota(feature?: string): AiQuota {
 export function useCanUseAiFeature(feature: string): {
   canUse: boolean;
   reason: string | null;
-  quota: AiQuota;
+  quota: AiQuotaResult;
 } {
   const quota = useAiQuota(feature);
 
-  if (quota.isAtLimit) {
+  let featureUsed: number;
+  let featureLimit: number;
+  let featureName: string;
+
+  switch (feature) {
+    case 'roleplay':
+      featureUsed = quota.roleplayUsed;
+      featureLimit = quota.roleplayLimit;
+      featureName = 'roleplay sessions';
+      break;
+    case 'flashcard':
+    case 'flashcards':
+      featureUsed = quota.flashcardUsed;
+      featureLimit = quota.flashcardLimit;
+      featureName = 'flashcard decks';
+      break;
+    case 'grammar':
+      featureUsed = quota.grammarUsed;
+      featureLimit = quota.grammarLimit;
+      featureName = 'grammar exercises';
+      break;
+    default:
+      featureUsed = quota.totalUsed;
+      featureLimit = quota.totalLimit;
+      featureName = 'AI requests';
+  }
+
+  const isAtLimit = featureUsed >= featureLimit;
+
+  if (isAtLimit) {
     return {
       canUse: false,
-      reason: `You've reached your daily limit of ${quota.dailyLimit} ${feature} requests.`,
+      reason: `You've reached your monthly limit of ${featureLimit} ${featureName}. ${
+        quota.planType === 'FREE' 
+          ? 'Upgrade to Pro for higher limits!' 
+          : `Resets in ${quota.daysUntilReset} days.`
+      }`,
       quota,
     };
   }
