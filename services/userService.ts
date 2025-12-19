@@ -15,7 +15,9 @@ export const userService = {
   uploadAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await api.post("/users/profile/avatar", formData, {
+    // Use /users/avatar endpoint which accepts multipart/form-data
+    // Note: /users/profile/avatar only accepts JSON (avatarUrl field)
+    const response = await api.post("/users/avatar", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

@@ -281,14 +281,25 @@ export default function ProfilePage() {
 
           {/* Subscription Card */}
           <Card className={subscription?.planType !== "FREE" && subscription?.status === "ACTIVE"
-            ? "border-2 border-[#FFB300] bg-gradient-to-br from-[#FFF8E1]/50 to-white dark:from-[#2E2E2E] dark:to-[#1E1E1E] shadow-lg"
+            ? "relative overflow-hidden border-2 border-[#FFB300] bg-gradient-to-br from-[#FFF8E1]/60 to-white dark:from-[#2E2E2E] dark:to-[#1E1E1E] shadow-lg pro-shimmer-enhanced"
             : ""
           }>
-            <CardHeader>
+            {/* Decorative elements for Pro users */}
+            {subscription?.planType !== "FREE" && subscription?.status === "ACTIVE" && (
+              <>
+                <div className="absolute top-3 right-3 opacity-20">
+                  <Sparkles className="h-8 w-8 text-[#FFB300] pro-float" />
+                </div>
+                <div className="absolute bottom-4 left-4 opacity-15">
+                  <Sparkles className="h-5 w-5 text-[#FFD54F]" />
+                </div>
+              </>
+            )}
+            <CardHeader className="relative z-10">
               <div className="flex items-center gap-2">
                 <CardTitle>Subscription Plan</CardTitle>
                 {subscription?.planType !== "FREE" && subscription?.status === "ACTIVE" && (
-                  <ProBadge size="md" />
+                  <ProBadge size="md" pulse />
                 )}
               </div>
               <CardDescription>Manage your billing and subscription</CardDescription>
@@ -338,9 +349,9 @@ export default function ProfilePage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {[
-                      "Unlimited AI Flashcards",
-                      "Unlimited AI Grammar Practice",
-                      "Unlimited AI Roleplay Conversations",
+                      "50 AI Role Play Sessions/month",
+                      "30 AI Flashcard Decks/month",
+                      "300 AI Grammar Exercises/month",
                       "Priority Support",
                     ].map((feature) => (
                       <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">

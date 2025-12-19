@@ -12,12 +12,15 @@ import { Crown } from "lucide-react";
  * - Gold/amber color scheme
  * - Crown icon
  * - Multiple sizes (sm, md, lg)
- * - Subtle shimmer animation
+ * - Enhanced shimmer animation
+ * - Optional glow pulse effect
+ * - Hover glow enhancement
  * 
  * @example
  * ```tsx
  * <ProBadge size="sm" />
  * <ProBadge size="md" showLabel />
+ * <ProBadge size="lg" pulse />
  * ```
  */
 
@@ -26,15 +29,22 @@ interface ProBadgeProps {
     size?: "sm" | "md" | "lg";
     /** Show "PRO" label text */
     showLabel?: boolean;
+    /** Enable pulse glow animation */
+    pulse?: boolean;
     /** Additional className */
     className?: string;
 }
 
-export function ProBadge({ size = "md", showLabel = true, className }: ProBadgeProps) {
+export function ProBadge({
+    size = "md",
+    showLabel = true,
+    pulse = false,
+    className
+}: ProBadgeProps) {
     const sizeClasses = {
-        sm: "h-4 px-1 text-[10px] gap-0.5",
-        md: "h-5 px-1.5 text-xs gap-1",
-        lg: "h-6 px-2 text-sm gap-1.5",
+        sm: "h-4 px-1.5 text-[10px] gap-0.5",
+        md: "h-5 px-2 text-xs gap-1",
+        lg: "h-6 px-2.5 text-sm gap-1.5",
     };
 
     const iconSizes = {
@@ -48,24 +58,28 @@ export function ProBadge({ size = "md", showLabel = true, className }: ProBadgeP
             className={cn(
                 // Base styles
                 "inline-flex items-center justify-center font-bold rounded-full",
+                "cursor-default select-none",
                 // Gold gradient background
                 "bg-gradient-to-r from-[#FFB300] via-[#FFD54F] to-[#FFB300]",
                 // Text color
                 "text-[#5D4037]",
-                // Subtle shadow for depth
-                "shadow-sm",
-                // Shimmer animation
-                "relative overflow-hidden",
-                "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent",
-                "before:translate-x-[-100%] before:animate-[shimmer_2s_infinite]",
+                // Enhanced shadow
+                "shadow-sm hover:shadow-md",
+                // Using new shimmer class
+                "pro-shimmer-enhanced",
+                // Pulse glow if enabled
+                pulse && "pro-glow-pulse",
+                // Hover glow
+                "transition-all duration-300",
+                "hover:ring-2 hover:ring-[#FFB300]/50 hover:ring-offset-1 hover:ring-offset-background",
                 // Size classes
                 sizeClasses[size],
                 className
             )}
             aria-label="Pro member"
         >
-            <Crown className={cn(iconSizes[size], "shrink-0")} />
-            {showLabel && <span>PRO</span>}
+            <Crown className={cn(iconSizes[size], "shrink-0 drop-shadow-sm")} />
+            {showLabel && <span className="drop-shadow-sm">PRO</span>}
         </span>
     );
 }

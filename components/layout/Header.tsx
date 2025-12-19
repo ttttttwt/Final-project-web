@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ProBadge } from "@/components/ui/ProBadge";
 import { ProTooltip } from "@/components/ui/ProTooltip";
+import { ProUserAvatar } from "@/components/ui/ProUserAvatar";
 
 /**
  * Header Component
@@ -241,25 +242,34 @@ export function Header({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className={`relative h-9 w-9 rounded-full ${isPro ? "hover:ring-2 hover:ring-[#FFB300]/50" : ""}`}
+                      className="relative h-auto w-auto p-0 rounded-full hover:bg-transparent"
                       aria-label={isPro ? "User menu - Pro member" : "User menu"}
                     >
-                      <Avatar
-                        key={user?.userId || 'guest'}
-                        className={`h-9 w-9 ${isPro ? "ring-2 ring-[#FFB300] ring-offset-2 ring-offset-background" : ""}`}
-                      >
-                        <AvatarImage
+                      {isPro ? (
+                        <ProUserAvatar
                           src={avatarSrc}
+                          fallback={userInitials}
                           alt={`${fullName || "User"} avatar`}
-                          onLoadingStatusChange={(status) => {
-                            if (status === 'error') handleAvatarError();
-                          }}
+                          size="sm"
+                          onImageError={handleAvatarError}
                         />
-                        <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">
-                          {userInitials}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isPro && <ProBadge size="sm" showLabel={false} className="absolute -top-1 -right-1" />}
+                      ) : (
+                        <Avatar
+                          key={user?.userId || 'guest'}
+                          className="h-9 w-9"
+                        >
+                          <AvatarImage
+                            src={avatarSrc}
+                            alt={`${fullName || "User"} avatar`}
+                            onLoadingStatusChange={(status) => {
+                              if (status === 'error') handleAvatarError();
+                            }}
+                          />
+                          <AvatarFallback className="bg-[#1A73E8] dark:bg-[#8AB4F8] text-white dark:text-[#121212]">
+                            {userInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent

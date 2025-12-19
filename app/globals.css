@@ -378,3 +378,228 @@
   box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
 }
 
+/* ==========================================
+   Pro Premium Enhanced Animations & Utilities
+   ========================================== */
+
+/* Enhanced Shimmer - Slower, more visible */
+@keyframes pro-shimmer-enhanced {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Pulse Glow - Subtle pulsing glow effect */
+@keyframes pro-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 179, 0, 0.3), 0 0 30px rgba(255, 179, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 179, 0, 0.5), 0 0 50px rgba(255, 179, 0, 0.2);
+  }
+}
+
+/* Float Animation */
+@keyframes pro-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Rotating Gradient */
+@keyframes pro-gradient-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Sparkle Effect */
+@keyframes pro-sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* Ring Pulse */
+@keyframes pro-ring-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px #FFB300, 0 0 0 4px rgba(255, 179, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 3px #FFD54F, 0 0 0 8px rgba(255, 179, 0, 0.1);
+  }
+}
+
+/* Pro Utility Classes */
+
+/* Enhanced shimmer effect */
+.pro-shimmer-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.pro-shimmer-enhanced::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: pro-shimmer-enhanced 3s ease-in-out infinite;
+}
+
+/* Pulsing glow effect */
+.pro-glow-pulse {
+  animation: pro-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Floating effect */
+.pro-float {
+  animation: pro-float 3s ease-in-out infinite;
+}
+
+/* Premium card styling */
+.pro-card {
+  background: linear-gradient(135deg, rgba(255, 248, 225, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border: 2px solid rgba(255, 179, 0, 0.4);
+  box-shadow: 
+    0 4px 20px rgba(255, 179, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .pro-card {
+  background: linear-gradient(135deg, rgba(46, 46, 46, 0.9) 0%, rgba(30, 30, 30, 0.95) 100%);
+  border: 2px solid rgba(255, 179, 0, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(255, 179, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Animated ring for avatars */
+.pro-ring-animated {
+  position: relative;
+}
+
+.pro-ring-animated::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFB300, #FFD54F, #FFA000, #FFB300);
+  background-size: 300% 300%;
+  animation: pro-gradient-rotate 4s ease infinite;
+  z-index: -1;
+}
+
+/* Premium text gradient */
+.pro-text-gradient {
+  background: linear-gradient(135deg, #FFB300 0%, #FFD54F 50%, #FFA000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pro Section Divider */
+.pro-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFB300, transparent);
+  border: none;
+}
+
+/* Pro Button Styles */
+.pro-button {
+  background: linear-gradient(135deg, #FFB300 0%, #FFD54F 50%, #FFA000 100%);
+  color: #5D4037;
+  font-weight: 600;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pro-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 179, 0, 0.4);
+}
+
+.pro-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.pro-button:hover::after {
+  transform: translateX(100%);
+}
+
+/* Sparkle container */
+.pro-sparkle-container {
+  position: relative;
+}
+
+.pro-sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #FFD54F;
+  border-radius: 50%;
+  animation: pro-sparkle 2s ease-in-out infinite;
+}
+
+.pro-sparkle:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.pro-sparkle:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.4s; }
+.pro-sparkle:nth-child(3) { bottom: 15%; left: 20%; animation-delay: 0.8s; }
+.pro-sparkle:nth-child(4) { bottom: 25%; right: 10%; animation-delay: 1.2s; }
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .pro-shimmer-enhanced::before,
+  .pro-glow-pulse,
+  .pro-float,
+  .pro-ring-animated::before,
+  .pro-sparkle,
+  .pro-button::after {
+    animation: none;
+  }
+  
+  .pro-button:hover {
+    transform: none;
+  }
+}
