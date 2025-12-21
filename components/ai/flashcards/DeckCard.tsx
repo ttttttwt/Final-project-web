@@ -76,7 +76,7 @@ export function DeckCard({
       )}
       onClick={() => onView?.(deck)}>
 
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 pt-4 px-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Badges row */}
@@ -117,14 +117,14 @@ export function DeckCard({
 
             {/* Title */}
             <h3 className={cn(
-              "font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1 min-h-[1.75rem]",
+              "font-semibold text-base leading-tight group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]",
               !hasDueCards && "text-muted-foreground group-hover:text-primary/80"
             )}>
               {deck.title}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-[2.5rem]">
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">
               {deck.description || "\u00A0"}
             </p>
           </div>
@@ -147,7 +147,7 @@ export function DeckCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pb-3 space-y-3 flex-1">
+      <CardContent className="pb-3 px-4 space-y-2 flex-1">
         {/* Stats row */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">

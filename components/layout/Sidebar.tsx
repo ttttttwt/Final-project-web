@@ -23,7 +23,9 @@ import {
   CreditCard,
   MessageSquare,
   BookText,
+  FileUp,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Sidebar Component
@@ -90,7 +92,7 @@ const navigationItems: NavItem[] = [
   },
 ];
 
-const aiFeatures: NavItem[] = [
+const aiFeatures: NavItemWithPro[] = [
   {
     href: "/ai/flashcards",
     label: "AI Flashcards",
@@ -109,7 +111,18 @@ const aiFeatures: NavItem[] = [
     icon: MessageSquare,
     ariaLabel: "AI Conversation Roleplay",
   },
+  {
+    href: "/custom-materials",
+    label: "Custom Materials",
+    icon: FileUp,
+    ariaLabel: "Custom AI Materials Generator",
+    isPro: true,
+  },
 ];
+
+interface NavItemWithPro extends NavItem {
+  isPro?: boolean;
+}
 
 export function Sidebar({
   isOpen = false,
@@ -251,14 +264,14 @@ export function Sidebar({
 
             {/* AI Features Section - Collapsible Dropdown */}
             <div className="mt-2">
-              <Collapsible defaultOpen={pathname?.startsWith("/ai")}>
+              <Collapsible defaultOpen={pathname?.startsWith("/ai") || pathname?.startsWith("/custom-materials")}>
                 <CollapsibleTrigger asChild>
                   <button
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       "text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED]",
                       "hover:bg-[#F8F9FA] dark:hover:bg-[#1E1E1E]",
-                      pathname?.startsWith("/ai") &&
+                      (pathname?.startsWith("/ai") || pathname?.startsWith("/custom-materials")) &&
                       "text-[#FFB300] dark:text-[#FDD663] bg-[#FFF8E1] dark:bg-[#1E1E1E]"
                     )}
                     aria-label="Toggle AI Features menu"
@@ -267,7 +280,7 @@ export function Sidebar({
                       <Sparkles
                         className={cn(
                           "h-5 w-5 shrink-0",
-                          pathname?.startsWith("/ai")
+                          pathname?.startsWith("/ai") || pathname?.startsWith("/custom-materials")
                             ? "text-[#FFB300] dark:text-[#FDD663]"
                             : "text-[#5F6368] dark:text-[#9AA0A6]"
                         )}
@@ -307,7 +320,19 @@ export function Sidebar({
                                 isCollapsed && "mx-auto"
                               )}
                             />
-                            {!isCollapsed && <span>{item.label}</span>}
+                            {!isCollapsed && (
+                              <span className="flex items-center gap-2">
+                                {item.label}
+                                {item.isPro && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-gradient-to-r from-[#FFB300] to-[#FF8F00] text-white text-[10px] px-1.5 py-0 h-4 font-semibold"
+                                  >
+                                    PRO
+                                  </Badge>
+                                )}
+                              </span>
+                            )}
                           </Link>
                         </li>
                       );

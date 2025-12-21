@@ -214,7 +214,7 @@ export function SwipeableCard({
       <div
         ref={cardRef}
         className={cn(
-          "relative touch-none",
+          "relative touch-none w-full h-full",
           dragState.isDragging && "flashcard-dragging",
           isSwipingLeft && "flashcard-drag-hint-left",
           isSwipingRight && "flashcard-drag-hint-right",

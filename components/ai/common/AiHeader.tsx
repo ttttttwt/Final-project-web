@@ -319,8 +319,8 @@ export function AiPageWrapper({
     <>
       {showQuota && !quota.isLoading && (
         <QuotaIndicator
-          used={quota.totalUsed}
-          limit={quota.totalLimit}
+          used={quota.featureUsed}
+          limit={quota.featureLimit}
           planType={quota.planType}
           className="hidden sm:flex"
         />
@@ -343,8 +343,8 @@ export function AiPageWrapper({
       {showQuota && quota.isNearLimit && (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <QuotaWarning
-            used={quota.totalUsed}
-            limit={quota.totalLimit}
+            used={quota.featureUsed}
+            limit={quota.featureLimit}
             feature={feature || "AI"}
             resetTime={quota.monthlyResetTime || undefined}
             daysUntilReset={quota.daysUntilReset}
@@ -355,7 +355,7 @@ export function AiPageWrapper({
 
       <main
         className={cn(
-          "flex-1 container mx-auto py-6 px-4 sm:px-6 lg:px-8",
+          "flex-1 container mx-auto py-4 px-4 sm:px-6 lg:px-8",
           maxWidthClasses[maxWidth],
           className
         )}

@@ -1,13 +1,13 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { FlashcardCardDTO } from "@/types/ai";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon } from "lucide-react";
+import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 interface FlashCardProps {
   card: FlashcardCardDTO;
@@ -30,9 +30,16 @@ export const FlashCard = memo(function FlashCard({
   className,
   showHint = false,
 }: FlashCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const handleClick = useCallback(() => {
     onFlip?.();
   }, [onFlip]);
+
+  const toggleExpand = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(prev => !prev);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -43,6 +50,7 @@ export const FlashCard = memo(function FlashCard({
     },
     [onFlip]
   );
+// ... existing code ...
 
   const playAudio = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -64,11 +72,30 @@ export const FlashCard = memo(function FlashCard({
     >
       <div className={cn("flashcard-inner", isFlipped && "flipped")}>
         {/* Front Face */}
-        <Card className="flashcard-face flashcard-front flex flex-col items-center justify-center p-8 bg-card border-2 border-border hover:border-primary/50 transition-colors cursor-pointer">
+        <Card className="flashcard-face flashcard-front flex flex-col items-center justify-center p-8 bg-card border-2 border-border hover:border-primary/50 transition-colors cursor-pointer overflow-hidden">
           <div className="text-center space-y-4 w-full">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground break-words">
-              {card.front}
-            </h2>
+            <div className="relative w-full">
+              <h2 className={cn(
+                "text-3xl md:text-4xl font-bold text-foreground break-words transition-all duration-300",
+                !isExpanded && "line-clamp-6"
+              )}>
+                {card.front}
+              </h2>
+              {card.front.length > 80 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-8 text-xs text-muted-foreground hover:text-primary"
+                  onClick={toggleExpand}
+                >
+                  {isExpanded ? (
+                    <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+                  ) : (
+                    <><ChevronDown className="w-3 h-3 mr-1" /> Show More</>
+                  )}
+                </Button>
+              )}
+            </div>
             {card.back.pronunciation && (
               <div className="flex items-center justify-center gap-2">
                 <p className="text-lg text-muted-foreground font-mono">
@@ -149,9 +176,22 @@ export const FlashCard = memo(function FlashCard({
               <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Definition
               </h4>
-              <p className="text-lg text-foreground leading-relaxed">
+              <p className={cn(
+                "text-lg text-foreground leading-relaxed transition-all duration-300",
+                !isExpanded && "line-clamp-4"
+              )}>
                 {card.back.definition}
               </p>
+              {card.back.definition.length > 120 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-7 text-xs text-primary hover:bg-primary/5 px-2"
+                  onClick={toggleExpand}
+                >
+                  {isExpanded ? "Show Less" : "Read More..."}
+                </Button>
+              )}
             </div>
 
             {/* Example sentence */}
@@ -163,7 +203,10 @@ export const FlashCard = memo(function FlashCard({
                     Example
                   </h4>
                 </div>
-                <p className="text-foreground italic">
+                <p className={cn(
+                  "text-foreground italic transition-all duration-300",
+                  !isExpanded && "line-clamp-3"
+                )}>
                   "{card.back.exampleSentence}"
                 </p>
               </div>

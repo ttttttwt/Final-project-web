@@ -314,7 +314,7 @@ export default function StudyPage({ params }: StudyPageProps) {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="container max-w-4xl mx-auto px-4 py-3">
+        <div className="container max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={handleExit}>
               <X className="w-4 h-4 mr-2" />
@@ -366,7 +366,7 @@ export default function StudyPage({ params }: StudyPageProps) {
       </header>
 
       {/* Main Study Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         {isComplete ? (
           // Session Complete Summary
           <Card className="w-full max-w-md">
@@ -429,9 +429,9 @@ export default function StudyPage({ params }: StudyPageProps) {
           </Card>
         ) : (
           // Active Study Card
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-2xl">
             {/* Card Stack */}
-            <div className="flashcard-stack aspect-[3/4] sm:aspect-[4/3] mb-16">
+            <div className="flashcard-stack aspect-[3/4] sm:aspect-[4/3] mb-8">
               {currentCard && (
                 <SwipeableCard
                   card={currentCard}
@@ -447,7 +447,6 @@ export default function StudyPage({ params }: StudyPageProps) {
             <div className="flex items-center justify-center gap-4">
               <Button
                 variant="outline"
-                size="lg"
                 className="flex-1 max-w-[140px] border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 onClick={handleSwipeLeft}
               >
@@ -457,15 +456,14 @@ export default function StudyPage({ params }: StudyPageProps) {
               <Button
                 variant="outline"
                 size="icon"
-                className="w-12 h-12 rounded-full"
+                className="w-10 h-10 rounded-full"
                 onClick={handleFlip}
                 aria-label="Flip card"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
-                size="lg"
                 className="flex-1 max-w-[140px] border-green-500 text-green-600 hover:bg-green-500 hover:text-white"
                 onClick={handleSwipeRight}
               >

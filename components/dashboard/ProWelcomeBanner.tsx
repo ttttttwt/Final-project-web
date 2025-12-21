@@ -97,7 +97,7 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
                 {/* Left: Crown + Message */}
                 <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm shadow-inner">
-                        <Crown className="h-6 w-6 text-[#5D4037] drop-shadow-sm" />
+                        <Crown className="h-7 w-7 text-[#5D4037] drop-shadow-sm" />
                     </div>
                     <div className="space-y-1">
                         <h3 className="text-lg font-bold text-[#5D4037] flex items-center gap-2">
@@ -117,9 +117,9 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
                         {PREMIUM_FEATURES.map(({ icon: Icon, label }) => (
                             <div
                                 key={label}
-                                className="flex items-center gap-1.5 text-xs text-[#5D4037]/90 bg-white/20 rounded-full px-2.5 py-1"
+                                className="flex items-center gap-2 text-sm text-[#5D4037]/90 bg-white/20 rounded-full px-3 py-1.5"
                             >
-                                <Icon className="h-3 w-3" />
+                                <Icon className="h-5 w-5" />
                                 <span className="font-medium">{label}</span>
                             </div>
                         ))}
@@ -137,14 +137,13 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
                 </div>
             </div>
 
-            {/* Mobile features - visible only on small screens */}
             <div className="flex lg:hidden flex-wrap gap-2 mt-4">
                 {PREMIUM_FEATURES.map(({ icon: Icon, label }) => (
                     <div
                         key={label}
-                        className="flex items-center gap-1.5 text-xs text-[#5D4037]/90 bg-white/20 rounded-full px-2 py-1"
+                        className="flex items-center gap-2 text-sm text-[#5D4037]/90 bg-white/20 rounded-full px-3 py-1.5"
                     >
-                        <Icon className="h-3 w-3" />
+                        <Icon className="h-5 w-5" />
                         <span className="font-medium">{label}</span>
                     </div>
                 ))}

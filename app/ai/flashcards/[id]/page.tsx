@@ -132,6 +132,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
         title="AI Flashcards"
         backHref="/ai/flashcards"
         backLabel="Flashcards"
+        maxWidth="7xl"
       >
         <AiLoadingState variant="studying" message="Loading deck..." />
       </AiPageWrapper>
@@ -144,6 +145,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
         title="AI Flashcards"
         backHref="/ai/flashcards"
         backLabel="Flashcards"
+        maxWidth="7xl"
       >
         <AiErrorCard
           title="Failed to load deck"
@@ -162,10 +164,11 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       title={deck.title}
       backHref="/ai/flashcards"
       backLabel="Flashcards"
+      maxWidth="7xl"
     >
 
       {/* Deck Header */}
-      <Card className="mb-6">
+      <Card className="mb-4">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="space-y-3">
@@ -225,36 +228,36 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Layers className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Cards</p>
-                <p className="text-lg font-semibold">{deck.cardCount}</p>
+                <p className="text-xs text-muted-foreground">Total Cards</p>
+                <p className="text-base font-semibold">{deck.cardCount}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Clock className="w-5 h-5 text-yellow-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Due Now</p>
-                <p className="text-lg font-semibold">{deck.dueCount ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Due Now</p>
+                <p className="text-base font-semibold">{deck.dueCount ?? 0}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Calendar className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Created</p>
-                <p className="text-sm font-medium">
+                <p className="text-xs text-muted-foreground">Created</p>
+                <p className="text-xs font-medium">
                   {formatDistanceToNow(new Date(deck.createdAt), { addSuffix: true })}
                 </p>
               </div>
             </div>
             {deck.masteryLevel !== undefined && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">Mastery</p>
+                  <p className="text-xs text-muted-foreground mb-1">Mastery</p>
                   <MasteryIndicator level={deck.masteryLevel} showLabel size="sm" />
                 </div>
               </div>
@@ -263,7 +266,6 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
 
           {/* Study Button */}
           <Button
-            size="lg"
             className="w-full"
             onClick={handleStudy}
           >
@@ -274,9 +276,9 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       </Card>
 
       {/* Card Preview List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Cards ({deck.cardCount})</h2>
-        <div className="space-y-2">
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Cards ({deck.cardCount})</h2>
+        <div className="space-y-1.5">
           {deck.cards.map((card, index) => (
             <Card
               key={index}

@@ -116,9 +116,10 @@ export default function FlashcardsPage() {
       feature="flashcards"
       showQuota={true}
       showNetworkStatus={true}
+      maxWidth="7xl"
     >
       {/* Page Description */}
-      <div className="mb-6">
+      <div className="mb-4">
         <p className="text-muted-foreground">
           Study vocabulary with spaced repetition
         </p>
@@ -126,15 +127,15 @@ export default function FlashcardsPage() {
 
       {/* Quick Study Card */}
       {totalDue > 0 && (
-        <Card className="mb-6 border-primary/30 bg-primary/5">
-          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-primary" />
+        <Card className="mb-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Ready to study?</h3>
-                <p className="text-muted-foreground">
+                <h3 className="font-semibold text-base">Ready to study?</h3>
+                <p className="text-sm text-muted-foreground">
                   You have <strong>{totalDue}</strong> cards due across{" "}
                   <strong>{dueDecks.length}</strong> deck
                   {dueDecks.length !== 1 ? "s" : ""}.
@@ -142,7 +143,6 @@ export default function FlashcardsPage() {
               </div>
             </div>
             <Button
-              size="lg"
               onClick={() => {
                 // Guard against empty array
                 if (dueDecks.length === 0) {
@@ -166,7 +166,7 @@ export default function FlashcardsPage() {
       )}
 
       {/* Search and Tabs */}
-      <div className="space-y-4 mb-6">
+      <div className="space-y-3 mb-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -215,8 +215,8 @@ export default function FlashcardsPage() {
       {isLoading && (
         <div className="space-y-4">
           <AiLoadingState variant="studying" message="Loading your flashcard decks..." />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <FlashcardDeckSkeleton key={i} />
             ))}
           </div>
@@ -262,7 +262,7 @@ export default function FlashcardsPage() {
 
       {/* Deck Grid - Grouped */}
       {!isLoading && !error && filteredDecks.length > 0 && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {Object.entries(
             filteredDecks.reduce((acc, deck) => {
               const courseTitle = deck.courseTitle || "Other Decks";
@@ -278,15 +278,15 @@ export default function FlashcardsPage() {
               return acc;
             }, {} as Record<string, Record<string, FlashcardDeckDTO[]>>)
           ).map(([courseTitle, lessons]) => (
-            <div key={courseTitle} className="space-y-4">
-              <h2 className="text-xl font-bold flex items-center gap-2 text-primary">
+            <div key={courseTitle} className="space-y-3">
+              <h2 className="text-lg font-bold flex items-center gap-2 text-primary">
                 <Layers className="w-5 h-5" />
                 {courseTitle}
               </h2>
               
-              <div className="pl-4 border-l-2 border-muted space-y-6">
+              <div className="pl-3 border-l-2 border-muted space-y-4">
                 {Object.entries(lessons).map(([lessonTitle, decks]) => (
-                  <div key={lessonTitle} className="space-y-3">
+                  <div key={lessonTitle} className="space-y-2">
                     {lessonTitle !== "General" && (
                       <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
                         <BookOpen className="w-4 h-4" />
@@ -294,7 +294,7 @@ export default function FlashcardsPage() {
                       </h3>
                     )}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
                       {decks.map((deck) => (
                         <DeckCard
                           key={deck.id}

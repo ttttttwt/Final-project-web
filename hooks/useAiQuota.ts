@@ -53,6 +53,10 @@ export interface AiQuotaResult {
   planType: 'FREE' | 'MONTHLY' | 'YEARLY';
   /** Days until quota resets */
   daysUntilReset: number;
+  /** Usage for the requested feature (or total if none specified) */
+  featureUsed: number;
+  /** Limit for the requested feature (or total if none specified) */
+  featureLimit: number;
 }
 
 /**
@@ -177,6 +181,8 @@ export function useAiQuota(feature?: string): AiQuotaResult {
     flashcardLimit,
     grammarUsed,
     grammarLimit,
+    featureUsed,
+    featureLimit,
     totalUsed,
     totalLimit,
     planType,
