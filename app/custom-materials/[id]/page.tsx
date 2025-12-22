@@ -52,6 +52,17 @@ export default function MaterialDetailPage() {
 
   const [activeTab, setActiveTab] = useState("vocabulary");
 
+  // Text-to-speech function
+  const speak = (text: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   // Fetch material on mount
   useEffect(() => {
     if (materialId) {
@@ -243,95 +254,115 @@ export default function MaterialDetailPage() {
             {/* Vocabulary Tab */}
             {hasVocabulary && (
               <TabsContent value="vocabulary" className="space-y-4">
-                {content.vocabulary?.map((item) => (
-                  <Card key={item.id}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-lg text-[#202124] dark:text-[#E8EAED]">
-                              {item.term}
-                            </h3>
-                            {item.partOfSpeech && (
-                              <Badge variant="outline" className="text-xs">
-                                {item.partOfSpeech}
-                              </Badge>
+                {content.vocabulary?.map((item, index) => {
+                  const wordText = item.word || item.term || "";
+                  return (
+                    <Card key={item.id || `vocab-${index}`}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-lg text-[#202124] dark:text-[#E8EAED]">
+                                {wordText}
+                              </h3>
+                              {item.partOfSpeech && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.partOfSpeech}
+                                </Badge>
+                              )}
+                              {item.ipa && (
+                                <span className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
+                                  /{item.ipa}/
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[#202124] dark:text-[#E8EAED] mb-2">
+                              {item.definition}
+                            </p>
+                            {item.example && (
+                              <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6] italic">
+                                &ldquo;{item.example}&rdquo;
+                              </p>
                             )}
-                            {item.ipa && (
-                              <span className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
-                                /{item.ipa}/
-                              </span>
+                            {(item.context || item.contextNote) && (
+                              <p className="text-xs text-[#4285F4] mt-2">
+                                💡 {item.context || item.contextNote}
+                              </p>
                             )}
                           </div>
-                          <p className="text-[#202124] dark:text-[#E8EAED] mb-2">
-                            {item.definition}
-                          </p>
-                          {item.example && (
-                            <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6] italic">
-                              &ldquo;{item.example}&rdquo;
-                            </p>
-                          )}
-                          {item.contextNote && (
-                            <p className="text-xs text-[#4285F4] mt-2">
-                              💡 {item.contextNote}
-                            </p>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => speak(wordText)}
+                            title={`Speak: ${wordText}`}
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="icon">
-                          <Volume2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </TabsContent>
             )}
 
             {/* Quiz Tab */}
             {hasQuiz && (
               <TabsContent value="quiz" className="space-y-4">
-                {content.quiz?.map((question, idx) => (
-                  <Card key={question.id}>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Question {idx + 1}
-                      </CardTitle>
-                      <CardDescription>{question.question}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {question.type === "multiple_choice" && question.options && (
-                        <div className="space-y-2">
-                          {question.options.map((option, optIdx) => (
-                            <div
-                              key={optIdx}
-                              className={`p-3 rounded-lg border ${
-                                optIdx === question.correctAnswer
-                                  ? "border-[#4CAF50] bg-[#E8F5E9] dark:bg-[#4CAF50]/10"
-                                  : "border-[#E0E0E0] dark:border-[#2E2E2E]"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {optIdx === question.correctAnswer ? (
-                                  <Check className="h-4 w-4 text-[#4CAF50]" />
-                                ) : (
-                                  <X className="h-4 w-4 text-[#9AA0A6]" />
-                                )}
-                                <span>{option}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {question.explanation && (
-                        <div className="mt-4 p-3 rounded-lg bg-[#E3F2FD] dark:bg-[#4285F4]/10">
-                          <p className="text-sm text-[#1565C0] dark:text-[#90CAF9]">
-                            <strong>Explanation:</strong> {question.explanation}
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                {content.quiz?.map((question, idx) => {
+                  // Handle both 'answer' (AI) and 'correctAnswer' (legacy) fields
+                  const correctAnswerValue = question.answer || question.correctAnswer;
+
+                  return (
+                    <Card key={question.id || `quiz-${idx}`}>
+                      <CardHeader>
+                        <CardTitle className="text-base">
+                          Question {idx + 1}
+                        </CardTitle>
+                        <CardDescription>{question.question}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* Show options if available (multiple choice) */}
+                        {question.options && question.options.length > 0 && (
+                          <div className="space-y-2">
+                            {question.options.map((option, optIdx) => {
+                              // Check if this option is the correct answer
+                              const isCorrect = typeof correctAnswerValue === 'string'
+                                ? option === correctAnswerValue
+                                : optIdx === correctAnswerValue;
+
+                              return (
+                                <div
+                                  key={optIdx}
+                                  className={`p-3 rounded-lg border ${isCorrect
+                                    ? "border-[#4CAF50] bg-[#E8F5E9] dark:bg-[#4CAF50]/10"
+                                    : "border-[#E0E0E0] dark:border-[#2E2E2E]"
+                                    }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {isCorrect ? (
+                                      <Check className="h-4 w-4 text-[#4CAF50]" />
+                                    ) : (
+                                      <X className="h-4 w-4 text-[#9AA0A6]" />
+                                    )}
+                                    <span>{option}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {question.explanation && (
+                          <div className="mt-4 p-3 rounded-lg bg-[#E3F2FD] dark:bg-[#4285F4]/10">
+                            <p className="text-sm text-[#1565C0] dark:text-[#90CAF9]">
+                              <strong>Explanation:</strong> {question.explanation}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </TabsContent>
             )}
 
@@ -389,6 +420,6 @@ export default function MaterialDetailPage() {
           </Tabs>
         </div>
       </MainLayout>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 }

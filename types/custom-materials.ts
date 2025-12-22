@@ -49,21 +49,24 @@ export interface InputMetadata {
 // ==========================================
 
 export interface VocabularyItem {
-  id: string;
-  term: string;
+  id?: string;              // Optional - AI may not generate this
+  word?: string;            // AI often returns this field
+  term?: string;            // Original expected field (fallback)
   definition: string;
-  example: string;
+  example?: string;
   partOfSpeech?: string;
   ipa?: string;
-  contextNote?: string;
+  context?: string;         // AI returns this for usage context
+  contextNote?: string;     // Legacy field (fallback)
 }
 
 export interface QuizQuestion {
-  id: string;
-  type: "multiple_choice" | "fill_blank" | "true_false";
+  id?: string;
+  type?: "multiple_choice" | "fill_blank" | "true_false";
   question: string;
   options?: string[];
-  correctAnswer: string | number;
+  answer?: string;          // AI returns this
+  correctAnswer?: string | number;  // Legacy/fallback
   explanation?: string;
 }
 
@@ -96,6 +99,12 @@ export interface GeneratedContent {
 // Request DTOs
 // ==========================================
 
+export interface MaterialSettingsInput {
+  aiCorrectionMode?: AiCorrectionMode;
+  styleLearnMode?: boolean;
+  syncVocabToSrs?: boolean;
+}
+
 export interface CreateMaterialRequest {
   title: string;
   sourceType: CustomMaterialSourceType;
@@ -103,9 +112,7 @@ export interface CreateMaterialRequest {
   rawText?: string;
   inputMetadata?: InputMetadata;
   targetOptions: TargetOption[];
-  aiCorrectionMode?: AiCorrectionMode;
-  stylelearnMode?: boolean;
-  syncVocabToSrs?: boolean;
+  settings?: MaterialSettingsInput;
 }
 
 export interface UpdateContentRequest {

@@ -152,13 +152,13 @@ export function MaterialCard({
         {/* Content counts */}
         {isReady && (
           <div className="flex flex-wrap gap-2 mb-3">
-            {material.vocabularyCount && material.vocabularyCount > 0 && (
+            {(material.vocabularyCount ?? 0) > 0 && (
               <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
                 <BookOpen className="h-3 w-3" />
                 {material.vocabularyCount} words
               </div>
             )}
-            {material.quizCount && material.quizCount > 0 && (
+            {(material.quizCount ?? 0) > 0 && (
               <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
                 <HelpCircle className="h-3 w-3" />
                 {material.quizCount} questions

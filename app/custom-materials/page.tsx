@@ -186,9 +186,11 @@ export default function CustomMaterialsPage() {
       title: title || "Untitled Material",
       sourceType,
       targetOptions,
-      aiCorrectionMode,
-      stylelearnMode: styleLearnMode,
-      syncVocabToSrs,
+      settings: {
+        aiCorrectionMode,
+        styleLearnMode,
+        syncVocabToSrs,
+      },
     };
 
     // Add source-specific fields
@@ -309,25 +311,23 @@ export default function CustomMaterialsPage() {
               {["source", "input", "config"].map((s, idx) => (
                 <div key={s} className="flex items-center">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step === s
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === s
                         ? "bg-[#4285F4] text-white"
                         : idx <
                           ["source", "input", "config"].indexOf(step as string)
-                        ? "bg-[#4CAF50] text-white"
-                        : "bg-[#E0E0E0] dark:bg-[#2E2E2E] text-[#9AA0A6]"
-                    }`}
+                          ? "bg-[#4CAF50] text-white"
+                          : "bg-[#E0E0E0] dark:bg-[#2E2E2E] text-[#9AA0A6]"
+                      }`}
                   >
                     {idx + 1}
                   </div>
                   {idx < 2 && (
                     <div
-                      className={`w-12 h-0.5 ${
-                        idx <
-                        ["source", "input", "config"].indexOf(step as string)
+                      className={`w-12 h-0.5 ${idx <
+                          ["source", "input", "config"].indexOf(step as string)
                           ? "bg-[#4CAF50]"
                           : "bg-[#E0E0E0] dark:bg-[#2E2E2E]"
-                      }`}
+                        }`}
                     />
                   )}
                 </div>
@@ -366,12 +366,12 @@ export default function CustomMaterialsPage() {
                 {(sourceType === "PDF" ||
                   sourceType === "DOCX" ||
                   sourceType === "IMAGE") && (
-                  <FileDropzone
-                    sourceType={sourceType}
-                    file={file}
-                    onFileSelect={setFile}
-                  />
-                )}
+                    <FileDropzone
+                      sourceType={sourceType}
+                      file={file}
+                      onFileSelect={setFile}
+                    />
+                  )}
 
                 {/* URL input */}
                 {(sourceType === "YOUTUBE" || sourceType === "WEBSITE") && (

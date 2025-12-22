@@ -34,8 +34,9 @@ export const customMaterialService = {
       formData.append("file", file);
     }
     
-    // Add request JSON
-    formData.append("request", JSON.stringify(data));
+    // Add request JSON as Blob with proper Content-Type for Spring @RequestPart
+    const jsonBlob = new Blob([JSON.stringify(data)], { type: "application/json; charset=utf-8" });
+    formData.append("request", jsonBlob);
 
     const response = await api.post(`${BASE_URL}`, formData, {
       headers: {
