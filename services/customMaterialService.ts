@@ -172,6 +172,16 @@ export const customMaterialService = {
     );
     return response.data;
   },
+
+  /**
+   * Get materials generated from the same source (for sidebar navigation).
+   */
+  getRelatedMaterials: async (materialId: string): Promise<MaterialListItem[]> => {
+    const response = await api.get<MaterialListItem[]>(
+      `${BASE_URL}/${materialId}/related`
+    );
+    return response.data;
+  },
 };
 
 export default customMaterialService;

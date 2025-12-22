@@ -37,3 +37,7 @@ export {
   MaterialFilters,
   MaterialsGrid,
 } from "./library";
+
+// Sidebar components
+export { RelatedMaterialsSidebar } from "./RelatedMaterialsSidebar";
+export { ContentNavigationSidebar } from "./ContentNavigationSidebar";

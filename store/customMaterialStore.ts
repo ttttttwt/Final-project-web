@@ -25,6 +25,10 @@ interface CustomMaterialState {
   currentMaterial: CustomMaterial | null;
   isLoadingMaterial: boolean;
 
+  // Related materials (for sidebar)
+  relatedMaterials: MaterialListItem[];
+  isLoadingRelated: boolean;
+
   // Upload/Create state
   isCreating: boolean;
   createError: string | null;
@@ -72,6 +76,7 @@ interface CustomMaterialState {
   ) => Promise<EndChatResponse | null>;
   resetChatSession: () => void;
   fetchQuota: () => Promise<void>;
+  fetchRelatedMaterials: (materialId: string) => Promise<void>;
   clearError: () => void;
   clearCurrentMaterial: () => void;
 }
@@ -97,6 +102,8 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
     performanceReport: null,
     quota: null,
     isLoadingQuota: false,
+    relatedMaterials: [],
+    isLoadingRelated: false,
     error: null,
 
     // Fetch materials list
@@ -325,6 +332,19 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
       }
     },
 
+    // Fetch related materials
+    fetchRelatedMaterials: async (materialId) => {
+      set({ isLoadingRelated: true });
+      try {
+        const materials = await customMaterialService.getRelatedMaterials(materialId);
+        set({ relatedMaterials: materials, isLoadingRelated: false });
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch related materials";
+        set({ error: message, isLoadingRelated: false, relatedMaterials: [] });
+      }
+    },
+
     // Clear error
     clearError: () => set({ error: null, createError: null }),
 
@@ -336,6 +356,7 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
         chatSessionId: null,
         chatMessages: [],
         performanceReport: null,
+        relatedMaterials: [],
       }),
   })
 );
