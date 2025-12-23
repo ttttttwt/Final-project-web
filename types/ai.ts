@@ -375,6 +375,8 @@ export interface UserAiQuota {
   flashcardDecksLimit: number;
   grammarExercisesUsed: number;
   grammarExercisesLimit: number;
+  customMaterialsUsed: number;
+  customMaterialsLimit: number;
   totalRequestsUsed: number;
   totalRequestsLimit: number;
   
@@ -421,12 +423,14 @@ export const QUOTA_LIMITS = {
     roleplaySessions: 10,
     flashcardDecks: 10,
     grammarExercises: 75,
+    customMaterials: 0,
     totalRequests: 100,
   },
   PRO: {
     roleplaySessions: 50,
     flashcardDecks: 30,
     grammarExercises: 300,
+    customMaterials: 10,
     totalRequests: 300,
   },
 } as const;

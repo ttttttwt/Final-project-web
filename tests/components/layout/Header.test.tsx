@@ -26,9 +26,9 @@ jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
 }));
 
-const useAuthStoreMock = useAuthStore as jest.Mock;
-const useRouterMock = useRouter as jest.Mock;
-const usePathnameMock = usePathname as jest.Mock;
+const useAuthStoreMock = useAuthStore as unknown as jest.Mock;
+const useRouterMock = useRouter as unknown as jest.Mock;
+const usePathnameMock = usePathname as unknown as jest.Mock;
 const toastSuccessMock = toast.success as unknown as jest.Mock;
 
 const pushMock = jest.fn();

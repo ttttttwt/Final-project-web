@@ -10,7 +10,7 @@ import {
     Mic,
     MessageSquare,
     FileCode,
-    ExternalLink,
+    Eye,
     CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -121,19 +121,8 @@ export function ContentNavigationSidebar({
     ].filter((section) => section.available);
 
     const handleSectionClick = (sectionId: string) => {
-        if (sectionId === "source") {
-            // For file/URL materials, open in new tab
-            const url = currentMaterial.originalFileUrl || sourceUrl;
-            if (url) {
-                window.open(url, "_blank", "noopener,noreferrer");
-            } else {
-                // For TEXT materials, switch to a "source" view
-                onTabChange("source");
-            }
-        } else {
-            // Change active tab
-            onTabChange(sectionId);
-        }
+        // All sections now use tab change - the page handles previews via dialog
+        onTabChange(sectionId);
     };
 
     return (
@@ -210,7 +199,7 @@ export function ContentNavigationSidebar({
                                             <CheckCircle2 className="h-4 w-4 text-[#4285F4] dark:text-[#8AB4F8] flex-shrink-0" />
                                         )}
                                         {isSourceLink && !isActive && (
-                                            <ExternalLink className="h-3 w-3 text-[#5F6368] dark:text-[#9AA0A6] flex-shrink-0" />
+                                            <Eye className="h-3 w-3 text-[#5F6368] dark:text-[#9AA0A6] flex-shrink-0" />
                                         )}
                                     </div>
                                     {section.description && (

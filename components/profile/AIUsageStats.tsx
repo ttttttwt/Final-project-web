@@ -23,6 +23,9 @@ export function AIUsageStats({ quota, nextBillingDate }: AIUsageStatsProps) {
   const grammarUsed = quota.grammarExercisesUsed ?? quota.grammarUsedMonth ?? 0;
   const grammarLimit = quota.grammarExercisesLimit ?? quota.grammarMonthlyLimit ?? QUOTA_LIMITS.FREE.grammarExercises;
 
+  const customMaterialUsed = quota.customMaterialsUsed ?? 0;
+  const customMaterialLimit = quota.customMaterialsLimit ?? QUOTA_LIMITS.FREE.customMaterials;
+
   const totalUsed = quota.totalRequestsUsed ?? quota.monthlyUsed ?? 0;
   const totalLimit = quota.totalRequestsLimit ?? quota.monthlyLimit ?? QUOTA_LIMITS.FREE.totalRequests;
 
@@ -31,6 +34,7 @@ export function AIUsageStats({ quota, nextBillingDate }: AIUsageStatsProps) {
   const roleplayUsage = calculateQuotaUsage(roleplayUsed, roleplayLimit);
   const flashcardUsage = calculateQuotaUsage(flashcardUsed, flashcardLimit);
   const grammarUsage = calculateQuotaUsage(grammarUsed, grammarLimit);
+  const customMaterialUsage = calculateQuotaUsage(customMaterialUsed, customMaterialLimit);
 
   // Determine reset date
   const resetDate = quota.quotaResetDate
@@ -40,9 +44,9 @@ export function AIUsageStats({ quota, nextBillingDate }: AIUsageStatsProps) {
       : format(new Date(quota.lastResetMonthly), "dd/MM/yyyy");
 
   // Check for warnings using new flags or calculated
-  const isWarning = quota.quotaWarning || totalUsage.isWarning || roleplayUsage.isWarning || flashcardUsage.isWarning || grammarUsage.isWarning;
-  const isCritical = quota.quotaCritical || totalUsage.isCritical || roleplayUsage.isCritical || flashcardUsage.isCritical || grammarUsage.isCritical;
-  const isExceeded = totalUsage.isExceeded || roleplayUsage.isExceeded || flashcardUsage.isExceeded || grammarUsage.isExceeded;
+  const isWarning = quota.quotaWarning || totalUsage.isWarning || roleplayUsage.isWarning || flashcardUsage.isWarning || grammarUsage.isWarning || customMaterialUsage.isWarning;
+  const isCritical = quota.quotaCritical || totalUsage.isCritical || roleplayUsage.isCritical || flashcardUsage.isCritical || grammarUsage.isCritical || customMaterialUsage.isCritical;
+  const isExceeded = totalUsage.isExceeded || roleplayUsage.isExceeded || flashcardUsage.isExceeded || grammarUsage.isExceeded || customMaterialUsage.isExceeded;
 
   return (
     <div className="mt-6 space-y-6">
@@ -71,7 +75,7 @@ export function AIUsageStats({ quota, nextBillingDate }: AIUsageStatsProps) {
       </div>
 
       {/* Feature Breakdown */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <FeatureStat
           label="Role Play"
           icon={<MessageSquare className="h-4 w-4" />}
@@ -86,6 +90,11 @@ export function AIUsageStats({ quota, nextBillingDate }: AIUsageStatsProps) {
           label="Grammar Exercises"
           icon={<FileText className="h-4 w-4" />}
           usage={grammarUsage}
+        />
+        <FeatureStat
+          label="Custom Materials"
+          icon={<FileText className="h-4 w-4" />}
+          usage={customMaterialUsage}
         />
       </div>
 

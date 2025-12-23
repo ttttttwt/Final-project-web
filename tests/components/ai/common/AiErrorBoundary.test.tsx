@@ -155,7 +155,6 @@ describe("AiErrorCard", () => {
     render(
       <AiErrorCard 
         onRetry={() => {}} 
-        isExhausted={true}
         attemptNumber={3}
         maxRetries={3}
       />

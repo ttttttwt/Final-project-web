@@ -191,6 +191,10 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
         quota.grammarExercisesUsed ?? 0,
         quota.grammarExercisesLimit ?? 75
     );
+    const customMaterialUsage = calculateQuotaUsage(
+        quota.customMaterialsUsed ?? 0,
+        quota.customMaterialsLimit ?? 10
+    );
     const totalUsage = calculateQuotaUsage(
         quota.totalRequestsUsed ?? quota.monthlyUsed ?? 0,
         quota.totalRequestsLimit ?? 100
@@ -198,7 +202,7 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
 
     const isPro = quota.planType === "MONTHLY" || quota.planType === "YEARLY";
     const hasExceeded = roleplayUsage.isExceeded || flashcardUsage.isExceeded ||
-        grammarUsage.isExceeded || totalUsage.isExceeded;
+        grammarUsage.isExceeded || customMaterialUsage.isExceeded || totalUsage.isExceeded;
 
     return (
         <Card className={quota.quotaCritical ? "border-orange-500" : quota.quotaWarning ? "border-yellow-500" : ""}>
@@ -224,6 +228,7 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
                 {roleplayUsage.isExceeded && <QuotaExceededAlert featureName="Role Play" />}
                 {flashcardUsage.isExceeded && <QuotaExceededAlert featureName="Flashcards" />}
                 {grammarUsage.isExceeded && <QuotaExceededAlert featureName="Grammar Exercises" />}
+                {customMaterialUsage.isExceeded && <QuotaExceededAlert featureName="Custom Materials" />}
                 {totalUsage.isExceeded && <QuotaExceededAlert featureName="Total AI Requests" />}
 
                 {/* Progress bars */}
@@ -241,6 +246,11 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
                     label="Grammar Exercises"
                     icon={<FileText className="h-4 w-4 text-purple-500" />}
                     usage={grammarUsage}
+                />
+                <QuotaProgressBar
+                    label="Custom Materials"
+                    icon={<FileText className="h-4 w-4 text-indigo-500" />}
+                    usage={customMaterialUsage}
                 />
                 <QuotaProgressBar
                     label="Total AI Requests"

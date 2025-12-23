@@ -41,3 +41,6 @@ export {
 // Sidebar components
 export { RelatedMaterialsSidebar } from "./RelatedMaterialsSidebar";
 export { ContentNavigationSidebar } from "./ContentNavigationSidebar";
+
+// Detail components
+export { FilePreviewDialog } from "./detail";

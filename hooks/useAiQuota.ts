@@ -17,6 +17,8 @@ export interface AiQuotaResult {
   dailyResetTime: Date | null;
   /** When the monthly quota resets */
   monthlyResetTime: Date | null;
+  /** Percentage of daily quota used (0-100) */
+  dailyPercentage: number;
   /** Percentage of monthly quota used (0-100) */
   monthlyPercentage: number;
   /** Whether user is near monthly limit (>=80%) */
@@ -45,6 +47,10 @@ export interface AiQuotaResult {
   grammarUsed: number;
   /** Grammar exercises limit this month */
   grammarLimit: number;
+  /** Custom materials created this month */
+  customMaterialUsed: number;
+  /** Custom materials limit this month */
+  customMaterialLimit: number;
   /** Total AI requests this month */
   totalUsed: number;
   /** Total AI requests limit this month */
@@ -108,6 +114,8 @@ export function useAiQuota(feature?: string): AiQuotaResult {
     flashcardLimit: QUOTA_LIMITS.FREE.flashcardDecks,
     grammarUsed: 0,
     grammarLimit: QUOTA_LIMITS.FREE.grammarExercises,
+    customMaterialUsed: 0,
+    customMaterialLimit: QUOTA_LIMITS.FREE.customMaterials,
     totalUsed: 0,
     totalLimit: QUOTA_LIMITS.FREE.totalRequests,
     planType: 'FREE' as const,
@@ -120,8 +128,8 @@ export function useAiQuota(feature?: string): AiQuotaResult {
   const flashcardUsed = quota?.flashcardDecksUsed ?? quota?.flashcardUsedMonth ?? defaults.flashcardUsed;
   const flashcardLimit = quota?.flashcardDecksLimit ?? quota?.flashcardMonthlyLimit ?? defaults.flashcardLimit;
   const grammarUsed = quota?.grammarExercisesUsed ?? quota?.grammarUsedMonth ?? defaults.grammarUsed;
-  const grammarLimit = quota?.grammarExercisesLimit ?? quota?.grammarMonthlyLimit ?? defaults.grammarLimit;
-  const totalUsed = quota?.totalRequestsUsed ?? quota?.monthlyUsed ?? defaults.totalUsed;
+  const grammarLimit = quota?.grammarExercisesLimit ?? quota?.grammarMonthlyLimit ?? defaults.grammarLimit;  const customMaterialUsed = quota?.customMaterialsUsed ?? defaults.customMaterialUsed;
+  const customMaterialLimit = quota?.customMaterialsLimit ?? defaults.customMaterialLimit;  const totalUsed = quota?.totalRequestsUsed ?? quota?.monthlyUsed ?? defaults.totalUsed;
   const totalLimit = quota?.totalRequestsLimit ?? quota?.monthlyLimit ?? defaults.totalLimit;
   const planType = quota?.planType ?? defaults.planType;
   const daysUntilReset = quota?.daysUntilReset ?? defaults.daysUntilReset;
@@ -139,12 +147,10 @@ export function useAiQuota(feature?: string): AiQuotaResult {
   } else if (feature === 'grammar') {
     featureUsed = grammarUsed;
     featureLimit = grammarLimit;
+  } else if (feature === 'custom_materials' || feature === 'custom-materials') {
+    featureUsed = customMaterialUsed;
+    featureLimit = customMaterialLimit;
   }
-
-  const monthlyPercentage = Math.min((featureUsed / featureLimit) * 100, 100);
-  const isNearLimit = monthlyPercentage >= 80;
-  const isCriticalLimit = monthlyPercentage >= 95;
-  const isAtLimit = monthlyPercentage >= 100;
 
   // Legacy daily values for backwards compatibility
   const usedToday = quota?.dailyUsed ?? 0;
@@ -156,6 +162,12 @@ export function useAiQuota(feature?: string): AiQuotaResult {
       ? new Date(quota.lastResetMonthly) 
       : null;
 
+  const monthlyPercentage = Math.min((featureUsed / featureLimit) * 100, 100);
+  const dailyPercentage = Math.min((usedToday / dailyLimit) * 100, 100);
+  const isNearLimit = monthlyPercentage >= 80;
+  const isCriticalLimit = monthlyPercentage >= 95;
+  const isAtLimit = monthlyPercentage >= 100;
+
   return {
     // Legacy fields
     usedToday,
@@ -166,6 +178,7 @@ export function useAiQuota(feature?: string): AiQuotaResult {
     monthlyResetTime,
     
     // New subscription-based fields
+    dailyPercentage,
     monthlyPercentage,
     isNearLimit,
     isCriticalLimit,
@@ -181,6 +194,8 @@ export function useAiQuota(feature?: string): AiQuotaResult {
     flashcardLimit,
     grammarUsed,
     grammarLimit,
+    customMaterialUsed,
+    customMaterialLimit,
     featureUsed,
     featureLimit,
     totalUsed,
@@ -220,6 +235,12 @@ export function useCanUseAiFeature(feature: string): {
       featureUsed = quota.grammarUsed;
       featureLimit = quota.grammarLimit;
       featureName = 'grammar exercises';
+      break;
+    case 'custom_materials':
+    case 'custom-materials':
+      featureUsed = quota.customMaterialUsed;
+      featureLimit = quota.customMaterialLimit;
+      featureName = 'custom materials';
       break;
     default:
       featureUsed = quota.totalUsed;

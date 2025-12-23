@@ -9,6 +9,7 @@ import {
   ProcessingStatus,
   useStatusPoller,
   ContentNavigationSidebar,
+  FilePreviewDialog,
 } from "@/components/custom-materials";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,11 @@ import {
   FileCode,
   Check,
   X,
+  Download,
+  ExternalLink,
+  Eye,
+  File,
+  Image as ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -106,6 +112,9 @@ export default function MaterialDetailPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordings, setRecordings] = useState<Map<number, Blob>>(new Map());
   const [playingRecording, setPlayingRecording] = useState<number | null>(null);
+
+  // File preview dialog state
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Text-to-speech function
   const speak = (text: string) => {
@@ -387,21 +396,111 @@ export default function MaterialDetailPage() {
               {/* Content display controlled by sidebar */}
               <div>
                 {/* Original Source View */}
-                {activeTab === "source" && currentMaterial.contentText && (
+                {activeTab === "source" && (
                   <Card>
                     <CardHeader>
-                      <div className="flex items-center gap-2">
-                        <FileCode className="h-5 w-5 text-[#34A853]" />
-                        <h3 className="text-lg font-semibold">Original Source</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {currentMaterial.sourceType === "PDF" && <FileText className="h-5 w-5 text-[#EA4335]" />}
+                          {currentMaterial.sourceType === "DOCX" && <File className="h-5 w-5 text-[#4285F4]" />}
+                          {currentMaterial.sourceType === "IMAGE" && <ImageIcon className="h-5 w-5 text-[#34A853]" />}
+                          {currentMaterial.sourceType === "TEXT" && <FileCode className="h-5 w-5 text-[#5F6368]" />}
+                          {(currentMaterial.sourceType === "YOUTUBE" || currentMaterial.sourceType === "WEBSITE") && (
+                            <ExternalLink className="h-5 w-5 text-[#9334EA]" />
+                          )}
+                          <h3 className="text-lg font-semibold">Original Source</h3>
+                        </div>
+                        <Badge variant="outline">{currentMaterial.sourceType}</Badge>
                       </div>
                       <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
-                        {currentMaterial.sourceType}
+                        {currentMaterial.sourceType === "TEXT" 
+                          ? "View the original text content"
+                          : currentMaterial.sourceType === "PDF"
+                          ? "PDF document preview"
+                          : currentMaterial.sourceType === "DOCX"
+                          ? "Word document - download to view"
+                          : currentMaterial.sourceType === "IMAGE"
+                          ? "Image preview with zoom controls"
+                          : "External source link"
+                        }
                       </p>
                     </CardHeader>
-                    <CardContent>
-                      <div className="prose dark:prose-invert max-w-none">
-                        <p className="whitespace-pre-wrap">{currentMaterial.contentText}</p>
-                      </div>
+                    <CardContent className="space-y-4">
+                      {/* TEXT content - show directly */}
+                      {currentMaterial.sourceType === "TEXT" && currentMaterial.contentText && (
+                        <div className="prose dark:prose-invert max-w-none">
+                          <div className="p-4 bg-muted/30 rounded-lg border max-h-[500px] overflow-auto">
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{currentMaterial.contentText}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* FILE types (PDF, DOCX, IMAGE) - show preview card with button */}
+                      {(currentMaterial.sourceType === "PDF" || 
+                        currentMaterial.sourceType === "DOCX" || 
+                        currentMaterial.sourceType === "IMAGE") && (
+                        <div className="flex flex-col items-center justify-center py-8 px-4 bg-muted/20 rounded-lg border-2 border-dashed">
+                          <div className={`p-4 rounded-full mb-4 ${
+                            currentMaterial.sourceType === "PDF" 
+                              ? "bg-red-100 dark:bg-red-900/20" 
+                              : currentMaterial.sourceType === "DOCX"
+                              ? "bg-blue-100 dark:bg-blue-900/20"
+                              : "bg-green-100 dark:bg-green-900/20"
+                          }`}>
+                            {currentMaterial.sourceType === "PDF" && <FileText className="h-8 w-8 text-red-500" />}
+                            {currentMaterial.sourceType === "DOCX" && <File className="h-8 w-8 text-blue-500" />}
+                            {currentMaterial.sourceType === "IMAGE" && <ImageIcon className="h-8 w-8 text-green-500" />}
+                          </div>
+                          <h4 className="font-medium text-lg mb-1">
+                            {currentMaterial.sourceType === "PDF" && "PDF Document"}
+                            {currentMaterial.sourceType === "DOCX" && "Word Document"}
+                            {currentMaterial.sourceType === "IMAGE" && "Image File"}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
+                            {currentMaterial.sourceType === "PDF" 
+                              ? "Click to preview the PDF document in a viewer"
+                              : currentMaterial.sourceType === "DOCX"
+                              ? "DOCX files cannot be previewed in browser. Click to download."
+                              : "Click to view the image with zoom controls"
+                            }
+                          </p>
+                          <div className="flex gap-2">
+                            <Button onClick={() => setIsPreviewOpen(true)} className="gap-2">
+                              <Eye className="h-4 w-4" />
+                              {currentMaterial.sourceType === "DOCX" ? "Download / View" : "Preview"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* YOUTUBE or WEBSITE - show link */}
+                      {(currentMaterial.sourceType === "YOUTUBE" || currentMaterial.sourceType === "WEBSITE") && (
+                        <div className="flex flex-col items-center justify-center py-8 px-4 bg-muted/20 rounded-lg border-2 border-dashed">
+                          <div className="p-4 rounded-full mb-4 bg-purple-100 dark:bg-purple-900/20">
+                            <ExternalLink className="h-8 w-8 text-purple-500" />
+                          </div>
+                          <h4 className="font-medium text-lg mb-1">
+                            {currentMaterial.sourceType === "YOUTUBE" ? "YouTube Video" : "Website"}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-4 text-center max-w-md break-all">
+                            {(() => {
+                              const metadata = currentMaterial.inputMetadata as Record<string, unknown> | undefined;
+                              return metadata?.sourceUrl as string || currentMaterial.originalFileUrl || "No URL available";
+                            })()}
+                          </p>
+                          <Button 
+                            onClick={() => {
+                              const metadata = currentMaterial.inputMetadata as Record<string, unknown> | undefined;
+                              const url = (metadata?.sourceUrl as string) || currentMaterial.originalFileUrl;
+                              if (url) window.open(url, "_blank", "noopener,noreferrer");
+                            }}
+                            className="gap-2"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Open in New Tab
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -685,6 +784,16 @@ export default function MaterialDetailPage() {
               />
             </div>
           </div>
+
+          {/* File Preview Dialog */}
+          <FilePreviewDialog
+            open={isPreviewOpen}
+            onOpenChange={setIsPreviewOpen}
+            fileUrl={currentMaterial.originalFileUrl || null}
+            sourceType={currentMaterial.sourceType}
+            title={currentMaterial.title}
+            contentText={currentMaterial.contentText}
+          />
         </div>
       </MainLayout>
     </ProtectedRoute>
