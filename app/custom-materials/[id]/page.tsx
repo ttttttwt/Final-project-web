@@ -70,7 +70,7 @@ export default function MaterialDetailPage() {
     if (content?.vocabulary && content.vocabulary.length > 0) tabs.push("vocabulary");
     if (content?.quiz && content.quiz.length > 0) tabs.push("quiz");
     if (content?.summary) tabs.push("summary");
-    if (content?.rolePlay) tabs.push("roleplay");
+    if (content?.rolePlay || content?.roleplay) tabs.push("roleplay");
     if (content?.shadowing && content.shadowing.length > 0) tabs.push("shadowing");
 
     return tabs;
@@ -285,7 +285,7 @@ export default function MaterialDetailPage() {
                   {error || "Material not found"}
                 </p>
                 <Button asChild>
-                  <Link href="/custom-materials/library">
+                  <Link href="/custom-materials">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Library
                   </Link>
@@ -306,7 +306,7 @@ export default function MaterialDetailPage() {
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="mb-6">
               <Button variant="ghost" asChild>
-                <Link href="/custom-materials/library">
+                <Link href="/custom-materials">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Library
                 </Link>
@@ -330,7 +330,7 @@ export default function MaterialDetailPage() {
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="mb-6">
               <Button variant="ghost" asChild>
-                <Link href="/custom-materials/library">
+                <Link href="/custom-materials">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Library
                 </Link>
@@ -351,7 +351,7 @@ export default function MaterialDetailPage() {
   const hasVocabulary = content?.vocabulary && content.vocabulary.length > 0;
   const hasQuiz = content?.quiz && content.quiz.length > 0;
   const hasSummary = content?.summary;
-  const hasRolePlay = content?.rolePlay;
+  const hasRolePlay = content?.rolePlay || content?.roleplay;
   const hasShadowing = content?.shadowing && content.shadowing.length > 0;
 
   return (
@@ -361,7 +361,7 @@ export default function MaterialDetailPage() {
           {/* Header */}
           <div className="mb-6">
             <Button variant="ghost" asChild className="mb-4">
-              <Link href="/custom-materials/library">
+              <Link href="/custom-materials">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Library
               </Link>
@@ -377,15 +377,6 @@ export default function MaterialDetailPage() {
                   {new Date(currentMaterial.createdAt).toLocaleDateString()}
                 </p>
               </div>
-
-              {hasRolePlay && (
-                <Button asChild>
-                  <Link href={`/custom-materials/${materialId}/chat`}>
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Practice Role-Play
-                  </Link>
-                </Button>
-              )}
             </div>
           </div>
 
@@ -543,6 +534,56 @@ export default function MaterialDetailPage() {
                       </CardContent>
                     </Card>
                   </div>
+                )}
+
+                {/* Role-Play Tab */}
+                {activeTab === "roleplay" && hasRolePlay && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-[#4285F4]" />
+                        <h3 className="text-lg font-semibold">Role-Play Scenario</h3>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Scenario</h4>
+                        <p className="text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
+                          {content.roleplay?.scenario || content.rolePlay?.scenario}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Role</span>
+                          <p className="font-semibold text-lg mt-1">{content.roleplay?.yourRole || content.rolePlay?.yourRole}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AI Role</span>
+                          <p className="font-semibold text-lg mt-1">{content.roleplay?.aiRole || content.rolePlay?.aiRole}</p>
+                        </div>
+                      </div>
+
+                      {((content.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
+                        (content.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Objectives</h4>
+                            <ul className="list-disc list-inside space-y-1 text-[#5F6368] dark:text-[#9AA0A6]">
+                              {(content.roleplay?.objectives || content.rolePlay?.objectives)?.map((obj: string, i: number) => (
+                                <li key={i}>{obj}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                      <Button asChild className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20">
+                        <Link href={`/custom-materials/${materialId}/chat`}>
+                          <MessageSquare className="h-5 w-5 mr-2" />
+                          Start Practice Session
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Shadowing */}

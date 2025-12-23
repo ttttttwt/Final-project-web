@@ -43,6 +43,8 @@ interface CustomMaterialState {
   isSendingMessage: boolean;
   isEndingChat: boolean;
   performanceReport: PerformanceReport | null;
+  dynamicPrompts: string[];
+  isLoadingPrompts: boolean;
 
   // Quota
   quota: QuotaInfo | null;
@@ -67,10 +69,12 @@ interface CustomMaterialState {
   pollStatus: (id: string) => Promise<MaterialStatusResponse>;
   startPolling: (id: string, onComplete?: () => void) => void;
   stopPolling: () => void;
+  startChatSession: (materialId: string) => Promise<void>;
   sendChatMessage: (
     materialId: string,
     message: string
   ) => Promise<ChatMessageResponse | null>;
+  fetchDynamicPrompts: (materialId: string) => Promise<void>;
   endChatSession: (
     materialId: string
   ) => Promise<EndChatResponse | null>;
@@ -100,6 +104,8 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
     isSendingMessage: false,
     isEndingChat: false,
     performanceReport: null,
+    dynamicPrompts: [],
+    isLoadingPrompts: false,
     quota: null,
     isLoadingQuota: false,
     relatedMaterials: [],
@@ -231,6 +237,29 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
       set({ isPolling: false });
     },
 
+    // Start a new chat session (AI starts)
+    startChatSession: async (materialId) => {
+      set({ isSendingMessage: true, chatMessages: [], chatSessionId: null });
+      try {
+        const response = await customMaterialService.startChat(materialId);
+        
+        const aiMessage: ChatMessage = {
+          role: "ai",
+          content: response.aiResponse,
+          timestamp: new Date().toISOString(),
+        };
+
+        set({
+          chatSessionId: response.sessionId,
+          chatMessages: [aiMessage],
+          isSendingMessage: false,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to start chat";
+        set({ error: message, isSendingMessage: false });
+      }
+    },
+
     // Send chat message
     sendChatMessage: async (materialId, message) => {
       const { chatSessionId } = get();
@@ -265,6 +294,7 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
           role: "ai",
           content: response.aiResponse,
           timestamp: new Date().toISOString(),
+          corrections: response.corrections,
         };
         set((state) => ({
           chatMessages: [...state.chatMessages, aiMessage],
@@ -281,6 +311,24 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
           chatMessages: state.chatMessages.slice(0, -1),
         }));
         return null;
+      }
+    },
+
+    // Fetch dynamic prompts
+    fetchDynamicPrompts: async (materialId) => {
+      const { chatSessionId } = get();
+      if (!chatSessionId) return;
+
+      set({ isLoadingPrompts: true });
+      try {
+        const prompts = await customMaterialService.getDynamicPrompts(
+          materialId,
+          chatSessionId
+        );
+        set({ dynamicPrompts: prompts, isLoadingPrompts: false });
+      } catch (err) {
+        console.error("Failed to fetch dynamic prompts:", err);
+        set({ isLoadingPrompts: false });
       }
     },
 
@@ -314,6 +362,7 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
         chatSessionId: null,
         chatMessages: [],
         performanceReport: null,
+        dynamicPrompts: [],
         isSendingMessage: false,
         isEndingChat: false,
       });
@@ -356,6 +405,7 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
         chatSessionId: null,
         chatMessages: [],
         performanceReport: null,
+        dynamicPrompts: [],
         relatedMaterials: [],
       }),
   })

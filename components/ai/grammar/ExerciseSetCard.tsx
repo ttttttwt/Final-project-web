@@ -13,6 +13,7 @@ import {
   Clock,
   ChevronRight,
   Trophy,
+  Sparkles,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -51,8 +52,7 @@ export function ExerciseSetCard({
     <Card
       className={cn(
         "group hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/50",
-        progress.passed && "border-l-4 border-l-green-500",
-        !progress.passed && "border-l-4 border-l-red-500",
+        progress.completed ? (progress.passed ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500") : "border-l-4 border-l-blue-500",
         className
       )}
       onClick={onClick}
@@ -70,7 +70,12 @@ export function ExerciseSetCard({
               >
                 {progress.cefrLevel}
               </Badge>
-              {progress.passed ? (
+              {!progress.completed ? (
+                <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Not Started
+                </Badge>
+              ) : progress.passed ? (
                 <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Passed
@@ -88,7 +93,9 @@ export function ExerciseSetCard({
           </div>
           <div className="flex-shrink-0">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              {progress.passed ? (
+              {!progress.completed ? (
+                <Sparkles className="w-6 h-6 text-primary" />
+              ) : progress.passed ? (
                 <Trophy className="w-6 h-6 text-primary" />
               ) : (
                 <BookOpen className="w-6 h-6 text-primary" />
@@ -102,33 +109,37 @@ export function ExerciseSetCard({
           <div className="flex items-center gap-4">
             {/* Score */}
             <div className="text-center">
-              <p className={cn("text-2xl font-bold", getScoreColor(progress.percentage))}>
-                {progress.score}/{progress.maxScore}
+              <p className={cn("text-2xl font-bold", progress.completed ? getScoreColor(progress.percentage) : "text-muted-foreground")}>
+                {progress.completed ? `${progress.score}/${progress.maxScore}` : `-/${progress.maxScore}`}
               </p>
               <p className="text-xs text-muted-foreground">Score</p>
             </div>
 
             {/* Percentage */}
             <div className="text-center">
-              <p className={cn("text-2xl font-bold", getScoreColor(progress.percentage))}>
-                {progress.percentage.toFixed(0)}%
+              <p className={cn("text-2xl font-bold", progress.completed ? getScoreColor(progress.percentage) : "text-muted-foreground")}>
+                {progress.completed ? `${progress.percentage.toFixed(0)}%` : "0%"}
               </p>
               <p className="text-xs text-muted-foreground">Accuracy</p>
             </div>
 
             {/* Time */}
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm">{formatDuration(progress.timeSpentSeconds)}</span>
-            </div>
+            {progress.completed && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm">{formatDuration(progress.timeSpentSeconds)}</span>
+              </div>
+            )}
           </div>
 
           <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
 
-        {/* Completed date */}
+        {/* Date */}
         <p className="text-xs text-muted-foreground mt-3">
-          Completed {formatDistanceToNow(new Date(progress.completedAt), { addSuffix: true })}
+          {progress.completed 
+            ? `Completed ${formatDistanceToNow(new Date(progress.completedAt), { addSuffix: true })}`
+            : `Generated ${formatDistanceToNow(new Date(progress.createdAt), { addSuffix: true })}`}
         </p>
       </CardContent>
     </Card>

@@ -110,6 +110,17 @@ export const customMaterialService = {
   },
 
   /**
+   * Start a new role-play chat session.
+   * Returns the AI's opening message.
+   */
+  startChat: async (materialId: string): Promise<ChatMessageResponse> => {
+    const response = await api.post<ChatMessageResponse>(
+      `${BASE_URL}/${materialId}/chat/start`
+    );
+    return response.data;
+  },
+
+  /**
    * Send a message in a role-play chat session.
    * Creates a new session if sessionId is null.
    */
@@ -133,6 +144,19 @@ export const customMaterialService = {
   ): Promise<EndChatResponse> => {
     const response = await api.post<EndChatResponse>(
       `${BASE_URL}/${materialId}/chat/${sessionId}/end`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get dynamic suggested prompts based on conversation context.
+   */
+  getDynamicPrompts: async (
+    materialId: string,
+    sessionId: string
+  ): Promise<string[]> => {
+    const response = await api.get<string[]>(
+      `${BASE_URL}/${materialId}/chat/${sessionId}/prompts`
     );
     return response.data;
   },

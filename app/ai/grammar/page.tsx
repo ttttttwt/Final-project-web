@@ -187,6 +187,10 @@ export default function GrammarPage() {
       setGeneratedSet(exerciseSet);
       // Save to localStorage for persistence
       saveGeneratedExercise(exerciseSet);
+
+      // Refresh history so it shows up there too
+      loadHistory(0);
+
       toast.success("Exercises generated!", {
         description: `${exerciseSet.exerciseCount} exercises on ${exerciseSet.grammarPoint}`,
       });
@@ -522,7 +526,7 @@ export default function GrammarPage() {
             <div className="lg:col-span-2 space-y-4">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <History className="w-5 h-5" />
-                Completed Exercises
+                Your Exercises
               </h2>
 
               {isLoadingHistory && history.length === 0 ? (
@@ -537,9 +541,9 @@ export default function GrammarPage() {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                       <BookOpen className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium mb-1">No History Yet</h3>
+                    <h3 className="font-medium mb-1">No Exercises Yet</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Complete some exercises to see your history
+                      Generate exercises to start practicing
                     </p>
                     <Button
                       variant="outline"

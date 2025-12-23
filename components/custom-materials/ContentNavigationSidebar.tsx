@@ -55,7 +55,7 @@ export function ContentNavigationSidebar({
     const hasVocabulary = content?.vocabulary && content.vocabulary.length > 0;
     const hasQuiz = content?.quiz && content.quiz.length > 0;
     const hasSummary = content?.summary;
-    const hasRolePlay = content?.rolePlay;
+    const hasRolePlay = content?.rolePlay || content?.roleplay;
     const hasShadowing = content?.shadowing && content.shadowing.length > 0;
 
     // Get source URL or text content

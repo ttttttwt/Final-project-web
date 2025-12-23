@@ -78,12 +78,37 @@ export interface ShadowingSentence {
   translation?: string;
 }
 
+export interface RolePlayDialogue {
+  speaker: string;
+  dialogue: string;
+}
+
 export interface RolePlayContext {
+  // Required fields (match RolePlayScenarioDTO)
   scenario: string;
   yourRole: string;
   aiRole: string;
   objectives: string[];
+  
+  // Optional from existing RolePlayScenarioDTO
+  title?: string;
   suggestedOpening?: string;
+  openingLine?: string;
+  keyVocabulary?: VocabularyItem[] | string[];
+  suggestedPrompts?: string[];
+  contextDetails?: {
+    setting?: string;
+    situation?: string;
+    keyInfo?: string[];
+    yourGoal?: string;
+    tips?: string[];
+  };
+  
+  // New fields for Custom Materials
+  userCharacter?: string;  // Name of character user plays
+  aiCharacter?: string;    // Name of AI character
+  description?: string;
+  sampleDialogues?: RolePlayDialogue[];
 }
 
 export interface GeneratedContent {
@@ -92,6 +117,7 @@ export interface GeneratedContent {
   quiz?: QuizQuestion[];
   summary?: string;
   rolePlay?: RolePlayContext;
+  roleplay?: RolePlayContext;  // Backend may return lowercase
   shadowing?: ShadowingSentence[];
 }
 
@@ -192,6 +218,7 @@ export interface ChatMessage {
   role: "user" | "ai";
   content: string;
   timestamp: string;
+  corrections?: GrammarError[];
 }
 
 export interface GrammarError {

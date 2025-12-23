@@ -1,301 +1,152 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useCustomMaterialStore } from "@/store/customMaterialStore";
 import {
-  SourceTypeSelector,
-  FileDropzone,
-  UrlInput,
-  RawTextInput,
-  InputMetadataForm,
-  TargetOptionsSelector,
-  SettingsPanel,
-  ProcessingStatus,
+  MaterialsGrid,
+  MaterialFilters,
   QuotaDisplay,
 } from "@/components/custom-materials";
-import {
-  CustomMaterialSourceType,
-  InputMetadata,
-  TargetOption,
-  AiCorrectionMode,
-  CreateMaterialRequest,
-} from "@/types/custom-materials";
+import { CustomMaterialStatus } from "@/types/custom-materials";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Upload,
-  Sparkles,
-  Crown,
-  Library,
-} from "lucide-react";
-import Link from "next/link";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-type Step = "source" | "input" | "config" | "processing";
-
 /**
- * Custom Materials Upload Page
- * Multi-step wizard for creating new learning materials
+ * Custom Materials Library Page - View and manage all custom materials
  */
 export default function CustomMaterialsPage() {
   const router = useRouter();
-  const { isPro, isLoading: isLoadingSubscription } = useSubscriptionStore();
   const {
+    materials,
+    totalMaterials,
+    isLoadingList,
     quota,
     isLoadingQuota,
-    isCreating,
-    createError,
-    processingStatus,
+    error,
+    fetchMaterials,
     fetchQuota,
-    createMaterial,
-    startPolling,
-    stopPolling,
+    deleteMaterial,
     clearError,
   } = useCustomMaterialStore();
 
-  // Wizard state
-  const [step, setStep] = useState<Step>("source");
-  const [sourceType, setSourceType] = useState<CustomMaterialSourceType | null>(
-    null
-  );
-  const [file, setFile] = useState<File | null>(null);
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [rawText, setRawText] = useState("");
-  const [inputMetadata, setInputMetadata] = useState<InputMetadata>({});
-  const [title, setTitle] = useState("");
-  const [targetOptions, setTargetOptions] = useState<TargetOption[]>([
-    "VOCABULARY",
-    "SUMMARY",
-    "QUIZ",
-  ]);
-  const [aiCorrectionMode, setAiCorrectionMode] =
-    useState<AiCorrectionMode>("POLITE");
-  const [styleLearnMode, setStyleLearnMode] = useState(true);
-  const [syncVocabToSrs, setSyncVocabToSrs] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<
+    CustomMaterialStatus | "ALL"
+  >("ALL");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Created material ID for tracking
-  const [createdMaterialId, setCreatedMaterialId] = useState<string | null>(
-    null
-  );
+  // Fetch materials on mount and when filter changes
+  useEffect(() => {
+    const params: { status?: CustomMaterialStatus } = {};
+    if (statusFilter !== "ALL") {
+      params.status = statusFilter;
+    }
+    fetchMaterials(params);
+  }, [statusFilter, fetchMaterials]);
 
   // Fetch quota on mount
   useEffect(() => {
-    if (isPro) {
-      fetchQuota();
-    }
-  }, [isPro, fetchQuota]);
+    fetchQuota();
+  }, [fetchQuota]);
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      stopPolling();
-    };
-  }, [stopPolling]);
+  // Handle view material
+  const handleView = useCallback(
+    (id: string) => {
+      router.push(`/custom-materials/${id}`);
+    },
+    [router]
+  );
 
-  // Determine if input is valid for current source type
-  const isInputValid = useCallback(() => {
-    if (!sourceType) return false;
+  // Handle chat with material
+  const handleChat = useCallback(
+    (id: string) => {
+      router.push(`/custom-materials/${id}/chat`);
+    },
+    [router]
+  );
 
-    switch (sourceType) {
-      case "PDF":
-      case "DOCX":
-      case "IMAGE":
-        return file !== null;
-      case "YOUTUBE":
-      case "WEBSITE":
-        return sourceUrl.trim().length > 0;
-      case "TEXT":
-        return rawText.trim().length > 0 && rawText.length <= 5000;
-      default:
-        return false;
-    }
-  }, [sourceType, file, sourceUrl, rawText]);
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
 
-  // Handle source type selection
-  const handleSourceTypeSelect = (type: CustomMaterialSourceType) => {
-    setSourceType(type);
-    // Reset input state when changing source type
-    setFile(null);
-    setSourceUrl("");
-    setRawText("");
-    setInputMetadata({});
-    setStep("input");
-  };
-
-  // Handle next step
-  const handleNext = () => {
-    if (step === "input" && isInputValid()) {
-      // Auto-generate title from filename or URL if empty
-      if (!title) {
-        if (file) {
-          setTitle(file.name.replace(/\.[^/.]+$/, ""));
-        } else if (sourceUrl) {
-          try {
-            const url = new URL(sourceUrl);
-            setTitle(url.hostname.replace("www.", ""));
-          } catch {
-            setTitle("My Material");
-          }
-        } else {
-          setTitle("My Material");
-        }
+    setIsDeleting(true);
+    try {
+      await deleteMaterial(deleteId);
+      toast.success("Material deleted");
+      // Refresh the list
+      const params: { status?: CustomMaterialStatus } = {};
+      if (statusFilter !== "ALL") {
+        params.status = statusFilter;
       }
-      setStep("config");
+      fetchMaterials(params);
+    } catch {
+      toast.error("Failed to delete material");
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
-  // Handle back
-  const handleBack = () => {
-    if (step === "input") {
-      setStep("source");
-    } else if (step === "config") {
-      setStep("input");
-    } else if (step === "processing") {
-      // Reset and start over
-      setStep("source");
-      setSourceType(null);
-      setFile(null);
-      setSourceUrl("");
-      setRawText("");
-      setTitle("");
-      setCreatedMaterialId(null);
-    }
+  // Handle create new
+  const handleCreateNew = () => {
+    router.push("/custom-materials/new");
   };
 
-  // Handle create material
-  const handleCreate = async () => {
-    if (!sourceType) return;
-
-    clearError();
-
-    const request: CreateMaterialRequest = {
-      title: title || "Untitled Material",
-      sourceType,
-      targetOptions,
-      settings: {
-        aiCorrectionMode,
-        styleLearnMode,
-        syncVocabToSrs,
-      },
-    };
-
-    // Add source-specific fields
-    if (sourceType === "YOUTUBE" || sourceType === "WEBSITE") {
-      request.sourceUrl = sourceUrl;
-    } else if (sourceType === "TEXT") {
-      request.rawText = rawText;
-    }
-
-    // Add metadata if present
-    if (Object.keys(inputMetadata).length > 0) {
-      request.inputMetadata = inputMetadata;
-    }
-
-    const materialId = await createMaterial(request, file || undefined);
-
-    if (materialId) {
-      setCreatedMaterialId(materialId);
-      setStep("processing");
-      toast.success("Material submitted for processing!");
-      // Start polling for status updates
-      startPolling(materialId, () => {
-        toast.success("Your material is ready!");
-      });
-    } else {
-      toast.error("Failed to create material", {
-        description: createError || "Please try again.",
-      });
-    }
-  };
-
-  // Handle view result
-  const handleViewResult = () => {
-    if (createdMaterialId) {
-      router.push(`/custom-materials/${createdMaterialId}`);
-    }
-  };
-
-  // Render premium gate for non-pro users
-  if (!isLoadingSubscription && !isPro) {
-    return (
-      <ProtectedRoute>
-        <MainLayout>
-          <div className="container mx-auto px-4 py-8 max-w-2xl">
-            <Card className="text-center">
-              <CardHeader>
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA000] flex items-center justify-center">
-                  <Crown className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl">Premium Feature</CardTitle>
-                <CardDescription className="text-base">
-                  Custom AI Content Generator is available for Pro subscribers
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-3 text-left max-w-sm mx-auto">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
-                    <span>Upload any document or video</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
-                    <span>AI generates vocabulary & quizzes</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
-                    <span>Practice with role-play scenarios</span>
-                  </div>
-                </div>
-                <div className="flex gap-3 justify-center">
-                  <Button variant="outline" asChild>
-                    <Link href="/dashboard">Back to Dashboard</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/pricing">Upgrade to Pro</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </MainLayout>
-      </ProtectedRoute>
-    );
-  }
+  // Calculate status counts
+  const statusCounts = materials.reduce(
+    (acc, m) => {
+      acc[m.status] = (acc[m.status] || 0) + 1;
+      acc.ALL = (acc.ALL || 0) + 1;
+      return acc;
+    },
+    {} as Record<CustomMaterialStatus | "ALL", number>
+  );
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <div className="container mx-auto px-4 py-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-[#202124] dark:text-[#E8EAED]">
-                Custom AI Content Generator
+                Custom Materials Library
               </h1>
               <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-                Transform any content into personalized learning materials
+                {totalMaterials} material{totalMaterials !== 1 ? "s" : ""}{" "}
+                created
               </p>
             </div>
-            <Button variant="outline" asChild>
-              <Link href="/custom-materials/library">
-                <Library className="h-4 w-4 mr-2" />
-                My Library
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => fetchMaterials()}
+                disabled={isLoadingList}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoadingList ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <Button onClick={handleCreateNew} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Material
+              </Button>
+            </div>
           </div>
 
           {/* Quota display */}
@@ -305,190 +156,71 @@ export default function CustomMaterialsPage() {
             className="mb-6"
           />
 
-          {/* Step indicator */}
-          {step !== "processing" && (
-            <div className="flex items-center gap-2 mb-8">
-              {["source", "input", "config"].map((s, idx) => (
-                <div key={s} className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === s
-                        ? "bg-[#4285F4] text-white"
-                        : idx <
-                          ["source", "input", "config"].indexOf(step as string)
-                          ? "bg-[#4CAF50] text-white"
-                          : "bg-[#E0E0E0] dark:bg-[#2E2E2E] text-[#9AA0A6]"
-                      }`}
-                  >
-                    {idx + 1}
-                  </div>
-                  {idx < 2 && (
-                    <div
-                      className={`w-12 h-0.5 ${idx <
-                          ["source", "input", "config"].indexOf(step as string)
-                          ? "bg-[#4CAF50]"
-                          : "bg-[#E0E0E0] dark:bg-[#2E2E2E]"
-                        }`}
-                    />
-                  )}
-                </div>
-              ))}
+          {/* Filters */}
+          <MaterialFilters
+            value={statusFilter}
+            onChange={setStatusFilter}
+            counts={statusCounts}
+            className="mb-6"
+          />
+
+          {/* Error state */}
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-[#FFEBEE] dark:bg-[#D32F2F]/10 border border-[#FFCDD2] dark:border-[#D32F2F]/30">
+              <p className="text-[#D32F2F]">{error}</p>
+              <Button
+                variant="link"
+                onClick={clearError}
+                className="text-[#D32F2F] p-0 h-auto mt-2"
+              >
+                Dismiss
+              </Button>
             </div>
           )}
 
-          {/* Step 1: Source Type Selection */}
-          {step === "source" && (
-            <Card>
-              <CardContent className="pt-6">
-                <SourceTypeSelector
-                  value={sourceType}
-                  onChange={handleSourceTypeSelect}
-                />
-              </CardContent>
-            </Card>
-          )}
+          {/* Materials grid */}
+          <MaterialsGrid
+            materials={materials}
+            isLoading={isLoadingList}
+            onView={handleView}
+            onChat={handleChat}
+            onDelete={setDeleteId}
+            onCreateNew={handleCreateNew}
+            emptyMessage={
+              statusFilter === "ALL"
+                ? "No materials yet"
+                : `No ${statusFilter.toLowerCase()} materials`
+            }
+          />
 
-          {/* Step 2: Input Content */}
-          {step === "input" && sourceType && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Your Content</CardTitle>
-                <CardDescription>
-                  {sourceType === "PDF" && "Upload a PDF document"}
-                  {sourceType === "DOCX" && "Upload a Word document"}
-                  {sourceType === "IMAGE" && "Upload an image with text"}
-                  {sourceType === "YOUTUBE" && "Paste a YouTube video URL"}
-                  {sourceType === "WEBSITE" && "Paste a website URL"}
-                  {sourceType === "TEXT" && "Paste your text content"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* File upload */}
-                {(sourceType === "PDF" ||
-                  sourceType === "DOCX" ||
-                  sourceType === "IMAGE") && (
-                    <FileDropzone
-                      sourceType={sourceType}
-                      file={file}
-                      onFileSelect={setFile}
-                    />
-                  )}
-
-                {/* URL input */}
-                {(sourceType === "YOUTUBE" || sourceType === "WEBSITE") && (
-                  <UrlInput
-                    sourceType={sourceType}
-                    value={sourceUrl}
-                    onChange={setSourceUrl}
-                  />
-                )}
-
-                {/* Raw text */}
-                {sourceType === "TEXT" && (
-                  <RawTextInput value={rawText} onChange={setRawText} />
-                )}
-
-                {/* Metadata form */}
-                <InputMetadataForm
-                  sourceType={sourceType}
-                  metadata={inputMetadata}
-                  onChange={setInputMetadata}
-                />
-
-                {/* Navigation */}
-                <div className="flex gap-3 pt-4">
-                  <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </Button>
-                  <Button
-                    onClick={handleNext}
-                    disabled={!isInputValid()}
-                    className="flex-1"
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Configuration */}
-          {step === "config" && (
-            <div className="space-y-6">
-              {/* Title input */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Name Your Material</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter a descriptive title..."
-                      maxLength={255}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Target options */}
-              <Card>
-                <CardContent className="pt-6">
-                  <TargetOptionsSelector
-                    value={targetOptions}
-                    onChange={setTargetOptions}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Settings */}
-              <SettingsPanel
-                aiCorrectionMode={aiCorrectionMode}
-                styleLearnMode={styleLearnMode}
-                syncVocabToSrs={syncVocabToSrs}
-                onAiCorrectionModeChange={setAiCorrectionMode}
-                onStyleLearnModeChange={setStyleLearnMode}
-                onSyncVocabToSrsChange={setSyncVocabToSrs}
-              />
-
-              {/* Navigation */}
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={handleCreate}
-                  disabled={isCreating || targetOptions.length === 0}
-                  className="flex-1"
+          {/* Delete confirmation dialog */}
+          <AlertDialog
+            open={!!deleteId}
+            onOpenChange={(open) => !open && setDeleteId(null)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Material?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this material and all associated
+                  data including vocabulary, quizzes, and chat history. This
+                  action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting}
+                  className="bg-[#D32F2F] hover:bg-[#B71C1C]"
                 >
-                  {isCreating ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Generate Content
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Processing */}
-          {step === "processing" && processingStatus && (
-            <ProcessingStatus
-              status={processingStatus.status}
-              progress={processingStatus.progress}
-              errorMessage={processingStatus.errorMessage}
-              onRetry={handleBack}
-              onViewResult={handleViewResult}
-            />
-          )}
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </MainLayout>
     </ProtectedRoute>

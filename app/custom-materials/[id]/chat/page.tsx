@@ -14,6 +14,7 @@ import Link from "next/link";
 
 /**
  * Material Chat Page - Role-play practice interface
+ * Uses full-screen layout to match the existing Role Play feature.
  */
 export default function MaterialChatPage() {
   const params = useParams();
@@ -37,6 +38,11 @@ export default function MaterialChatPage() {
       clearCurrentMaterial();
     };
   }, [materialId, fetchMaterial, clearCurrentMaterial]);
+
+  // Navigate back handler
+  const handleBack = () => {
+    router.push(`/custom-materials/${materialId}`);
+  };
 
   // Loading state
   if (isLoadingMaterial) {
@@ -66,7 +72,7 @@ export default function MaterialChatPage() {
                   {error || "Material not found"}
                 </p>
                 <Button asChild>
-                  <Link href="/custom-materials/library">
+                  <Link href="/custom-materials">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Library
                   </Link>
@@ -105,7 +111,8 @@ export default function MaterialChatPage() {
   }
 
   // Check if role-play is available
-  const hasRolePlay = currentMaterial.generatedContent?.rolePlay;
+  const hasRolePlay = currentMaterial.generatedContent?.rolePlay
+    || currentMaterial.generatedContent?.roleplay;
   if (!hasRolePlay) {
     return (
       <ProtectedRoute>
@@ -130,7 +137,7 @@ export default function MaterialChatPage() {
                     </Link>
                   </Button>
                   <Button asChild>
-                    <Link href="/custom-materials">
+                    <Link href="/custom-materials/new">
                       Create New Material
                     </Link>
                   </Button>
@@ -143,42 +150,13 @@ export default function MaterialChatPage() {
     );
   }
 
-  const rolePlay = currentMaterial.generatedContent!.rolePlay!;
-
-  // Navigate back handler
-  const handleBack = () => {
-    router.push(`/custom-materials/${materialId}`);
-  };
-
+  // MaterialChatInterface now handles its own header and layout
+  // Full-height layout without MainLayout wrapper for immersive chat experience
   return (
     <ProtectedRoute>
-      <MainLayout>
-        <div className="container mx-auto px-4 py-6 max-w-4xl h-[calc(100vh-100px)]">
-          {/* Header */}
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <Button variant="ghost" asChild size="sm" className="mb-2">
-                <Link href={`/custom-materials/${materialId}`}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Material
-                </Link>
-              </Button>
-              <h1 className="text-xl font-bold text-[#202124] dark:text-[#E8EAED]">
-                {rolePlay.scenario}
-              </h1>
-              <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
-                Your role: <strong>{rolePlay.yourRole}</strong> | AI role:{" "}
-                <strong>{rolePlay.aiRole}</strong>
-              </p>
-            </div>
-          </div>
-
-          {/* Chat Interface */}
-          <div className="h-[calc(100%-80px)]">
-            <MaterialChatInterface material={currentMaterial} onBack={handleBack} />
-          </div>
-        </div>
-      </MainLayout>
+      <div className="h-screen flex flex-col bg-background">
+        <MaterialChatInterface material={currentMaterial} onBack={handleBack} />
+      </div>
     </ProtectedRoute>
   );
 }
