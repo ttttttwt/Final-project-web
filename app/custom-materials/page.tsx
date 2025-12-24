@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -141,6 +141,14 @@ export default function CustomMaterialsPage() {
                 <RefreshCw
                   className={`h-4 w-4 ${isLoadingList ? "animate-spin" : ""}`}
                 />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/custom-materials/style-transform")}
+                className="gap-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 dark:border-blue-900/30 dark:hover:bg-blue-900/20"
+              >
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                Style Transformer
               </Button>
               <Button onClick={handleCreateNew} className="gap-2">
                 <Plus className="h-4 w-4" />

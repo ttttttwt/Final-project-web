@@ -12,6 +12,9 @@ import {
   CustomMaterialStatus,
   ChatMessageResponse,
   EndChatResponse,
+  ShadowingScoreResponse,
+  StyleTransformRequest,
+  StyleTransformResponse,
 } from "@/types/custom-materials";
 import { PaginatedResponse } from "@/types/common";
 
@@ -46,9 +49,20 @@ interface CustomMaterialState {
   dynamicPrompts: string[];
   isLoadingPrompts: boolean;
 
+  // Shadowing
+  shadowingScores: Record<string, ShadowingScoreResponse>;
+  isScoring: Record<string, boolean>;
+
   // Quota
   quota: QuotaInfo | null;
   isLoadingQuota: boolean;
+
+  // Style Transformation
+  transformationResult: StyleTransformResponse | null;
+  isTransforming: boolean;
+
+  // Edit Mode
+  isEditMode: boolean;
 
   // Error state
   error: string | null;
@@ -79,6 +93,15 @@ interface CustomMaterialState {
     materialId: string
   ) => Promise<EndChatResponse | null>;
   resetChatSession: () => void;
+  scoreShadowing: (
+    materialId: string,
+    sentenceId: string,
+    audio: Blob
+  ) => Promise<void>;
+  clearShadowingScore: (sentenceId: string) => void;
+  transformStyle: (data: StyleTransformRequest) => Promise<void>;
+  clearTransformation: () => void;
+  setEditMode: (isEditMode: boolean) => void;
   fetchQuota: () => Promise<void>;
   fetchRelatedMaterials: (materialId: string) => Promise<void>;
   clearError: () => void;
@@ -106,10 +129,15 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
     performanceReport: null,
     dynamicPrompts: [],
     isLoadingPrompts: false,
+    shadowingScores: {},
+    isScoring: {},
     quota: null,
     isLoadingQuota: false,
     relatedMaterials: [],
     isLoadingRelated: false,
+    transformationResult: null,
+    isTransforming: false,
+    isEditMode: false,
     error: null,
 
     // Fetch materials list
@@ -368,6 +396,66 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
       });
     },
 
+    // Score shadowing attempt
+    scoreShadowing: async (materialId, sentenceId, audio) => {
+      set((state) => ({
+        isScoring: { ...state.isScoring, [sentenceId]: true },
+      }));
+
+      try {
+        const response = await customMaterialService.scoreShadowing(
+          materialId,
+          sentenceId,
+          audio
+        );
+
+        set((state) => ({
+          shadowingScores: {
+            ...state.shadowingScores,
+            [sentenceId]: response,
+          },
+          isScoring: { ...state.isScoring, [sentenceId]: false },
+        }));
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to score shadowing";
+        set((state) => ({
+          error: message,
+          isScoring: { ...state.isScoring, [sentenceId]: false },
+        }));
+        throw err;
+      }
+    },
+
+    // Clear specific shadowing score
+    clearShadowingScore: (sentenceId) => {
+      set((state) => {
+        const newScores = { ...state.shadowingScores };
+        delete newScores[sentenceId];
+        return { shadowingScores: newScores };
+      });
+    },
+
+    // Transform text style
+    transformStyle: async (data) => {
+      set({ isTransforming: true, error: null });
+      try {
+        const response = await customMaterialService.transformStyle(data);
+        set({ transformationResult: response, isTransforming: false });
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to transform style";
+        set({ error: message, isTransforming: false });
+        throw err;
+      }
+    },
+
+    // Clear transformation result
+    clearTransformation: () => set({ transformationResult: null }),
+
+    // Set edit mode
+    setEditMode: (isEditMode) => set({ isEditMode }),
+
     // Fetch quota
     fetchQuota: async () => {
       set({ isLoadingQuota: true });
@@ -407,6 +495,8 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
         performanceReport: null,
         dynamicPrompts: [],
         relatedMaterials: [],
+        shadowingScores: {},
+        isScoring: {},
       }),
   })
 );

@@ -31,7 +31,30 @@ export type StyleType =
   | "CASUAL" 
   | "EMAIL" 
   | "PRESENTATION" 
-  | "SOCIAL_MEDIA";
+  | "SOCIAL_MEDIA"
+  | "DIPLOMATIC"
+  | "PERSUASIVE";
+
+// ==========================================
+// Style Transform Types
+// ==========================================
+
+export interface StyleExplanation {
+  original?: string;
+  changed?: string;
+  reason: string;
+}
+
+export interface StyleTransformRequest {
+  text: string;
+  targetStyle: StyleType;
+  includeExplanation: boolean;
+}
+
+export interface StyleTransformResponse {
+  transformedText: string;
+  explanations?: StyleExplanation[];
+}
 
 // ==========================================
 // Input Metadata
@@ -72,10 +95,13 @@ export interface QuizQuestion {
 
 export interface ShadowingSentence {
   id: string;
-  text: string;
+  sentence?: string;        // AI returns this
+  text?: string;            // Fallback/Legacy
+  phonetic?: string;        // AI returns this
+  ipa?: string;             // Fallback/Legacy
+  notes?: string;           // AI returns this
+  translation?: string;     // Optional
   audioUrl?: string;
-  ipa?: string;
-  translation?: string;
 }
 
 export interface RolePlayDialogue {
@@ -267,10 +293,16 @@ export interface StyleTransformResponse {
 // Shadowing Types
 // ==========================================
 
+export interface WordScore {
+  word: string;
+  score: number;
+  note: string;
+}
+
 export interface ShadowingScoreResponse {
   score: number;
   feedback: string;
-  phonemeBreakdown?: Record<string, number>;
+  phonemeBreakdown?: Record<string, WordScore>;
 }
 
 // ==========================================

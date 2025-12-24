@@ -10,9 +10,14 @@ import {
   useStatusPoller,
   ContentNavigationSidebar,
   FilePreviewDialog,
+  ShadowingScoreCard,
 } from "@/components/custom-materials";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -38,6 +43,10 @@ import {
   Eye,
   File,
   Image as ImageIcon,
+  Sparkles,
+  Loader2,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -57,9 +66,25 @@ export default function MaterialDetailPage() {
     error,
     fetchMaterial,
     clearCurrentMaterial,
+    scoreShadowing,
+    shadowingScores,
+    isScoring,
+    clearShadowingScore,
+    isEditMode,
+    setEditMode,
+    updateContent,
   } = useCustomMaterialStore();
 
   const [activeTab, setActiveTab] = useState("vocabulary");
+  const [localContent, setLocalContent] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize local content when material is loaded
+  useEffect(() => {
+    if (currentMaterial?.generatedContent) {
+      setLocalContent(JSON.parse(JSON.stringify(currentMaterial.generatedContent)));
+    }
+  }, [currentMaterial]);
 
   // Determine available tabs
   const availableTabs = useMemo(() => {
@@ -160,7 +185,7 @@ export default function MaterialDetailPage() {
   };
 
   // Voice recording handler
-  const handleToggleRecording = async (index: number) => {
+  const handleToggleRecording = async (index: number, sentenceId: string) => {
     if (recordingIndex === index && mediaRecorder) {
       // Stop recording
       mediaRecorder.stop();
@@ -173,6 +198,9 @@ export default function MaterialDetailPage() {
       // Already recording another sentence
       return;
     }
+
+    // Clear existing score when starting a new recording
+    clearShadowingScore(sentenceId);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -224,6 +252,22 @@ export default function MaterialDetailPage() {
     audio.onerror = () => setPlayingRecording(null);
 
     audio.play();
+  };
+
+  // Handle shadowing scoring
+  const handleScoreShadowing = async (index: number, sentenceId: string) => {
+    const audioBlob = recordings.get(index);
+    if (!audioBlob) {
+      toast.error("Please record your voice first");
+      return;
+    }
+
+    try {
+      await scoreShadowing(materialId, sentenceId, audioBlob);
+      toast.success("Pronunciation assessed successfully!");
+    } catch (err) {
+      toast.error("Failed to assess pronunciation. Please try again.");
+    }
   };
 
   // Recording timer
@@ -386,6 +430,19 @@ export default function MaterialDetailPage() {
                   {new Date(currentMaterial.createdAt).toLocaleDateString()}
                 </p>
               </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2 bg-muted/50 px-3 py-2 rounded-full border border-border/50">
+                  <Switch
+                    id="edit-mode"
+                    checked={isEditMode}
+                    onCheckedChange={setEditMode}
+                  />
+                  <Label htmlFor="edit-mode" className="text-sm font-medium cursor-pointer">
+                    Manage Content
+                  </Label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -506,10 +563,96 @@ export default function MaterialDetailPage() {
                 )}
 
                 {/* Vocabulary */}
-                {activeTab === "vocabulary" && hasVocabulary && (
+                {activeTab === "vocabulary" && (localContent?.vocabulary || content?.vocabulary) && (
                   <div className="space-y-4">
-                    {content.vocabulary?.map((item, index) => {
+                    {(localContent?.vocabulary || content?.vocabulary)?.map((item: any, index: number) => {
                       const wordText = item.word || item.term || "";
+                      
+                      if (isEditMode) {
+                        return (
+                          <Card key={item.id || `vocab-edit-${index}`} className="border-primary/20">
+                            <CardContent className="pt-6 space-y-4">
+                              <div className="flex items-start gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                                  <div className="space-y-2">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Word</Label>
+                                    <Input 
+                                      value={wordText} 
+                                      onChange={(e) => {
+                                        const newVocab = [...localContent.vocabulary];
+                                        newVocab[index] = { ...newVocab[index], word: e.target.value };
+                                        setLocalContent({ ...localContent, vocabulary: newVocab });
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Part of Speech</Label>
+                                    <Input 
+                                      value={item.partOfSpeech || ""} 
+                                      onChange={(e) => {
+                                        const newVocab = [...localContent.vocabulary];
+                                        newVocab[index] = { ...newVocab[index], partOfSpeech: e.target.value };
+                                        setLocalContent({ ...localContent, vocabulary: newVocab });
+                                      }}
+                                      placeholder="e.g. noun, verb"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">IPA</Label>
+                                    <Input 
+                                      value={item.ipa || ""} 
+                                      onChange={(e) => {
+                                        const newVocab = [...localContent.vocabulary];
+                                        newVocab[index] = { ...newVocab[index], ipa: e.target.value };
+                                        setLocalContent({ ...localContent, vocabulary: newVocab });
+                                      }}
+                                      placeholder="e.g. /wɜːrd/"
+                                    />
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 mt-6"
+                                  onClick={() => {
+                                    const newVocab = localContent.vocabulary.filter((_: any, i: number) => i !== index);
+                                    setLocalContent({ ...localContent, vocabulary: newVocab });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Definition</Label>
+                                <Textarea 
+                                  value={item.definition || ""} 
+                                  onChange={(e) => {
+                                    const newVocab = [...localContent.vocabulary];
+                                    newVocab[index] = { ...newVocab[index], definition: e.target.value };
+                                    setLocalContent({ ...localContent, vocabulary: newVocab });
+                                  }}
+                                  rows={2}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Example Sentence</Label>
+                                <Textarea 
+                                  value={item.example || ""} 
+                                  onChange={(e) => {
+                                    const newVocab = [...localContent.vocabulary];
+                                    newVocab[index] = { ...newVocab[index], example: e.target.value };
+                                    setLocalContent({ ...localContent, vocabulary: newVocab });
+                                  }}
+                                  rows={2}
+                                />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
+
                       return (
                         <Card key={item.id || `vocab-${index}`}>
                           <CardContent className="pt-4">
@@ -557,15 +700,151 @@ export default function MaterialDetailPage() {
                         </Card>
                       );
                     })}
+
+                    {isEditMode && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed py-8 flex flex-col gap-2"
+                        onClick={() => {
+                          const newVocab = [...(localContent?.vocabulary || [])];
+                          newVocab.push({
+                            id: `new-${Date.now()}`,
+                            word: "",
+                            definition: "",
+                            example: "",
+                            partOfSpeech: "",
+                            ipa: ""
+                          });
+                          setLocalContent({ ...localContent, vocabulary: newVocab });
+                        }}
+                      >
+                        <Plus className="h-5 w-5" />
+                        Add Vocabulary Item
+                      </Button>
+                    )}
                   </div>
                 )}
 
                 {/* Quiz Tab */}
-                {activeTab === "quiz" && hasQuiz && (
+                {activeTab === "quiz" && (localContent?.quiz || content?.quiz) && (
                   <div className="space-y-4">
-                    {content.quiz?.map((question, idx) => {
-                      // Handle both 'answer' (AI) and 'correctAnswer' (legacy) fields
+                    {(localContent?.quiz || content?.quiz)?.map((question: any, idx: number) => {
                       const correctAnswerValue = question.answer || question.correctAnswer;
+
+                      if (isEditMode) {
+                        return (
+                          <Card key={question.id || `quiz-edit-${idx}`} className="border-primary/20">
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Question {idx + 1}</CardTitle>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => {
+                                    const newQuiz = localContent.quiz.filter((_: any, i: number) => i !== idx);
+                                    setLocalContent({ ...localContent, quiz: newQuiz });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Question Text</Label>
+                                <Textarea 
+                                  value={question.question || ""} 
+                                  onChange={(e) => {
+                                    const newQuiz = [...localContent.quiz];
+                                    newQuiz[idx] = { ...newQuiz[idx], question: e.target.value };
+                                    setLocalContent({ ...localContent, quiz: newQuiz });
+                                  }}
+                                  rows={2}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Options</Label>
+                                <div className="space-y-2">
+                                  {question.options?.map((option: string, optIdx: number) => (
+                                    <div key={optIdx} className="flex items-center gap-2">
+                                      <div 
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors ${
+                                          (typeof correctAnswerValue === 'string' ? option === correctAnswerValue : optIdx === correctAnswerValue)
+                                            ? "bg-green-500 text-white"
+                                            : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                                        }`}
+                                        onClick={() => {
+                                          const newQuiz = [...localContent.quiz];
+                                          newQuiz[idx] = { ...newQuiz[idx], answer: option };
+                                          setLocalContent({ ...localContent, quiz: newQuiz });
+                                        }}
+                                        title="Mark as correct answer"
+                                      >
+                                        {optIdx + 1}
+                                      </div>
+                                      <Input 
+                                        value={option} 
+                                        onChange={(e) => {
+                                          const newQuiz = [...localContent.quiz];
+                                          const newOptions = [...newQuiz[idx].options];
+                                          newOptions[optIdx] = e.target.value;
+                                          newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                          setLocalContent({ ...localContent, quiz: newQuiz });
+                                        }}
+                                        className="flex-1"
+                                      />
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                        onClick={() => {
+                                          const newQuiz = [...localContent.quiz];
+                                          const newOptions = newQuiz[idx].options.filter((_: any, i: number) => i !== optIdx);
+                                          newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                          setLocalContent({ ...localContent, quiz: newQuiz });
+                                        }}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full border-dashed text-xs h-8"
+                                    onClick={() => {
+                                      const newQuiz = [...localContent.quiz];
+                                      const newOptions = [...(newQuiz[idx].options || [])];
+                                      newOptions.push("");
+                                      newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                      setLocalContent({ ...localContent, quiz: newQuiz });
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Add Option
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Explanation</Label>
+                                <Textarea 
+                                  value={question.explanation || ""} 
+                                  onChange={(e) => {
+                                    const newQuiz = [...localContent.quiz];
+                                    newQuiz[idx] = { ...newQuiz[idx], explanation: e.target.value };
+                                    setLocalContent({ ...localContent, quiz: newQuiz });
+                                  }}
+                                  rows={2}
+                                  placeholder="Explain why the answer is correct..."
+                                />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
 
                       return (
                         <Card key={question.id || `quiz-${idx}`}>
@@ -579,7 +858,7 @@ export default function MaterialDetailPage() {
                             {/* Show options if available (multiple choice) */}
                             {question.options && question.options.length > 0 && (
                               <div className="space-y-2">
-                                {question.options.map((option, optIdx) => {
+                                {question.options.map((option: string, optIdx: number) => {
                                   // Check if this option is the correct answer
                                   const isCorrect = typeof correctAnswerValue === 'string'
                                     ? option === correctAnswerValue
@@ -617,158 +896,445 @@ export default function MaterialDetailPage() {
                         </Card>
                       );
                     })}
+
+                    {isEditMode && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed py-8 flex flex-col gap-2"
+                        onClick={() => {
+                          const newQuiz = [...(localContent?.quiz || [])];
+                          newQuiz.push({
+                            id: `new-quiz-${Date.now()}`,
+                            question: "",
+                            options: ["", ""],
+                            answer: "",
+                            explanation: ""
+                          });
+                          setLocalContent({ ...localContent, quiz: newQuiz });
+                        }}
+                      >
+                        <Plus className="h-5 w-5" />
+                        Add Quiz Question
+                      </Button>
+                    )}
                   </div>
                 )}
 
                 {/* Summary Tab */}
-                {activeTab === "summary" && hasSummary && (
+                {activeTab === "summary" && (localContent?.summary || content?.summary) && (
                   <div>
                     <Card>
                       <CardContent className="pt-6">
-                        <div className="prose dark:prose-invert max-w-none">
-                          <p className="text-[#202124] dark:text-[#E8EAED] whitespace-pre-wrap">
-                            {content.summary}
-                          </p>
-                        </div>
+                        {isEditMode ? (
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">Summary Content</Label>
+                            <Textarea 
+                              value={localContent.summary || ""} 
+                              onChange={(e) => setLocalContent({ ...localContent, summary: e.target.value })}
+                              rows={10}
+                              className="resize-none"
+                            />
+                          </div>
+                        ) : (
+                          <div className="prose dark:prose-invert max-w-none">
+                            <p className="text-[#202124] dark:text-[#E8EAED] whitespace-pre-wrap">
+                              {content.summary}
+                            </p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
                 )}
 
                 {/* Role-Play Tab */}
-                {activeTab === "roleplay" && hasRolePlay && (
+                {activeTab === "roleplay" && (localContent?.roleplay || content?.roleplay || localContent?.rolePlay || content?.rolePlay) && (
                   <Card>
                     <CardHeader>
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-[#4285F4]" />
-                        <h3 className="text-lg font-semibold">Role-Play Scenario</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-5 w-5 text-[#4285F4]" />
+                          <h3 className="text-lg font-semibold">Role-Play Scenario</h3>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Scenario</h4>
-                        <p className="text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
-                          {content.roleplay?.scenario || content.rolePlay?.scenario}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Role</span>
-                          <p className="font-semibold text-lg mt-1">{content.roleplay?.yourRole || content.rolePlay?.yourRole}</p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AI Role</span>
-                          <p className="font-semibold text-lg mt-1">{content.roleplay?.aiRole || content.rolePlay?.aiRole}</p>
-                        </div>
-                      </div>
-
-                      {((content.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
-                        (content.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
+                      {isEditMode ? (
+                        <div className="space-y-4">
                           <div className="space-y-2">
-                            <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Objectives</h4>
-                            <ul className="list-disc list-inside space-y-1 text-[#5F6368] dark:text-[#9AA0A6]">
-                              {(content.roleplay?.objectives || content.rolePlay?.objectives)?.map((obj: string, i: number) => (
-                                <li key={i}>{obj}</li>
-                              ))}
-                            </ul>
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">Scenario</Label>
+                            <Textarea 
+                              value={localContent.roleplay?.scenario || localContent.rolePlay?.scenario || ""} 
+                              onChange={(e) => {
+                                const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                setLocalContent({ 
+                                  ...localContent, 
+                                  [key]: { ...localContent[key], scenario: e.target.value } 
+                                });
+                              }}
+                              rows={3}
+                            />
                           </div>
-                        )}
 
-                      <Button asChild className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20">
-                        <Link href={`/custom-materials/${materialId}/chat`}>
-                          <MessageSquare className="h-5 w-5 mr-2" />
-                          Start Practice Session
-                        </Link>
-                      </Button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs uppercase font-bold text-muted-foreground">Your Role</Label>
+                              <Input 
+                                value={localContent.roleplay?.yourRole || localContent.rolePlay?.yourRole || ""} 
+                                onChange={(e) => {
+                                  const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                  setLocalContent({ 
+                                    ...localContent, 
+                                    [key]: { ...localContent[key], yourRole: e.target.value } 
+                                  });
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs uppercase font-bold text-muted-foreground">AI Role</Label>
+                              <Input 
+                                value={localContent.roleplay?.aiRole || localContent.rolePlay?.aiRole || ""} 
+                                onChange={(e) => {
+                                  const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                  setLocalContent({ 
+                                    ...localContent, 
+                                    [key]: { ...localContent[key], aiRole: e.target.value } 
+                                  });
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">Objectives</Label>
+                            <div className="space-y-2">
+                              {(localContent.roleplay?.objectives || localContent.rolePlay?.objectives || [])?.map((obj: string, i: number) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <Input 
+                                    value={obj} 
+                                    onChange={(e) => {
+                                      const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                      const newObjs = [...(localContent[key].objectives || [])];
+                                      newObjs[i] = e.target.value;
+                                      setLocalContent({ 
+                                        ...localContent, 
+                                        [key]: { ...localContent[key], objectives: newObjs } 
+                                      });
+                                    }}
+                                  />
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-destructive"
+                                    onClick={() => {
+                                      const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                      const newObjs = localContent[key].objectives.filter((_: any, idx: number) => idx !== i);
+                                      setLocalContent({ 
+                                        ...localContent, 
+                                        [key]: { ...localContent[key], objectives: newObjs } 
+                                      });
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full border-dashed"
+                                onClick={() => {
+                                  const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
+                                  const newObjs = [...(localContent[key]?.objectives || [])];
+                                  newObjs.push("");
+                                  setLocalContent({ 
+                                    ...localContent, 
+                                    [key]: { ...localContent[key], objectives: newObjs } 
+                                  });
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Add Objective
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Scenario</h4>
+                            <p className="text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
+                              {content.roleplay?.scenario || content.rolePlay?.scenario}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Role</span>
+                              <p className="font-semibold text-lg mt-1">{content.roleplay?.yourRole || content.rolePlay?.yourRole}</p>
+                            </div>
+                            <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AI Role</span>
+                              <p className="font-semibold text-lg mt-1">{content.roleplay?.aiRole || content.rolePlay?.aiRole}</p>
+                            </div>
+                          </div>
+
+                          {((content.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
+                            (content.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Objectives</h4>
+                                <ul className="list-disc list-inside space-y-1 text-[#5F6368] dark:text-[#9AA0A6]">
+                                  {(content.roleplay?.objectives || content.rolePlay?.objectives)?.map((obj: string, i: number) => (
+                                    <li key={i}>{obj}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          <Button asChild className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20">
+                            <Link href={`/custom-materials/${materialId}/chat`}>
+                              <MessageSquare className="h-5 w-5 mr-2" />
+                              Start Practice Session
+                            </Link>
+                          </Button>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 )}
 
                 {/* Shadowing */}
-                {activeTab === "shadowing" && hasShadowing && (
+                {activeTab === "shadowing" && (localContent?.shadowing || content?.shadowing) && (
                   <div className="space-y-4">
-                    {content.shadowing?.map((sentence, index) => {
+                    {(localContent?.shadowing || content?.shadowing)?.map((sentence: any, index: number) => {
                       // Handle both string format (new AI response) and object format (legacy)
-                      const text = typeof sentence === "string" ? sentence : sentence.text;
-                      const ipa = typeof sentence === "object" ? sentence.ipa : undefined;
+                      const text = typeof sentence === "string" ? sentence : (sentence.sentence || sentence.text);
+                      const phonetic = typeof sentence === "object" ? (sentence.phonetic || sentence.ipa) : undefined;
+                      const notes = typeof sentence === "object" ? sentence.notes : undefined;
                       const translation = typeof sentence === "object" ? sentence.translation : undefined;
-                      const id = typeof sentence === "object" ? sentence.id : undefined;
+                      const sentenceId = (typeof sentence === "object" && sentence.id) ? sentence.id : `s-${index}`;
+
+                      const score = shadowingScores[sentenceId];
+                      const scoring = isScoring[sentenceId];
+
+                      if (isEditMode) {
+                        return (
+                          <Card key={`shadow-edit-${index}`} className="border-primary/20">
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Sentence {index + 1}</CardTitle>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => {
+                                    const newShadowing = localContent.shadowing.filter((_: any, i: number) => i !== index);
+                                    setLocalContent({ ...localContent, shadowing: newShadowing });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Sentence Text</Label>
+                                <Textarea 
+                                  value={text || ""} 
+                                  onChange={(e) => {
+                                    const newShadowing = [...localContent.shadowing];
+                                    if (typeof newShadowing[index] === 'string') {
+                                      newShadowing[index] = e.target.value;
+                                    } else {
+                                      newShadowing[index] = { ...newShadowing[index], sentence: e.target.value };
+                                    }
+                                    setLocalContent({ ...localContent, shadowing: newShadowing });
+                                  }}
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Phonetic (IPA)</Label>
+                                  <Input 
+                                    value={phonetic || ""} 
+                                    onChange={(e) => {
+                                      const newShadowing = [...localContent.shadowing];
+                                      if (typeof newShadowing[index] === 'string') {
+                                        newShadowing[index] = { sentence: newShadowing[index], phonetic: e.target.value };
+                                      } else {
+                                        newShadowing[index] = { ...newShadowing[index], phonetic: e.target.value };
+                                      }
+                                      setLocalContent({ ...localContent, shadowing: newShadowing });
+                                    }}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Translation</Label>
+                                  <Input 
+                                    value={translation || ""} 
+                                    onChange={(e) => {
+                                      const newShadowing = [...localContent.shadowing];
+                                      if (typeof newShadowing[index] === 'string') {
+                                        newShadowing[index] = { sentence: newShadowing[index], translation: e.target.value };
+                                      } else {
+                                        newShadowing[index] = { ...newShadowing[index], translation: e.target.value };
+                                      }
+                                      setLocalContent({ ...localContent, shadowing: newShadowing });
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">Notes</Label>
+                                <Input 
+                                  value={notes || ""} 
+                                  onChange={(e) => {
+                                    const newShadowing = [...localContent.shadowing];
+                                    if (typeof newShadowing[index] === 'string') {
+                                      newShadowing[index] = { sentence: newShadowing[index], notes: e.target.value };
+                                    } else {
+                                      newShadowing[index] = { ...newShadowing[index], notes: e.target.value };
+                                    }
+                                    setLocalContent({ ...localContent, shadowing: newShadowing });
+                                  }}
+                                />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
 
                       return (
-                        <Card key={id || `shadowing-${index}`}>
-                          <CardContent className="pt-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <p className="text-lg text-[#202124] dark:text-[#E8EAED] mb-2">
-                                  {text}
-                                </p>
-                                {ipa && (
-                                  <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
-                                    /{ipa}/
+                        <div key={sentenceId} className="space-y-3">
+                          <Card>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <p className="text-lg text-[#202124] dark:text-[#E8EAED] mb-2">
+                                    {text}
                                   </p>
-                                )}
-                                {translation && (
-                                  <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6] italic mt-1">
-                                    {translation}
-                                  </p>
-                                )}
+                                  {phonetic && (
+                                    <p className="text-sm font-mono text-[#5F6368] dark:text-[#9AA0A6] bg-muted/50 px-2 py-1 rounded inline-block">
+                                      {phonetic}
+                                    </p>
+                                  )}
+                                  {notes && (
+                                    <p className="text-xs text-[#5F6368] dark:text-[#9AA0A6] mt-2 italic">
+                                      <strong>Note:</strong> {notes}
+                                    </p>
+                                  )}
+                                  {translation && (
+                                    <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6] italic mt-1">
+                                      {translation}
+                                    </p>
+                                  )}
 
-                                {/* Recording timer */}
-                                {recordingIndex === index && (
-                                  <div className="mt-3 flex items-center gap-2 text-red-600 dark:text-red-400">
-                                    <div className="h-2 w-2 bg-red-600 rounded-full animate-pulse" />
-                                    <span className="text-sm font-medium">
-                                      Recording... {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col gap-2">
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => handlePlayAudio(text, index)}
-                                    disabled={recordingIndex !== null}
-                                    className={playingIndex === index ? "bg-blue-100 dark:bg-blue-900" : ""}
-                                    title="Play sentence"
-                                  >
-                                    <Volume2 className={`h-4 w-4 ${playingIndex === index ? "text-blue-600 animate-pulse" : ""}`} />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => handleToggleRecording(index)}
-                                    disabled={playingIndex !== null}
-                                    className={recordingIndex === index ? "bg-red-100 dark:bg-red-900" : ""}
-                                    title={recordingIndex === index ? "Stop recording" : "Start recording"}
-                                  >
-                                    <Mic className={`h-4 w-4 ${recordingIndex === index ? "text-red-600 animate-pulse" : ""}`} />
-                                  </Button>
+                                  {/* Recording timer */}
+                                  {recordingIndex === index && (
+                                    <div className="mt-3 flex items-center gap-2 text-red-600 dark:text-red-400">
+                                      <div className="h-2 w-2 bg-red-600 rounded-full animate-pulse" />
+                                      <span className="text-sm font-medium">
+                                        Recording... {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
 
-                                {/* Replay button - only show if there's a recording */}
-                                {recordings.has(index) && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePlayRecording(index)}
-                                    disabled={recordingIndex !== null || playingIndex !== null}
-                                    className={`w-full ${playingRecording === index ? "bg-green-100 dark:bg-green-900" : ""}`}
-                                    title="Replay your recording"
-                                  >
-                                    <Volume2 className={`h-3 w-3 mr-1 ${playingRecording === index ? "text-green-600 animate-pulse" : ""}`} />
-                                    <span className="text-xs">Replay</span>
-                                  </Button>
-                                )}
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handlePlayAudio(text, index)}
+                                      disabled={recordingIndex !== null}
+                                      className={playingIndex === index ? "bg-blue-100 dark:bg-blue-900" : ""}
+                                      title="Play sentence"
+                                    >
+                                      <Volume2 className={`h-4 w-4 ${playingIndex === index ? "text-blue-600 animate-pulse" : ""}`} />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                    onClick={() => handleToggleRecording(index, sentenceId)}
+                                      disabled={playingIndex !== null}
+                                      className={recordingIndex === index ? "bg-red-100 dark:bg-red-900" : ""}
+                                      title={recordingIndex === index ? "Stop recording" : "Start recording"}
+                                    >
+                                      <Mic className={`h-4 w-4 ${recordingIndex === index ? "text-red-600 animate-pulse" : ""}`} />
+                                    </Button>
+                                  </div>
+
+                                  {/* Replay button - only show if there's a recording */}
+                                  {recordings.has(index) && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handlePlayRecording(index)}
+                                      disabled={recordingIndex !== null || playingIndex !== null}
+                                      className={`w-full ${playingRecording === index ? "bg-green-100 dark:bg-green-900" : ""}`}
+                                      title="Replay your recording"
+                                    >
+                                      <Volume2 className={`h-3 w-3 mr-1 ${playingRecording === index ? "text-green-600 animate-pulse" : ""}`} />
+                                      <span className="text-xs">Replay</span>
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+
+                              {/* Score Button */}
+                              {recordings.has(index) && !score && (
+                                <div className="mt-4 pt-4 border-t border-dashed">
+                                  <Button
+                                    onClick={() => handleScoreShadowing(index, sentenceId)}
+                                    disabled={scoring}
+                                    className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
+                                  >
+                                    {scoring ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Analyzing Pronunciation...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles className="h-4 w-4" />
+                                        Score My Pronunciation
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+
+                          {/* Score Result */}
+                          {score && (
+                            <ShadowingScoreCard score={score} className="animate-in fade-in slide-in-from-top-2 duration-500" />
+                          )}
+                        </div>
                       );
                     })}
+
+                    {isEditMode && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed py-8 flex flex-col gap-2"
+                        onClick={() => {
+                          const newShadowing = [...(localContent?.shadowing || [])];
+                          newShadowing.push({
+                            id: `new-shadow-${Date.now()}`,
+                            sentence: "",
+                            phonetic: "",
+                            translation: "",
+                            notes: ""
+                          });
+                          setLocalContent({ ...localContent, shadowing: newShadowing });
+                        }}
+                      >
+                        <Plus className="h-5 w-5" />
+                        Add Shadowing Sentence
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -795,6 +1361,59 @@ export default function MaterialDetailPage() {
             contentText={currentMaterial.contentText}
           />
         </div>
+
+        {/* Floating Save Bar */}
+        {isEditMode && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 duration-300">
+            <Card className="shadow-2xl border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <CardContent className="py-3 px-6 flex items-center gap-6">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold">Editing Mode</span>
+                  <span className="text-xs text-muted-foreground">You have unsaved changes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setEditMode(false);
+                      setLocalContent(JSON.parse(JSON.stringify(currentMaterial?.generatedContent)));
+                    }}
+                    disabled={isSaving}
+                  >
+                    Discard
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={async () => {
+                      if (!materialId || !localContent) return;
+                      setIsSaving(true);
+                      try {
+                        await updateContent(materialId, { generatedContent: localContent });
+                        toast.success("Content updated successfully");
+                        setEditMode(false);
+                      } catch (err) {
+                        toast.error("Failed to update content");
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </MainLayout>
     </ProtectedRoute>
   );
