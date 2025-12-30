@@ -11,6 +11,7 @@ import {
   ContentNavigationSidebar,
   FilePreviewDialog,
   ShadowingScoreCard,
+  InteractiveQuiz,
 } from "@/components/custom-materials";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +48,11 @@ import {
   Loader2,
   Trash2,
   Plus,
+  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 /**
  * Material Detail Page - View generated content
@@ -78,6 +81,7 @@ export default function MaterialDetailPage() {
   const [activeTab, setActiveTab] = useState("vocabulary");
   const [localContent, setLocalContent] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isQuizPracticeMode, setIsQuizPracticeMode] = useState(false);
 
   // Initialize local content when material is loaded
   useEffect(() => {
@@ -470,15 +474,15 @@ export default function MaterialDetailPage() {
                         <Badge variant="outline">{currentMaterial.sourceType}</Badge>
                       </div>
                       <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
-                        {currentMaterial.sourceType === "TEXT" 
+                        {currentMaterial.sourceType === "TEXT"
                           ? "View the original text content"
                           : currentMaterial.sourceType === "PDF"
-                          ? "PDF document preview"
-                          : currentMaterial.sourceType === "DOCX"
-                          ? "Word document - download to view"
-                          : currentMaterial.sourceType === "IMAGE"
-                          ? "Image preview with zoom controls"
-                          : "External source link"
+                            ? "PDF document preview"
+                            : currentMaterial.sourceType === "DOCX"
+                              ? "Word document - download to view"
+                              : currentMaterial.sourceType === "IMAGE"
+                                ? "Image preview with zoom controls"
+                                : "External source link"
                         }
                       </p>
                     </CardHeader>
@@ -493,42 +497,41 @@ export default function MaterialDetailPage() {
                       )}
 
                       {/* FILE types (PDF, DOCX, IMAGE) - show preview card with button */}
-                      {(currentMaterial.sourceType === "PDF" || 
-                        currentMaterial.sourceType === "DOCX" || 
+                      {(currentMaterial.sourceType === "PDF" ||
+                        currentMaterial.sourceType === "DOCX" ||
                         currentMaterial.sourceType === "IMAGE") && (
-                        <div className="flex flex-col items-center justify-center py-8 px-4 bg-muted/20 rounded-lg border-2 border-dashed">
-                          <div className={`p-4 rounded-full mb-4 ${
-                            currentMaterial.sourceType === "PDF" 
-                              ? "bg-red-100 dark:bg-red-900/20" 
+                          <div className="flex flex-col items-center justify-center py-8 px-4 bg-muted/20 rounded-lg border-2 border-dashed">
+                            <div className={`p-4 rounded-full mb-4 ${currentMaterial.sourceType === "PDF"
+                              ? "bg-red-100 dark:bg-red-900/20"
                               : currentMaterial.sourceType === "DOCX"
-                              ? "bg-blue-100 dark:bg-blue-900/20"
-                              : "bg-green-100 dark:bg-green-900/20"
-                          }`}>
-                            {currentMaterial.sourceType === "PDF" && <FileText className="h-8 w-8 text-red-500" />}
-                            {currentMaterial.sourceType === "DOCX" && <File className="h-8 w-8 text-blue-500" />}
-                            {currentMaterial.sourceType === "IMAGE" && <ImageIcon className="h-8 w-8 text-green-500" />}
+                                ? "bg-blue-100 dark:bg-blue-900/20"
+                                : "bg-green-100 dark:bg-green-900/20"
+                              }`}>
+                              {currentMaterial.sourceType === "PDF" && <FileText className="h-8 w-8 text-red-500" />}
+                              {currentMaterial.sourceType === "DOCX" && <File className="h-8 w-8 text-blue-500" />}
+                              {currentMaterial.sourceType === "IMAGE" && <ImageIcon className="h-8 w-8 text-green-500" />}
+                            </div>
+                            <h4 className="font-medium text-lg mb-1">
+                              {currentMaterial.sourceType === "PDF" && "PDF Document"}
+                              {currentMaterial.sourceType === "DOCX" && "Word Document"}
+                              {currentMaterial.sourceType === "IMAGE" && "Image File"}
+                            </h4>
+                            <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
+                              {currentMaterial.sourceType === "PDF"
+                                ? "Click to preview the PDF document in a viewer"
+                                : currentMaterial.sourceType === "DOCX"
+                                  ? "DOCX files cannot be previewed in browser. Click to download."
+                                  : "Click to view the image with zoom controls"
+                              }
+                            </p>
+                            <div className="flex gap-2">
+                              <Button onClick={() => setIsPreviewOpen(true)} className="gap-2">
+                                <Eye className="h-4 w-4" />
+                                {currentMaterial.sourceType === "DOCX" ? "Download / View" : "Preview"}
+                              </Button>
+                            </div>
                           </div>
-                          <h4 className="font-medium text-lg mb-1">
-                            {currentMaterial.sourceType === "PDF" && "PDF Document"}
-                            {currentMaterial.sourceType === "DOCX" && "Word Document"}
-                            {currentMaterial.sourceType === "IMAGE" && "Image File"}
-                          </h4>
-                          <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                            {currentMaterial.sourceType === "PDF" 
-                              ? "Click to preview the PDF document in a viewer"
-                              : currentMaterial.sourceType === "DOCX"
-                              ? "DOCX files cannot be previewed in browser. Click to download."
-                              : "Click to view the image with zoom controls"
-                            }
-                          </p>
-                          <div className="flex gap-2">
-                            <Button onClick={() => setIsPreviewOpen(true)} className="gap-2">
-                              <Eye className="h-4 w-4" />
-                              {currentMaterial.sourceType === "DOCX" ? "Download / View" : "Preview"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* YOUTUBE or WEBSITE - show link */}
                       {(currentMaterial.sourceType === "YOUTUBE" || currentMaterial.sourceType === "WEBSITE") && (
@@ -545,7 +548,7 @@ export default function MaterialDetailPage() {
                               return metadata?.sourceUrl as string || currentMaterial.originalFileUrl || "No URL available";
                             })()}
                           </p>
-                          <Button 
+                          <Button
                             onClick={() => {
                               const metadata = currentMaterial.inputMetadata as Record<string, unknown> | undefined;
                               const url = (metadata?.sourceUrl as string) || currentMaterial.originalFileUrl;
@@ -567,7 +570,7 @@ export default function MaterialDetailPage() {
                   <div className="space-y-4">
                     {(localContent?.vocabulary || content?.vocabulary)?.map((item: any, index: number) => {
                       const wordText = item.word || item.term || "";
-                      
+
                       if (isEditMode) {
                         return (
                           <Card key={item.id || `vocab-edit-${index}`} className="border-primary/20">
@@ -576,8 +579,8 @@ export default function MaterialDetailPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                                   <div className="space-y-2">
                                     <Label className="text-xs uppercase font-bold text-muted-foreground">Word</Label>
-                                    <Input 
-                                      value={wordText} 
+                                    <Input
+                                      value={wordText}
                                       onChange={(e) => {
                                         const newVocab = [...localContent.vocabulary];
                                         newVocab[index] = { ...newVocab[index], word: e.target.value };
@@ -587,8 +590,8 @@ export default function MaterialDetailPage() {
                                   </div>
                                   <div className="space-y-2">
                                     <Label className="text-xs uppercase font-bold text-muted-foreground">Part of Speech</Label>
-                                    <Input 
-                                      value={item.partOfSpeech || ""} 
+                                    <Input
+                                      value={item.partOfSpeech || ""}
                                       onChange={(e) => {
                                         const newVocab = [...localContent.vocabulary];
                                         newVocab[index] = { ...newVocab[index], partOfSpeech: e.target.value };
@@ -599,8 +602,8 @@ export default function MaterialDetailPage() {
                                   </div>
                                   <div className="space-y-2">
                                     <Label className="text-xs uppercase font-bold text-muted-foreground">IPA</Label>
-                                    <Input 
-                                      value={item.ipa || ""} 
+                                    <Input
+                                      value={item.ipa || ""}
                                       onChange={(e) => {
                                         const newVocab = [...localContent.vocabulary];
                                         newVocab[index] = { ...newVocab[index], ipa: e.target.value };
@@ -610,9 +613,9 @@ export default function MaterialDetailPage() {
                                     />
                                   </div>
                                 </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10 mt-6"
                                   onClick={() => {
                                     const newVocab = localContent.vocabulary.filter((_: any, i: number) => i !== index);
@@ -622,11 +625,11 @@ export default function MaterialDetailPage() {
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Definition</Label>
-                                <Textarea 
-                                  value={item.definition || ""} 
+                                <Textarea
+                                  value={item.definition || ""}
                                   onChange={(e) => {
                                     const newVocab = [...localContent.vocabulary];
                                     newVocab[index] = { ...newVocab[index], definition: e.target.value };
@@ -638,8 +641,8 @@ export default function MaterialDetailPage() {
 
                               <div className="space-y-2">
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Example Sentence</Label>
-                                <Textarea 
-                                  value={item.example || ""} 
+                                <Textarea
+                                  value={item.example || ""}
                                   onChange={(e) => {
                                     const newVocab = [...localContent.vocabulary];
                                     newVocab[index] = { ...newVocab[index], example: e.target.value };
@@ -702,8 +705,8 @@ export default function MaterialDetailPage() {
                     })}
 
                     {isEditMode && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-dashed py-8 flex flex-col gap-2"
                         onClick={() => {
                           const newVocab = [...(localContent?.vocabulary || [])];
@@ -728,178 +731,215 @@ export default function MaterialDetailPage() {
                 {/* Quiz Tab */}
                 {activeTab === "quiz" && (localContent?.quiz || content?.quiz) && (
                   <div className="space-y-4">
-                    {(localContent?.quiz || content?.quiz)?.map((question: any, idx: number) => {
-                      const correctAnswerValue = question.answer || question.correctAnswer;
+                    {/* Quiz Mode Header */}
+                    {!isEditMode && (
+                      <div className="flex items-center justify-between p-4 bg-muted/20 border border-border/50 rounded-xl mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "p-2 rounded-full transition-colors",
+                            isQuizPracticeMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            <GraduationCap className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold">
+                              {isQuizPracticeMode ? "Practice Mode" : "Review Mode"}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {isQuizPracticeMode
+                                ? "Hide answers and test your knowledge"
+                                : "View question and explanation directly"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor="quiz-practice-mode" className="text-xs font-medium cursor-pointer">
+                            Practice
+                          </Label>
+                          <Switch
+                            id="quiz-practice-mode"
+                            checked={isQuizPracticeMode}
+                            onCheckedChange={setIsQuizPracticeMode}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                      if (isEditMode) {
-                        return (
-                          <Card key={question.id || `quiz-edit-${idx}`} className="border-primary/20">
-                            <CardHeader className="pb-2">
-                              <div className="flex items-center justify-between">
-                                <CardTitle className="text-base">Question {idx + 1}</CardTitle>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => {
-                                    const newQuiz = localContent.quiz.filter((_: any, i: number) => i !== idx);
-                                    setLocalContent({ ...localContent, quiz: newQuiz });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div className="space-y-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Question Text</Label>
-                                <Textarea 
-                                  value={question.question || ""} 
-                                  onChange={(e) => {
-                                    const newQuiz = [...localContent.quiz];
-                                    newQuiz[idx] = { ...newQuiz[idx], question: e.target.value };
-                                    setLocalContent({ ...localContent, quiz: newQuiz });
-                                  }}
-                                  rows={2}
-                                />
-                              </div>
+                    {isQuizPracticeMode && !isEditMode ? (
+                      <InteractiveQuiz questions={localContent?.quiz || content?.quiz} />
+                    ) : (
+                      (localContent?.quiz || content?.quiz)?.map((question: any, idx: number) => {
+                        const correctAnswerValue = question.answer || question.correctAnswer;
 
-                              <div className="space-y-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Options</Label>
-                                <div className="space-y-2">
-                                  {question.options?.map((option: string, optIdx: number) => (
-                                    <div key={optIdx} className="flex items-center gap-2">
-                                      <div 
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors ${
-                                          (typeof correctAnswerValue === 'string' ? option === correctAnswerValue : optIdx === correctAnswerValue)
-                                            ? "bg-green-500 text-white"
-                                            : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-                                        }`}
-                                        onClick={() => {
-                                          const newQuiz = [...localContent.quiz];
-                                          newQuiz[idx] = { ...newQuiz[idx], answer: option };
-                                          setLocalContent({ ...localContent, quiz: newQuiz });
-                                        }}
-                                        title="Mark as correct answer"
-                                      >
-                                        {optIdx + 1}
-                                      </div>
-                                      <Input 
-                                        value={option} 
-                                        onChange={(e) => {
-                                          const newQuiz = [...localContent.quiz];
-                                          const newOptions = [...newQuiz[idx].options];
-                                          newOptions[optIdx] = e.target.value;
-                                          newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
-                                          setLocalContent({ ...localContent, quiz: newQuiz });
-                                        }}
-                                        className="flex-1"
-                                      />
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                        onClick={() => {
-                                          const newQuiz = [...localContent.quiz];
-                                          const newOptions = newQuiz[idx].options.filter((_: any, i: number) => i !== optIdx);
-                                          newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
-                                          setLocalContent({ ...localContent, quiz: newQuiz });
-                                        }}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="w-full border-dashed text-xs h-8"
+                        if (isEditMode) {
+                          return (
+                            <Card key={question.id || `quiz-edit-${idx}`} className="border-primary/20">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-base">Question {idx + 1}</CardTitle>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                     onClick={() => {
-                                      const newQuiz = [...localContent.quiz];
-                                      const newOptions = [...(newQuiz[idx].options || [])];
-                                      newOptions.push("");
-                                      newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                      const newQuiz = localContent.quiz.filter((_: any, i: number) => i !== idx);
                                       setLocalContent({ ...localContent, quiz: newQuiz });
                                     }}
                                   >
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    Add Option
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              </div>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Question Text</Label>
+                                  <Textarea
+                                    value={question.question || ""}
+                                    onChange={(e) => {
+                                      const newQuiz = [...localContent.quiz];
+                                      newQuiz[idx] = { ...newQuiz[idx], question: e.target.value };
+                                      setLocalContent({ ...localContent, quiz: newQuiz });
+                                    }}
+                                    rows={2}
+                                  />
+                                </div>
 
-                              <div className="space-y-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Explanation</Label>
-                                <Textarea 
-                                  value={question.explanation || ""} 
-                                  onChange={(e) => {
-                                    const newQuiz = [...localContent.quiz];
-                                    newQuiz[idx] = { ...newQuiz[idx], explanation: e.target.value };
-                                    setLocalContent({ ...localContent, quiz: newQuiz });
-                                  }}
-                                  rows={2}
-                                  placeholder="Explain why the answer is correct..."
-                                />
-                              </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Options</Label>
+                                  <div className="space-y-2">
+                                    {question.options?.map((option: string, optIdx: number) => (
+                                      <div key={optIdx} className="flex items-center gap-2">
+                                        <div
+                                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors ${(typeof correctAnswerValue === 'string' ? option === correctAnswerValue : optIdx === correctAnswerValue)
+                                            ? "bg-green-500 text-white"
+                                            : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                                            }`}
+                                          onClick={() => {
+                                            const newQuiz = [...localContent.quiz];
+                                            newQuiz[idx] = { ...newQuiz[idx], answer: option };
+                                            setLocalContent({ ...localContent, quiz: newQuiz });
+                                          }}
+                                          title="Mark as correct answer"
+                                        >
+                                          {optIdx + 1}
+                                        </div>
+                                        <Input
+                                          value={option}
+                                          onChange={(e) => {
+                                            const newQuiz = [...localContent.quiz];
+                                            const newOptions = [...newQuiz[idx].options];
+                                            newOptions[optIdx] = e.target.value;
+                                            newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                            setLocalContent({ ...localContent, quiz: newQuiz });
+                                          }}
+                                          className="flex-1"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={() => {
+                                            const newQuiz = [...localContent.quiz];
+                                            const newOptions = newQuiz[idx].options.filter((_: any, i: number) => i !== optIdx);
+                                            newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                            setLocalContent({ ...localContent, quiz: newQuiz });
+                                          }}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full border-dashed text-xs h-8"
+                                      onClick={() => {
+                                        const newQuiz = [...localContent.quiz];
+                                        const newOptions = [...(newQuiz[idx].options || [])];
+                                        newOptions.push("");
+                                        newQuiz[idx] = { ...newQuiz[idx], options: newOptions };
+                                        setLocalContent({ ...localContent, quiz: newQuiz });
+                                      }}
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Add Option
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Explanation</Label>
+                                  <Textarea
+                                    value={question.explanation || ""}
+                                    onChange={(e) => {
+                                      const newQuiz = [...localContent.quiz];
+                                      newQuiz[idx] = { ...newQuiz[idx], explanation: e.target.value };
+                                      setLocalContent({ ...localContent, quiz: newQuiz });
+                                    }}
+                                    rows={2}
+                                    placeholder="Explain why the answer is correct..."
+                                  />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+
+                        return (
+                          <Card key={question.id || `quiz-${idx}`}>
+                            <CardHeader>
+                              <CardTitle className="text-base">
+                                Question {idx + 1}
+                              </CardTitle>
+                              <CardDescription>{question.question}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              {/* Show options if available (multiple choice) */}
+                              {question.options && question.options.length > 0 && (
+                                <div className="space-y-2">
+                                  {question.options.map((option: string, optIdx: number) => {
+                                    // Check if this option is the correct answer
+                                    const isCorrect = typeof correctAnswerValue === 'string'
+                                      ? option === correctAnswerValue
+                                      : optIdx === correctAnswerValue;
+
+                                    return (
+                                      <div
+                                        key={optIdx}
+                                        className={`p-3 rounded-lg border ${isCorrect
+                                          ? "border-[#4CAF50] bg-[#E8F5E9] dark:bg-[#4CAF50]/10"
+                                          : "border-[#E0E0E0] dark:border-[#2E2E2E]"
+                                          }`}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          {isCorrect ? (
+                                            <Check className="h-4 w-4 text-[#4CAF50]" />
+                                          ) : (
+                                            <X className="h-4 w-4 text-[#9AA0A6]" />
+                                          )}
+                                          <span>{option}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {question.explanation && (
+                                <div className="mt-4 p-3 rounded-lg bg-[#E3F2FD] dark:bg-[#4285F4]/10">
+                                  <p className="text-sm text-[#1565C0] dark:text-[#90CAF9]">
+                                    <strong>Explanation:</strong> {question.explanation}
+                                  </p>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         );
-                      }
-
-                      return (
-                        <Card key={question.id || `quiz-${idx}`}>
-                          <CardHeader>
-                            <CardTitle className="text-base">
-                              Question {idx + 1}
-                            </CardTitle>
-                            <CardDescription>{question.question}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            {/* Show options if available (multiple choice) */}
-                            {question.options && question.options.length > 0 && (
-                              <div className="space-y-2">
-                                {question.options.map((option: string, optIdx: number) => {
-                                  // Check if this option is the correct answer
-                                  const isCorrect = typeof correctAnswerValue === 'string'
-                                    ? option === correctAnswerValue
-                                    : optIdx === correctAnswerValue;
-
-                                  return (
-                                    <div
-                                      key={optIdx}
-                                      className={`p-3 rounded-lg border ${isCorrect
-                                        ? "border-[#4CAF50] bg-[#E8F5E9] dark:bg-[#4CAF50]/10"
-                                        : "border-[#E0E0E0] dark:border-[#2E2E2E]"
-                                        }`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        {isCorrect ? (
-                                          <Check className="h-4 w-4 text-[#4CAF50]" />
-                                        ) : (
-                                          <X className="h-4 w-4 text-[#9AA0A6]" />
-                                        )}
-                                        <span>{option}</span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                            {question.explanation && (
-                              <div className="mt-4 p-3 rounded-lg bg-[#E3F2FD] dark:bg-[#4285F4]/10">
-                                <p className="text-sm text-[#1565C0] dark:text-[#90CAF9]">
-                                  <strong>Explanation:</strong> {question.explanation}
-                                </p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                      })
+                    )}
 
                     {isEditMode && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-dashed py-8 flex flex-col gap-2"
                         onClick={() => {
                           const newQuiz = [...(localContent?.quiz || [])];
@@ -928,8 +968,8 @@ export default function MaterialDetailPage() {
                         {isEditMode ? (
                           <div className="space-y-2">
                             <Label className="text-xs uppercase font-bold text-muted-foreground">Summary Content</Label>
-                            <Textarea 
-                              value={localContent.summary || ""} 
+                            <Textarea
+                              value={localContent.summary || ""}
                               onChange={(e) => setLocalContent({ ...localContent, summary: e.target.value })}
                               rows={10}
                               className="resize-none"
@@ -938,7 +978,7 @@ export default function MaterialDetailPage() {
                         ) : (
                           <div className="prose dark:prose-invert max-w-none">
                             <p className="text-[#202124] dark:text-[#E8EAED] whitespace-pre-wrap">
-                              {content.summary}
+                              {content?.summary}
                             </p>
                           </div>
                         )}
@@ -963,13 +1003,13 @@ export default function MaterialDetailPage() {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label className="text-xs uppercase font-bold text-muted-foreground">Scenario</Label>
-                            <Textarea 
-                              value={localContent.roleplay?.scenario || localContent.rolePlay?.scenario || ""} 
+                            <Textarea
+                              value={localContent.roleplay?.scenario || localContent.rolePlay?.scenario || ""}
                               onChange={(e) => {
                                 const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
-                                setLocalContent({ 
-                                  ...localContent, 
-                                  [key]: { ...localContent[key], scenario: e.target.value } 
+                                setLocalContent({
+                                  ...localContent,
+                                  [key]: { ...localContent[key], scenario: e.target.value }
                                 });
                               }}
                               rows={3}
@@ -979,26 +1019,26 @@ export default function MaterialDetailPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label className="text-xs uppercase font-bold text-muted-foreground">Your Role</Label>
-                              <Input 
-                                value={localContent.roleplay?.yourRole || localContent.rolePlay?.yourRole || ""} 
+                              <Input
+                                value={localContent.roleplay?.yourRole || localContent.rolePlay?.yourRole || ""}
                                 onChange={(e) => {
                                   const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
-                                  setLocalContent({ 
-                                    ...localContent, 
-                                    [key]: { ...localContent[key], yourRole: e.target.value } 
+                                  setLocalContent({
+                                    ...localContent,
+                                    [key]: { ...localContent[key], yourRole: e.target.value }
                                   });
                                 }}
                               />
                             </div>
                             <div className="space-y-2">
                               <Label className="text-xs uppercase font-bold text-muted-foreground">AI Role</Label>
-                              <Input 
-                                value={localContent.roleplay?.aiRole || localContent.rolePlay?.aiRole || ""} 
+                              <Input
+                                value={localContent.roleplay?.aiRole || localContent.rolePlay?.aiRole || ""}
                                 onChange={(e) => {
                                   const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
-                                  setLocalContent({ 
-                                    ...localContent, 
-                                    [key]: { ...localContent[key], aiRole: e.target.value } 
+                                  setLocalContent({
+                                    ...localContent,
+                                    [key]: { ...localContent[key], aiRole: e.target.value }
                                   });
                                 }}
                               />
@@ -1010,28 +1050,28 @@ export default function MaterialDetailPage() {
                             <div className="space-y-2">
                               {(localContent.roleplay?.objectives || localContent.rolePlay?.objectives || [])?.map((obj: string, i: number) => (
                                 <div key={i} className="flex items-center gap-2">
-                                  <Input 
-                                    value={obj} 
+                                  <Input
+                                    value={obj}
                                     onChange={(e) => {
                                       const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
                                       const newObjs = [...(localContent[key].objectives || [])];
                                       newObjs[i] = e.target.value;
-                                      setLocalContent({ 
-                                        ...localContent, 
-                                        [key]: { ...localContent[key], objectives: newObjs } 
+                                      setLocalContent({
+                                        ...localContent,
+                                        [key]: { ...localContent[key], objectives: newObjs }
                                       });
                                     }}
                                   />
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="h-8 w-8 text-destructive"
                                     onClick={() => {
                                       const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
                                       const newObjs = localContent[key].objectives.filter((_: any, idx: number) => idx !== i);
-                                      setLocalContent({ 
-                                        ...localContent, 
-                                        [key]: { ...localContent[key], objectives: newObjs } 
+                                      setLocalContent({
+                                        ...localContent,
+                                        [key]: { ...localContent[key], objectives: newObjs }
                                       });
                                     }}
                                   >
@@ -1039,17 +1079,17 @@ export default function MaterialDetailPage() {
                                   </Button>
                                 </div>
                               ))}
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="w-full border-dashed"
                                 onClick={() => {
                                   const key = localContent.roleplay ? 'roleplay' : 'rolePlay';
                                   const newObjs = [...(localContent[key]?.objectives || [])];
                                   newObjs.push("");
-                                  setLocalContent({ 
-                                    ...localContent, 
-                                    [key]: { ...localContent[key], objectives: newObjs } 
+                                  setLocalContent({
+                                    ...localContent,
+                                    [key]: { ...localContent[key], objectives: newObjs }
                                   });
                                 }}
                               >
@@ -1064,27 +1104,27 @@ export default function MaterialDetailPage() {
                           <div className="space-y-2">
                             <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Scenario</h4>
                             <p className="text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
-                              {content.roleplay?.scenario || content.rolePlay?.scenario}
+                              {content?.roleplay?.scenario || content?.rolePlay?.scenario}
                             </p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
                               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Role</span>
-                              <p className="font-semibold text-lg mt-1">{content.roleplay?.yourRole || content.rolePlay?.yourRole}</p>
+                              <p className="font-semibold text-lg mt-1">{content?.roleplay?.yourRole || content?.rolePlay?.yourRole}</p>
                             </div>
                             <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
                               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AI Role</span>
-                              <p className="font-semibold text-lg mt-1">{content.roleplay?.aiRole || content.rolePlay?.aiRole}</p>
+                              <p className="font-semibold text-lg mt-1">{content?.roleplay?.aiRole || content?.rolePlay?.aiRole}</p>
                             </div>
                           </div>
 
-                          {((content.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
-                            (content.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
+                          {((content?.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
+                            (content?.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
                               <div className="space-y-2">
                                 <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Objectives</h4>
                                 <ul className="list-disc list-inside space-y-1 text-[#5F6368] dark:text-[#9AA0A6]">
-                                  {(content.roleplay?.objectives || content.rolePlay?.objectives)?.map((obj: string, i: number) => (
+                                  {(content?.roleplay?.objectives || content?.rolePlay?.objectives)?.map((obj: string, i: number) => (
                                     <li key={i}>{obj}</li>
                                   ))}
                                 </ul>
@@ -1123,9 +1163,9 @@ export default function MaterialDetailPage() {
                             <CardHeader className="pb-2">
                               <div className="flex items-center justify-between">
                                 <CardTitle className="text-base">Sentence {index + 1}</CardTitle>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => {
                                     const newShadowing = localContent.shadowing.filter((_: any, i: number) => i !== index);
@@ -1139,8 +1179,8 @@ export default function MaterialDetailPage() {
                             <CardContent className="space-y-4">
                               <div className="space-y-2">
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Sentence Text</Label>
-                                <Textarea 
-                                  value={text || ""} 
+                                <Textarea
+                                  value={text || ""}
                                   onChange={(e) => {
                                     const newShadowing = [...localContent.shadowing];
                                     if (typeof newShadowing[index] === 'string') {
@@ -1156,8 +1196,8 @@ export default function MaterialDetailPage() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs uppercase font-bold text-muted-foreground">Phonetic (IPA)</Label>
-                                  <Input 
-                                    value={phonetic || ""} 
+                                  <Input
+                                    value={phonetic || ""}
                                     onChange={(e) => {
                                       const newShadowing = [...localContent.shadowing];
                                       if (typeof newShadowing[index] === 'string') {
@@ -1171,8 +1211,8 @@ export default function MaterialDetailPage() {
                                 </div>
                                 <div className="space-y-2">
                                   <Label className="text-xs uppercase font-bold text-muted-foreground">Translation</Label>
-                                  <Input 
-                                    value={translation || ""} 
+                                  <Input
+                                    value={translation || ""}
                                     onChange={(e) => {
                                       const newShadowing = [...localContent.shadowing];
                                       if (typeof newShadowing[index] === 'string') {
@@ -1187,8 +1227,8 @@ export default function MaterialDetailPage() {
                               </div>
                               <div className="space-y-2">
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Notes</Label>
-                                <Input 
-                                  value={notes || ""} 
+                                <Input
+                                  value={notes || ""}
                                   onChange={(e) => {
                                     const newShadowing = [...localContent.shadowing];
                                     if (typeof newShadowing[index] === 'string') {
@@ -1256,7 +1296,7 @@ export default function MaterialDetailPage() {
                                     <Button
                                       variant="outline"
                                       size="icon"
-                                    onClick={() => handleToggleRecording(index, sentenceId)}
+                                      onClick={() => handleToggleRecording(index, sentenceId)}
                                       disabled={playingIndex !== null}
                                       className={recordingIndex === index ? "bg-red-100 dark:bg-red-900" : ""}
                                       title={recordingIndex === index ? "Stop recording" : "Start recording"}
@@ -1316,8 +1356,8 @@ export default function MaterialDetailPage() {
                     })}
 
                     {isEditMode && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-dashed py-8 flex flex-col gap-2"
                         onClick={() => {
                           const newShadowing = [...(localContent?.shadowing || [])];
@@ -1372,9 +1412,9 @@ export default function MaterialDetailPage() {
                   <span className="text-xs text-muted-foreground">You have unsaved changes</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       setEditMode(false);
                       setLocalContent(JSON.parse(JSON.stringify(currentMaterial?.generatedContent)));
@@ -1383,8 +1423,8 @@ export default function MaterialDetailPage() {
                   >
                     Discard
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={async () => {
                       if (!materialId || !localContent) return;
                       setIsSaving(true);

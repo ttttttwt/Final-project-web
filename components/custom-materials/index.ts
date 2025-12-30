@@ -43,4 +43,4 @@ export { RelatedMaterialsSidebar } from "./RelatedMaterialsSidebar";
 export { ContentNavigationSidebar } from "./ContentNavigationSidebar";
 
 // Detail components
-export { FilePreviewDialog, ShadowingScoreCard } from "./detail";
+export { FilePreviewDialog, ShadowingScoreCard, InteractiveQuiz } from "./detail";
