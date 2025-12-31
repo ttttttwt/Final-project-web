@@ -12,9 +12,13 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, ArrowLeft } from "lucide-react";
+import { MainLayout } from "@/components/layout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LearningPathCard } from "@/components/learning-paths";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { LearningPath, UserPathProgress } from "@/types/learningPath";
 import learningPathService from "@/services/learningPathService";
 import { toast } from "sonner";
@@ -70,76 +74,92 @@ export default function LearningPathsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-        <div className="space-y-4 mb-8">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-6 w-96" />
-        </div>
+      <ProtectedRoute>
+        <MainLayout showSidebar={true} pageTitle="Learning Paths">
+          <div className="space-y-4 mb-8">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-6 w-96" />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-80" />
-          ))}
-        </div>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-80" />
+            ))}
+          </div>
+        </MainLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Learning Paths</h1>
-        <p className="text-muted-foreground">
-          Structured learning journeys aligned with CEFR levels. Start with your
-          recommended path or choose any level to begin.
-        </p>
-      </div>
-
-      {/* Recommended Path Section */}
-      {recommendedPath && !isPathStarted(recommendedPath.id) && (
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-yellow-500" />
-            <h2 className="text-2xl font-semibold">Recommended for You</h2>
+    <ProtectedRoute>
+      <MainLayout showSidebar={true} pageTitle="Learning Paths">
+        <div className="space-y-8 pb-8">
+          {/* Page Header with Back Button */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground -ml-2">
+                  <Link href="/dashboard">
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Dashboard
+                  </Link>
+                </Button>
+              </div>
+              <h1 className="text-3xl font-bold mb-2">Learning Paths</h1>
+              <p className="text-muted-foreground">
+                Structured learning journeys aligned with CEFR levels. Start with your
+                recommended path or choose any level to begin.
+              </p>
+            </div>
           </div>
-          <div className="max-w-md">
-            <LearningPathCard
-              path={recommendedPath}
-              isRecommended={true}
-              onStartPath={handlePathStarted}
-            />
+
+          {/* Recommended Path Section */}
+          {recommendedPath && !isPathStarted(recommendedPath.id) && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-yellow-500" />
+                <h2 className="text-2xl font-semibold">Recommended for You</h2>
+              </div>
+              <div className="max-w-md">
+                <LearningPathCard
+                  path={recommendedPath}
+                  isRecommended={true}
+                  onStartPath={handlePathStarted}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* All Paths Grid */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">
+              {userProgress.length > 0 ? "All Learning Paths" : "Choose Your Path"}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paths.map((path) => (
+                <LearningPathCard
+                  key={path.id}
+                  path={path}
+                  isRecommended={recommendedPath?.id === path.id}
+                  isStarted={isPathStarted(path.id)}
+                  progress={getPathProgress(path.id)}
+                  onStartPath={handlePathStarted}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* All Paths Grid */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">
-          {userProgress.length > 0 ? "All Learning Paths" : "Choose Your Path"}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paths.map((path) => (
-            <LearningPathCard
-              key={path.id}
-              path={path}
-              isRecommended={recommendedPath?.id === path.id}
-              isStarted={isPathStarted(path.id)}
-              progress={getPathProgress(path.id)}
-              onStartPath={handlePathStarted}
-            />
-          ))}
+          {/* Empty State */}
+          {paths.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                No learning paths available at the moment.
+              </p>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Empty State */}
-      {paths.length === 0 && !isLoading && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            No learning paths available at the moment.
-          </p>
-        </div>
-      )}
-    </div>
+      </MainLayout>
+    </ProtectedRoute>
   );
 }
