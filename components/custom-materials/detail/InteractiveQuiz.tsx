@@ -84,12 +84,7 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({ questions }) =
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider">Question {qIdx + 1}</span>
-                      <Badge variant="secondary" className="text-[10px] uppercase font-bold px-1.5 py-0 h-4 bg-primary/10 text-primary border-none">
-                        {question.type?.replace('_', ' ') || 'multiple choice'}
-                      </Badge>
-                    </div>
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider">Question {qIdx + 1}</span>
                     <CardTitle className="text-base font-semibold leading-snug">
                       {question.question}
                     </CardTitle>
