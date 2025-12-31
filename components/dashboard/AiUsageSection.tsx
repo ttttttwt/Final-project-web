@@ -91,7 +91,7 @@ function UpgradeCTA() {
                     </p>
                 </div>
                 <Button asChild size="sm">
-                    <Link href="/subscription">
+                    <Link href="/pricing">
                         Nâng cấp
                     </Link>
                 </Button>
@@ -107,7 +107,7 @@ function QuotaExceededAlert({ featureName }: { featureName: string }) {
                 <AlertTriangle className="h-4 w-4 text-red-500" />
                 <p className="text-sm text-red-700 dark:text-red-400">
                     Bạn đã dùng hết quota <strong>{featureName}</strong> tháng này.{" "}
-                    <Link href="/subscription" className="underline font-medium">
+                    <Link href="/pricing" className="underline font-medium">
                         Nâng cấp Pro
                     </Link>{" "}
                     để tiếp tục!
