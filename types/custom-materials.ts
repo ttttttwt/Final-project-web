@@ -176,11 +176,7 @@ export interface ChatMessageRequest {
   sessionId?: string | null;
 }
 
-export interface StyleTransformRequest {
-  text: string;
-  targetStyle: StyleType;
-  includeExplanation?: boolean;
-}
+// Note: StyleTransformRequest is defined above in "Style Transform Types" section
 
 // ==========================================
 // Response DTOs
@@ -275,19 +271,8 @@ export interface EndChatResponse {
 }
 
 // ==========================================
-// Style Transform Types
+// Shadowing Types (StyleExplanation and StyleTransformResponse defined above)
 // ==========================================
-
-export interface StyleExplanation {
-  original: string;
-  changed: string;
-  reason: string;
-}
-
-export interface StyleTransformResponse {
-  transformedText: string;
-  explanations?: StyleExplanation[];
-}
 
 // ==========================================
 // Shadowing Types

@@ -6,6 +6,9 @@ import {
   hasValidAccessToken,
   saveTokens,
 } from "@/lib/tokenStorage";
+import { useCustomMaterialStore } from "./customMaterialStore";
+import { useSubscriptionStore } from "./subscriptionStore";
+import { useNotificationStore } from "./notificationStore";
 
 // 🔐 SECURITY: Temporary localStorage token storage (Sprint 3)
 // Tokens are saved in localStorage for implementation speed
@@ -94,6 +97,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error("Logout error:", error);
     } finally {
       clearTokens();
+      
+      // Reset all other stores to prevent state leakage between users
+      useCustomMaterialStore.getState().reset();
+      useSubscriptionStore.getState().reset();
+      useNotificationStore.getState().reset();
+      
       // Always clear local state
       set({
         user: null,

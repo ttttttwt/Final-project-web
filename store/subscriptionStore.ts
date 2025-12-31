@@ -13,8 +13,9 @@ interface SubscriptionState {
   planType: "FREE" | "MONTHLY" | "YEARLY" | null;
   
   // Actions
-  fetchSubscription: () => Promise<void>;
+  fetchSubscription: (force?: boolean) => Promise<void>;
   clearSubscription: () => void;
+  reset: () => void;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
@@ -24,9 +25,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   isPro: false,
   planType: null,
 
-  fetchSubscription: async () => {
-    // Avoid refetching if already loaded
-    if (get().subscription && !get().error) {
+  fetchSubscription: async (force?: boolean) => {
+    // Avoid refetching if already loaded (unless forced)
+    if (!force && get().subscription && !get().error) {
       return;
     }
     
@@ -53,6 +54,17 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   },
 
   clearSubscription: () => {
+    set({
+      subscription: null,
+      isLoading: false,
+      error: null,
+      isPro: false,
+      planType: null,
+    });
+  },
+
+  // Alias for logout - reset store to initial state
+  reset: () => {
     set({
       subscription: null,
       isLoading: false,

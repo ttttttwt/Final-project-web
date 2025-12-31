@@ -106,6 +106,7 @@ interface CustomMaterialState {
   fetchRelatedMaterials: (materialId: string) => Promise<void>;
   clearError: () => void;
   clearCurrentMaterial: () => void;
+  reset: () => void;
 }
 
 let pollingInterval: NodeJS.Timeout | null = null;
@@ -498,6 +499,39 @@ export const useCustomMaterialStore = create<CustomMaterialState>(
         shadowingScores: {},
         isScoring: {},
       }),
+
+    // Reset entire store to initial state (for logout)
+    reset: () => {
+      get().stopPolling();
+      set({
+        materials: [],
+        totalMaterials: 0,
+        isLoadingList: false,
+        currentMaterial: null,
+        isLoadingMaterial: false,
+        isCreating: false,
+        createError: null,
+        processingStatus: null,
+        isPolling: false,
+        chatSessionId: null,
+        chatMessages: [],
+        isSendingMessage: false,
+        isEndingChat: false,
+        performanceReport: null,
+        dynamicPrompts: [],
+        isLoadingPrompts: false,
+        shadowingScores: {},
+        isScoring: {},
+        quota: null,
+        isLoadingQuota: false,
+        relatedMaterials: [],
+        isLoadingRelated: false,
+        transformationResult: null,
+        isTransforming: false,
+        isEditMode: false,
+        error: null,
+      });
+    },
   })
 );
 
