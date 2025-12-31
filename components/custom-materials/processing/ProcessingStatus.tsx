@@ -97,10 +97,42 @@ export function ProcessingStatus({
   className,
 }: ProcessingStatusProps) {
   const [tipIndex, setTipIndex] = useState(0);
+  const [simulatedProgress, setSimulatedProgress] = useState(0);
   const config = statusConfig[status];
   const isProcessing = status === "PENDING" || status === "PROCESSING";
-  const displayProgress = progress ?? (status === "PROCESSING" ? 10 : 0);
 
+  // Use simulated progress for better UX - it gradually increases over ~45 seconds
+  // Backend rarely sends granular progress, so this gives users a sense of activity
+  const displayProgress = status === "COMPLETED" ? 100 :
+    status === "FAILED" ? 0 :
+      Math.max(simulatedProgress, progress ?? 0);
+
+  // Simulated progress effect - increases gradually over time
+  useEffect(() => {
+    if (!isProcessing) {
+      setSimulatedProgress(0);
+      return;
+    }
+
+    // Start at 5% immediately when processing starts
+    setSimulatedProgress(5);
+
+    const interval = setInterval(() => {
+      setSimulatedProgress((prev) => {
+        // Gradually slow down as we get closer to 90% (never reach 100% on simulation)
+        // This creates a natural "slowing down" effect near the end
+        if (prev >= 90) return prev; // Cap at 90%, actual completion comes from backend
+        if (prev >= 75) return prev + 0.3; // Very slow near end
+        if (prev >= 50) return prev + 0.8; // Slow down
+        if (prev >= 25) return prev + 1.2; // Medium speed
+        return prev + 2; // Fast at start
+      });
+    }, 500); // Update every 500ms for smooth animation
+
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  // Tips cycling effect
   useEffect(() => {
     if (!isProcessing) return;
     const interval = setInterval(() => {
@@ -171,7 +203,7 @@ export function ProcessingStatus({
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-bold">
                 <span className="text-muted-foreground">Current Progress</span>
-                <span className={config.color}>{displayProgress}%</span>
+                <span className={config.color}>{Math.round(displayProgress)}%</span>
               </div>
               <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden border border-border/50">
                 <div
