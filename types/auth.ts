@@ -63,3 +63,26 @@ export interface ChangePasswordRequest {
 export interface ChangePasswordResponse {
   message: string;
 }
+
+/**
+ * Forgot password request - matches backend ForgotPasswordDTO
+ */
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+/**
+ * Reset password request - matches backend ResetPasswordDTO
+ */
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
+ * Generic API response with message
+ */
+export interface ApiMessageResponse {
+  message: string;
+}

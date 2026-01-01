@@ -8,6 +8,9 @@ import {
   User,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ApiMessageResponse,
 } from "@/types/auth";
 
 // 🔐 SECURITY: Temporary localStorage token strategy (Sprint 3)
@@ -77,6 +80,37 @@ export const authService = {
   ): Promise<ChangePasswordResponse> => {
     const response = await api.post<ChangePasswordResponse>(
       "/auth/change-password",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Request password reset - sends email with reset link
+   * @param data - email address
+   * @returns Success message (always succeeds for security)
+   */
+  forgotPassword: async (
+    data: ForgotPasswordRequest
+  ): Promise<ApiMessageResponse> => {
+    const response = await api.post<ApiMessageResponse>(
+      "/auth/forgot-password",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Reset password with token from email
+   * @param data - token, new password, and confirmation
+   * @returns Success message
+   * @throws 400 if token is invalid/expired or passwords don't match
+   */
+  resetPassword: async (
+    data: ResetPasswordRequest
+  ): Promise<ApiMessageResponse> => {
+    const response = await api.post<ApiMessageResponse>(
+      "/auth/reset-password",
       data
     );
     return response.data;
