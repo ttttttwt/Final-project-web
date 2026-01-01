@@ -18,6 +18,7 @@ import type { DashboardOverview } from "@/types/progress";
 import { BookOpen, CheckCircle, Flame, Clock, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { AiUsageSection } from "@/components/dashboard/AiUsageSection";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Dashboard Page
@@ -28,6 +29,7 @@ import { AiUsageSection } from "@/components/dashboard/AiUsageSection";
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const { isPro, fetchSubscription } = useSubscriptionStore();
+  const { t } = useTranslation();
   const [data, setData] = React.useState<DashboardOverview | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -90,15 +92,15 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-[#202124] dark:text-[#E8EAED] mb-2">
-                Welcome back, {fullName}!
+                {t("dashboard.welcomeBack", { name: fullName })}
               </h1>
               <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-                Ready to continue your learning journey?
+                {t("dashboard.readyToContinue")}
               </p>
             </div>
             <div className="flex gap-2">
               <Button asChild>
-                <Link href="/courses">Browse Courses</Link>
+                <Link href="/courses">{t("dashboard.browseCourses")}</Link>
               </Button>
             </div>
           </div>
@@ -118,42 +120,42 @@ export default function DashboardPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
-              title="Current Streak"
-              value={`${stats?.currentStreak || 0} days`}
+              title={t("dashboard.currentStreak")}
+              value={`${stats?.currentStreak || 0} ${t("dashboard.days")}`}
               icon={Flame}
               color="purple"
               subtitle={
                 stats?.longestStreak
-                  ? `Best: ${stats.longestStreak} days`
-                  : "Start your streak"
+                  ? t("dashboard.bestStreak", { count: stats.longestStreak })
+                  : t("dashboard.startStreak")
               }
               isLoading={isLoading}
             />
 
             <StatsCard
-              title="Completed Lessons"
+              title={t("dashboard.completedLessons")}
               value={stats?.completedLessons || 0}
               icon={CheckCircle}
               color="green"
-              subtitle={`${stats?.totalLessons ? stats.totalLessons - stats.completedLessons : 0} remaining`}
+              subtitle={t("dashboard.remaining", { count: stats?.totalLessons ? stats.totalLessons - stats.completedLessons : 0 })}
               isLoading={isLoading}
             />
 
             <StatsCard
-              title="Study Time"
+              title={t("dashboard.studyTime")}
               value={`${Math.round((stats?.totalStudyMinutes || 0) / 60)}h ${(stats?.totalStudyMinutes || 0) % 60}m`}
               icon={Clock}
               color="blue"
-              subtitle="Total time invested"
+              subtitle={t("dashboard.totalTimeInvested")}
               isLoading={isLoading}
             />
 
             <StatsCard
-              title="Average Score"
+              title={t("dashboard.averageScore")}
               value={`${stats?.averageScore || 0}%`}
               icon={Trophy}
               color="yellow"
-              subtitle="Across all quizzes"
+              subtitle={t("dashboard.acrossAllQuizzes")}
               isLoading={isLoading}
             />
           </div>
@@ -187,7 +189,7 @@ export default function DashboardPage() {
               <Card className="p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <BookOpen className="h-5 w-5 text-gray-500" />
-                  My Courses
+                  {t("dashboard.myCourses")}
                 </h3>
                 {isLoading ? (
                   <div className="space-y-2 animate-pulse">
@@ -197,19 +199,19 @@ export default function DashboardPage() {
                 ) : stats && stats.enrolledCourses > 0 ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      You are enrolled in <span className="font-medium text-foreground">{stats.enrolledCourses}</span> courses.
+                      {t("dashboard.enrolledInCourses", { count: stats.enrolledCourses })}
                     </p>
                     <Button asChild variant="outline" className="w-full">
-                      <Link href="/courses">Go to My Courses</Link>
+                      <Link href="/courses">{t("dashboard.goToMyCourses")}</Link>
                     </Button>
                   </div>
                 ) : (
                   <div className="text-center py-4">
                     <p className="text-sm text-muted-foreground mb-4">
-                      No active courses.
+                      {t("dashboard.noActiveCourses")}
                     </p>
                     <Button asChild size="sm" className="w-full">
-                      <Link href="/courses">Explore Catalog</Link>
+                      <Link href="/courses">{t("dashboard.exploreCatalog")}</Link>
                     </Button>
                   </div>
                 )}

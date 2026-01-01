@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Goal } from "@/types/progress";
 import { Target, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface LearningGoalsProps {
     goals: Goal[];
@@ -10,13 +11,14 @@ interface LearningGoalsProps {
 }
 
 export function LearningGoals({ goals, isLoading = false }: LearningGoalsProps) {
+    const { t } = useTranslation();
     if (isLoading) {
         return (
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                         <Target className="h-5 w-5 text-primary" />
-                        Weekly Goals
+                        {t("dashboard.weeklyGoals")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -36,12 +38,12 @@ export function LearningGoals({ goals, isLoading = false }: LearningGoalsProps) 
             <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <Target className="h-5 w-5 text-primary" />
-                    Weekly Goals
+                    {t("dashboard.weeklyGoals")}
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
                 {goals.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No active goals for this week.</p>
+                    <p className="text-muted-foreground text-sm">{t("dashboard.noActiveGoals")}</p>
                 ) : (
                     goals.map((goal) => (
                         <div key={goal.id} className="space-y-2">

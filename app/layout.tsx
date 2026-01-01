@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { I18nProvider } from "@/lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -46,10 +47,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ErrorBoundary>
-            <AuthProvider>{children}</AuthProvider>
-          </ErrorBoundary>
-          <Toaster />
+          <I18nProvider>
+            <ErrorBoundary>
+              <AuthProvider>{children}</AuthProvider>
+            </ErrorBoundary>
+            <Toaster />
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

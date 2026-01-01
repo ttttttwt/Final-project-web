@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { User } from "@/types/auth";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 const TIMEZONES = [
   "UTC",
@@ -82,11 +83,17 @@ interface ProfileFormProps {
   isLoading?: boolean;
 }
 
+// --------------------------------------------------------------------------
+// ProfileForm
+// --------------------------------------------------------------------------
+
+
 export function ProfileForm({
   user,
   onSubmit,
   isLoading = false,
 }: ProfileFormProps) {
+  const { t } = useTranslation();
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -108,9 +115,9 @@ export function ProfileForm({
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>{t("profile.firstName")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} disabled={isLoading} />
+                  <Input placeholder={t("profile.placeholderFirstName")} {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -122,9 +129,9 @@ export function ProfileForm({
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>{t("profile.lastName")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Doe" {...field} disabled={isLoading} />
+                  <Input placeholder={t("profile.placeholderLastName")} {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -137,10 +144,10 @@ export function ProfileForm({
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Bio</FormLabel>
+              <FormLabel>{t("profile.bio")}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Tell us about yourself..."
+                  placeholder={t("profile.placeholderBio")}
                   className="resize-none"
                   rows={4}
                   {...field}
@@ -148,7 +155,7 @@ export function ProfileForm({
                 />
               </FormControl>
               <FormDescription>
-                Brief description about yourself (max 500 characters)
+                {t("profile.bioDesc")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -160,16 +167,16 @@ export function ProfileForm({
           name="phoneNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number</FormLabel>
+              <FormLabel>{t("profile.phone")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="+1234567890"
+                  placeholder={t("profile.placeholderPhone")}
                   {...field}
                   disabled={isLoading}
                 />
               </FormControl>
               <FormDescription>
-                10-20 digits, optionally starting with +
+                {t("profile.phoneDesc")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -182,7 +189,7 @@ export function ProfileForm({
             name="timezone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Timezone</FormLabel>
+                <FormLabel>{t("profile.timezone")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -190,7 +197,7 @@ export function ProfileForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select timezone" />
+                      <SelectValue placeholder={t("profile.selectTimezone")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -211,7 +218,7 @@ export function ProfileForm({
             name="language"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Language</FormLabel>
+                <FormLabel>{t("profile.language")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -219,7 +226,7 @@ export function ProfileForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
+                      <SelectValue placeholder={t("profile.selectLanguage")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -241,10 +248,10 @@ export function ProfileForm({
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t("profile.saving")}
               </>
             ) : (
-              "Save Changes"
+              t("profile.saveChanges")
             )}
           </Button>
         </div>

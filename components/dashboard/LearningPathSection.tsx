@@ -18,6 +18,7 @@ import {
     Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * LearningPathSection Component
@@ -34,6 +35,7 @@ interface LearningPathSectionProps {
 }
 
 export function LearningPathSection({ className }: LearningPathSectionProps) {
+    const { t } = useTranslation();
     const [userProgress, setUserProgress] = React.useState<UserPathProgress[]>([]);
     const [recommendedPath, setRecommendedPath] = React.useState<LearningPath | null>(null);
     const [isLoading, setIsLoading] = React.useState(true);
@@ -83,7 +85,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <GraduationCap className="h-5 w-5 text-primary" />
-                            Your Learning Path
+                            {t("dashboard.yourLearningPath")}
                         </CardTitle>
                         <Badge variant="secondary" className="text-xs">
                             {activePath.pathCefrLevel}
@@ -99,7 +101,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                         {activePath.currentCourseTitle && (
                             <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <BookOpen className="h-3.5 w-3.5" />
-                                Currently: {activePath.currentCourseTitle}
+                                {t("dashboard.currently", { title: activePath.currentCourseTitle })}
                             </p>
                         )}
                     </div>
@@ -107,14 +109,14 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                     {/* Progress */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Overall Progress</span>
+                            <span className="text-muted-foreground">{t("dashboard.overallProgress")}</span>
                             <span className="font-semibold text-primary">
                                 {Math.round(activePath.progressPercentage)}%
                             </span>
                         </div>
                         <Progress value={activePath.progressPercentage} className="h-2.5" />
                         <p className="text-xs text-muted-foreground">
-                            {activePath.coursesCompleted} of {activePath.totalCourses} courses completed
+                            {t("dashboard.coursesCompletedInfo", { completed: activePath.coursesCompleted, total: activePath.totalCourses })}
                         </p>
                     </div>
 
@@ -123,7 +125,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                         <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                             <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
                             <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                                Path Completed! 🎉
+                                {t("dashboard.pathCompleted")}
                             </span>
                         </div>
                     )}
@@ -131,7 +133,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                     {/* Action Button */}
                     <Button asChild className="w-full">
                         <Link href={`/learning-paths/${activePath.pathId}?from=dashboard`}>
-                            {activePath.isCompleted ? "View Achievements" : "Continue Learning"}
+                            {activePath.isCompleted ? t("dashboard.viewAchievements") : t("dashboard.continueLearning")}
                             <ChevronRight className="h-4 w-4 ml-1" />
                         </Link>
                     </Button>
@@ -146,7 +148,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <Target className="h-5 w-5 text-primary" />
-                    Start Your Learning Journey
+                    {t("dashboard.startLearningJourney")}
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -156,7 +158,7 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                         <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 rounded-lg border border-primary/20">
                             <div className="flex items-center gap-2 mb-2">
                                 <Sparkles className="h-4 w-4 text-primary" />
-                                <span className="text-xs font-medium text-primary">Recommended for You</span>
+                                <span className="text-xs font-medium text-primary">{t("dashboard.recommendedForYou")}</span>
                             </div>
                             <h4 className="font-semibold text-foreground mb-1">
                                 {recommendedPath.name}
@@ -166,14 +168,14 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                             </p>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <Badge variant="outline">{recommendedPath.cefrLevel}</Badge>
-                                <span>{recommendedPath.totalCourses} courses</span>
-                                <span>{recommendedPath.estimatedHours}h estimated</span>
+                                <span>{t("dashboard.coursesCompletedInfo", { completed: 0, total: recommendedPath.totalCourses ?? 0 })}</span>
+                                <span>{t("dashboard.estimatedHours", { hours: recommendedPath.estimatedHours ?? 0 })}</span>
                             </div>
                         </div>
 
                         <Button asChild className="w-full">
                             <Link href={`/learning-paths/${recommendedPath.id}?from=dashboard`}>
-                                Start This Path
+                                {t("dashboard.startThisPath")}
                                 <ChevronRight className="h-4 w-4 ml-1" />
                             </Link>
                         </Button>
@@ -184,13 +186,13 @@ export function LearningPathSection({ className }: LearningPathSectionProps) {
                         <div className="text-center py-4">
                             <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                             <p className="text-sm text-muted-foreground mb-4">
-                                Choose a structured learning path to guide your English learning journey.
+                                {t("dashboard.chooseStructuredPath")}
                             </p>
                         </div>
 
                         <Button asChild variant="outline" className="w-full">
                             <Link href="/learning-paths">
-                                Browse Learning Paths
+                                {t("dashboard.browseLearningPaths")}
                                 <ChevronRight className="h-4 w-4 ml-1" />
                             </Link>
                         </Button>

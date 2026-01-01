@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface QuotaProgressBarProps {
 }
 
 function QuotaProgressBar({ label, icon, usage }: QuotaProgressBarProps) {
+    const { t } = useTranslation();
     const getVariant = () => {
         if (usage.isExceeded) return "destructive";
         if (usage.isCritical) return "destructive";
@@ -53,13 +55,13 @@ function QuotaProgressBar({ label, icon, usage }: QuotaProgressBarProps) {
                     </span>
                     {usage.isExceeded && (
                         <Badge variant="destructive" className="text-xs">
-                            Đã hết
+                            {t("dashboard.quotaDepleted")}
                         </Badge>
                     )}
                     {usage.isCritical && !usage.isExceeded && (
                         <Badge variant="destructive" className="text-xs">
                             <AlertTriangle className="h-3 w-3 mr-1" />
-                            Sắp hết
+                            {t("dashboard.quotaAlmostOut")}
                         </Badge>
                     )}
                     {usage.isWarning && !usage.isCritical && (
@@ -78,6 +80,7 @@ function QuotaProgressBar({ label, icon, usage }: QuotaProgressBarProps) {
 }
 
 function UpgradeCTA() {
+    const { t } = useTranslation();
     return (
         <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
             <div className="flex items-center gap-3">
@@ -85,14 +88,14 @@ function UpgradeCTA() {
                     <Crown className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                    <p className="font-medium text-sm">Nâng cấp lên Pro</p>
+                    <p className="font-medium text-sm">{t("dashboard.upgradeToProCTA")}</p>
                     <p className="text-xs text-muted-foreground">
-                        Nhận quota cao hơn 3-5 lần và nhiều tính năng độc quyền
+                        {t("dashboard.upgradeToProDesc")}
                     </p>
                 </div>
                 <Button asChild size="sm">
                     <Link href="/pricing">
-                        Nâng cấp
+                        {t("dashboard.upgradeBtn")}
                     </Link>
                 </Button>
             </div>
@@ -101,16 +104,13 @@ function UpgradeCTA() {
 }
 
 function QuotaExceededAlert({ featureName }: { featureName: string }) {
+    const { t } = useTranslation();
     return (
         <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-red-500" />
                 <p className="text-sm text-red-700 dark:text-red-400">
-                    Bạn đã dùng hết quota <strong>{featureName}</strong> tháng này.{" "}
-                    <Link href="/pricing" className="underline font-medium">
-                        Nâng cấp Pro
-                    </Link>{" "}
-                    để tiếp tục!
+                    {t("dashboard.quotaExceededAlert", { feature: featureName })}
                 </p>
             </div>
         </div>
@@ -123,6 +123,7 @@ interface AiUsageSectionProps {
 }
 
 export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
+    const { t } = useTranslation();
     const [quota, setQuota] = useState<UserAiQuota | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -163,15 +164,15 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">AI Usage This Month</CardTitle>
+                    <CardTitle className="text-lg">{t("dashboard.aiUsageThisMonth")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Unable to load quota information.
+                        {t("dashboard.unableToLoadQuota")}
                     </p>
                     <Button variant="outline" size="sm" className="mt-2" onClick={() => fetchQuota()}>
                         <RefreshCw className="h-4 w-4 mr-2" />
-                        Retry
+                        {t("dashboard.retry")}
                     </Button>
                 </CardContent>
             </Card>
@@ -210,50 +211,50 @@ export function AiUsageSection({ compact = false }: AiUsageSectionProps) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Zap className="h-5 w-5 text-primary" />
-                        <CardTitle className="text-lg">AI Usage This Month</CardTitle>
+                        <CardTitle className="text-lg">{t("dashboard.aiUsageThisMonth")}</CardTitle>
                         {isPro && (
                             <Badge variant="secondary" className="ml-2">
                                 <Crown className="h-3 w-3 mr-1" />
-                                Pro
+                                {t("dashboard.proBadge")}
                             </Badge>
                         )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        Resets in <strong>{quota.daysUntilReset ?? 30}</strong> days
+                        {t("dashboard.resetsInDays", { count: quota.daysUntilReset ?? 30 })}
                     </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 {/* Show exceeded alerts */}
-                {roleplayUsage.isExceeded && <QuotaExceededAlert featureName="Role Play" />}
-                {flashcardUsage.isExceeded && <QuotaExceededAlert featureName="Flashcards" />}
-                {grammarUsage.isExceeded && <QuotaExceededAlert featureName="Grammar Exercises" />}
-                {customMaterialUsage.isExceeded && <QuotaExceededAlert featureName="Custom Materials" />}
-                {totalUsage.isExceeded && <QuotaExceededAlert featureName="Total AI Requests" />}
+                {roleplayUsage.isExceeded && <QuotaExceededAlert featureName={t("dashboard.rolePlay")} />}
+                {flashcardUsage.isExceeded && <QuotaExceededAlert featureName={t("dashboard.flashcardDecksLabel")} />}
+                {grammarUsage.isExceeded && <QuotaExceededAlert featureName={t("dashboard.grammarExercisesLabel")} />}
+                {customMaterialUsage.isExceeded && <QuotaExceededAlert featureName={t("dashboard.customMaterials")} />}
+                {totalUsage.isExceeded && <QuotaExceededAlert featureName={t("dashboard.totalAiRequests")} />}
 
                 {/* Progress bars */}
                 <QuotaProgressBar
-                    label="Role Play Sessions"
+                    label={t("dashboard.rolePlay")}
                     icon={<MessageSquare className="h-4 w-4 text-blue-500" />}
                     usage={roleplayUsage}
                 />
                 <QuotaProgressBar
-                    label="Flashcard Decks"
+                    label={t("dashboard.flashcardDecksLabel")}
                     icon={<BookOpen className="h-4 w-4 text-green-500" />}
                     usage={flashcardUsage}
                 />
                 <QuotaProgressBar
-                    label="Grammar Exercises"
+                    label={t("dashboard.grammarExercisesLabel")}
                     icon={<FileText className="h-4 w-4 text-purple-500" />}
                     usage={grammarUsage}
                 />
                 <QuotaProgressBar
-                    label="Custom Materials"
+                    label={t("dashboard.customMaterials")}
                     icon={<FileText className="h-4 w-4 text-indigo-500" />}
                     usage={customMaterialUsage}
                 />
                 <QuotaProgressBar
-                    label="Total AI Requests"
+                    label={t("dashboard.totalAiRequests")}
                     icon={<Zap className="h-4 w-4 text-orange-500" />}
                     usage={totalUsage}
                 />

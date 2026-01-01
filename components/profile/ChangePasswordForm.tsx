@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/store/authStore";
+import { useTranslation } from "@/lib/i18n";
 
 // 🔐 Change password validation schema
 const changePasswordSchema = z
@@ -82,6 +83,7 @@ interface ChangePasswordFormProps {
 
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     const { logout } = useAuthStore();
+    const { t } = useTranslation();
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -101,10 +103,10 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
 
     // Password requirements state
     const passwordRequirements = [
-        { label: "At least 8 characters", met: newPassword.length >= 8 },
-        { label: "One uppercase letter", met: /[A-Z]/.test(newPassword) },
-        { label: "One lowercase letter", met: /[a-z]/.test(newPassword) },
-        { label: "One number", met: /[0-9]/.test(newPassword) },
+        { label: t("passwordChange.atLeast8Chars"), met: newPassword.length >= 8 },
+        { label: t("passwordChange.oneUppercase"), met: /[A-Z]/.test(newPassword) },
+        { label: t("passwordChange.oneLowercase"), met: /[a-z]/.test(newPassword) },
+        { label: t("passwordChange.oneNumber"), met: /[0-9]/.test(newPassword) },
     ];
 
     const onSubmit = async (data: ChangePasswordFormData) => {
@@ -115,8 +117,8 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                 confirmNewPassword: data.confirmNewPassword,
             });
 
-            toast.success("Password changed successfully!", {
-                description: "You will be logged out. Please login with your new password.",
+            toast.success(t("passwordChange.passwordChanged"), {
+                description: t("passwordChange.passwordChangedDesc"),
             });
 
             // Reset form
@@ -141,20 +143,20 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
             if (apiError.response?.status === 400) {
                 const message = apiError.response.data?.message || "Invalid request";
                 if (message.toLowerCase().includes("current password")) {
-                    form.setError("currentPassword", { message: "Current password is incorrect" });
-                    toast.error("Incorrect password", {
-                        description: "The current password you entered is incorrect.",
+                    form.setError("currentPassword", { message: t("passwordChange.incorrectPassword") });
+                    toast.error(t("passwordChange.incorrectPassword"), {
+                        description: t("passwordChange.incorrectPasswordDesc"),
                     });
                 } else {
-                    toast.error("Validation error", { description: message });
+                    toast.error(t("common.error"), { description: message });
                 }
             } else if (apiError.response?.status === 401) {
-                toast.error("Session expired", {
-                    description: "Please login again to change your password.",
+                toast.error(t("passwordChange.sessionExpired"), {
+                    description: t("passwordChange.sessionExpiredDesc"),
                 });
             } else {
-                toast.error("Failed to change password", {
-                    description: apiError.message || "An unexpected error occurred.",
+                toast.error(t("passwordChange.failedToChange"), {
+                    description: apiError.message || t("common.error"),
                 });
             }
         }
@@ -169,13 +171,13 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                     name="currentPassword"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Current Password</FormLabel>
+                            <FormLabel>{t("passwordChange.currentPassword")}</FormLabel>
                             <FormControl>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         type={showCurrentPassword ? "text" : "password"}
-                                        placeholder="Enter your current password"
+                                        placeholder={t("passwordChange.currentPasswordPlaceholder")}
                                         autoComplete="current-password"
                                         disabled={form.formState.isSubmitting}
                                         className="pl-10 pr-10"
@@ -209,13 +211,13 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                     name="newPassword"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>New Password</FormLabel>
+                            <FormLabel>{t("passwordChange.newPassword")}</FormLabel>
                             <FormControl>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         type={showNewPassword ? "text" : "password"}
-                                        placeholder="Enter your new password"
+                                        placeholder={t("passwordChange.newPasswordPlaceholder")}
                                         autoComplete="new-password"
                                         disabled={form.formState.isSubmitting}
                                         className="pl-10 pr-10"
@@ -243,15 +245,15 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                             {newPassword && (
                                 <div className="mt-2 space-y-2">
                                     <div className="flex items-center justify-between text-xs">
-                                        <span className="text-muted-foreground">Password strength:</span>
+                                        <span className="text-muted-foreground">{t("passwordChange.passwordStrength")}</span>
                                         <span
                                             className={`font-medium ${passwordStrength.score === 1
-                                                    ? "text-red-500"
-                                                    : passwordStrength.score === 2
-                                                        ? "text-orange-500"
-                                                        : passwordStrength.score === 3
-                                                            ? "text-yellow-500"
-                                                            : "text-green-500"
+                                                ? "text-red-500"
+                                                : passwordStrength.score === 2
+                                                    ? "text-orange-500"
+                                                    : passwordStrength.score === 3
+                                                        ? "text-yellow-500"
+                                                        : "text-green-500"
                                                 }`}
                                         >
                                             {passwordStrength.label}
@@ -293,13 +295,13 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                     name="confirmNewPassword"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Confirm New Password</FormLabel>
+                            <FormLabel>{t("passwordChange.confirmNewPassword")}</FormLabel>
                             <FormControl>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         type={showConfirmPassword ? "text" : "password"}
-                                        placeholder="Re-enter your new password"
+                                        placeholder={t("passwordChange.confirmPasswordPlaceholder")}
                                         autoComplete="new-password"
                                         disabled={form.formState.isSubmitting}
                                         className="pl-10 pr-10"
@@ -337,10 +339,10 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
                         {form.formState.isSubmitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Changing...
+                                {t("passwordChange.changing")}
                             </>
                         ) : (
-                            "Change Password"
+                            t("passwordChange.changePassword")
                         )}
                     </Button>
                 </div>

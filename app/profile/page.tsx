@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import type { User } from "@/types/auth";
 import type { UserAiQuota } from "@/types/ai";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Profile Page
@@ -46,6 +47,7 @@ import type { UserAiQuota } from "@/types/ai";
 export default function ProfilePage() {
   const { user, loadUser } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<typeof user>(null);
@@ -67,7 +69,7 @@ export default function ProfilePage() {
       setProfileData(data);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
-      toast.error("Failed to load profile");
+      toast.error(t("profile.failedToLoadProfile"));
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +99,7 @@ export default function ProfilePage() {
       const { url } = await subscriptionService.createPortalSession();
       window.location.href = url;
     } catch (error) {
-      toast.error("Failed to open billing portal");
+      toast.error(t("profile.failedToOpenPortal"));
     } finally {
       setIsPortalLoading(false);
     }
@@ -114,10 +116,10 @@ export default function ProfilePage() {
       // Refresh profile data
       await fetchProfile();
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("profile.profileUpdated"));
     } catch (error) {
       console.error("Failed to update profile:", error);
-      toast.error("Failed to update profile. Please try again.");
+      toast.error(t("profile.failedToUpdateProfile"));
     } finally {
       setIsSaving(false);
     }
@@ -183,18 +185,18 @@ export default function ProfilePage() {
           {/* Page Header */}
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Profile Settings
+              {t("profile.title")}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Manage your account information and preferences
+              {t("profile.subtitle")}
             </p>
           </div>
 
           {/* Profile Overview Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Profile Overview</CardTitle>
-              <CardDescription>Your public profile information</CardDescription>
+              <CardTitle>{t("profile.overview")}</CardTitle>
+              <CardDescription>{t("profile.overviewDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row md:items-start gap-6">
@@ -220,7 +222,7 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <Award className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Current Level:
+                        {t("profile.currentLevel")}
                       </span>
                       <Badge variant="secondary">
                         {profileData.currentLevel}
@@ -231,7 +233,7 @@ export default function ProfilePage() {
                         className="h-6 text-xs ml-2"
                         onClick={() => router.push("/placement-test")}
                       >
-                        <RotateCcw className="w-3 h-3 mr-1" /> Retake Test
+                        <RotateCcw className="w-3 h-3 mr-1" /> {t("profile.retakeTest")}
                       </Button>
                     </div>
                   )}
@@ -243,7 +245,7 @@ export default function ProfilePage() {
                         size="sm"
                         onClick={() => router.push("/placement-test")}
                       >
-                        <Award className="w-4 h-4 mr-2" /> Take Placement Test
+                        <Award className="w-4 h-4 mr-2" /> {t("profile.takePlacementTest")}
                       </Button>
                     </div>
                   )}
@@ -297,12 +299,12 @@ export default function ProfilePage() {
             )}
             <CardHeader className="relative z-10">
               <div className="flex items-center gap-2">
-                <CardTitle>Subscription Plan</CardTitle>
+                <CardTitle>{t("profile.subscription")}</CardTitle>
                 {subscription?.planType !== "FREE" && subscription?.status === "ACTIVE" && (
                   <ProBadge size="md" pulse />
                 )}
               </div>
-              <CardDescription>Manage your billing and subscription</CardDescription>
+              <CardDescription>{t("profile.subscriptionDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
@@ -314,16 +316,16 @@ export default function ProfilePage() {
                       <CreditCard className="h-5 w-5 text-primary" />
                     )}
                     <span className="font-semibold text-lg">
-                      {subscription?.planType === "FREE" ? "Free Plan" : "Pro Plan"}
+                      {subscription?.planType === "FREE" ? t("profile.freePlan") : t("profile.proPlan")}
                     </span>
                     {subscription?.status === "ACTIVE" && subscription.planType !== "FREE" && (
-                      <Badge className="bg-[#FFB300] text-[#5D4037] hover:bg-[#FFA000]">Active</Badge>
+                      <Badge className="bg-[#FFB300] text-[#5D4037] hover:bg-[#FFA000]">{t("profile.active")}</Badge>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {subscription?.planType === "FREE"
-                      ? "Upgrade to unlock unlimited usage and AI features."
-                      : `Your plan renews on ${subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "..."}`
+                      ? t("profile.upgradeToUnlock")
+                      : t("profile.renewsOn", { date: subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "..." })
                     }
                   </p>
                 </div>
@@ -331,11 +333,11 @@ export default function ProfilePage() {
                 {subscription?.planType === "FREE" ? (
                   <Button onClick={() => router.push("/pricing")} className="bg-[#FFB300] text-[#5D4037] hover:bg-[#FFA000]">
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Upgrade to Pro
+                    {t("profile.upgradeToPro")}
                   </Button>
                 ) : (
                   <Button variant="outline" onClick={handleManageSubscription} disabled={isPortalLoading}>
-                    {isPortalLoading ? "Loading..." : "Manage Subscription"}
+                    {isPortalLoading ? t("common.loading") : t("profile.manageSubscription")}
                   </Button>
                 )}
               </div>
@@ -345,14 +347,14 @@ export default function ProfilePage() {
                 <div className="border-t border-[#FFB300]/30 pt-4">
                   <h4 className="text-sm font-semibold text-[#5D4037] dark:text-[#FFD54F] mb-3 flex items-center gap-2">
                     <Crown className="h-4 w-4" />
-                    Premium Features Unlocked
+                    {t("profile.premiumFeaturesUnlocked")}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {aiQuota && [
-                      `${aiQuota.roleplaySessionsLimit} AI Role Play Sessions/month`,
-                      `${aiQuota.flashcardDecksLimit} AI Flashcard Decks/month`,
-                      `${aiQuota.grammarExercisesLimit} AI Grammar Exercises/month`,
-                      "Priority Support",
+                      t("profile.aiRoleplaySessions", { count: aiQuota.roleplaySessionsLimit }),
+                      t("profile.aiFlashcardDecks", { count: aiQuota.flashcardDecksLimit }),
+                      t("profile.aiGrammarExercises", { count: aiQuota.grammarExercisesLimit }),
+                      t("profile.prioritySupportLabel"),
                     ].map((feature) => (
                       <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 text-[#FFB300]" />
@@ -375,9 +377,9 @@ export default function ProfilePage() {
           {/* Edit Profile Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Edit Profile</CardTitle>
+              <CardTitle>{t("profile.editProfile")}</CardTitle>
               <CardDescription>
-                Update your personal information
+                {t("profile.editProfileDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -393,7 +395,7 @@ export default function ProfilePage() {
           {profileData.learningGoal && (
             <Card>
               <CardHeader>
-                <CardTitle>Learning Goal</CardTitle>
+                <CardTitle>{t("profile.learningGoal")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400">

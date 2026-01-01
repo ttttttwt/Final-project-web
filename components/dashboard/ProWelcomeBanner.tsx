@@ -4,6 +4,7 @@ import * as React from "react";
 import { X, Crown, Sparkles, Zap, MessageSquare, BookOpen, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * ProWelcomeBanner Component
@@ -29,15 +30,17 @@ interface ProWelcomeBannerProps {
     className?: string;
 }
 
-const PREMIUM_FEATURES = [
-    { icon: MessageSquare, label: "50 Role Play Sessions" },
-    { icon: BookOpen, label: "30 Flashcard Decks" },
-    { icon: FileText, label: "300 Grammar Exercises" },
-    { icon: Zap, label: "Priority Support" },
-];
-
 export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
+    const { t } = useTranslation();
     const [isDismissed, setIsDismissed] = React.useState(true); // Start hidden to prevent flash
+
+    // Premium features with translated labels
+    const premiumFeatures = [
+        { icon: MessageSquare, label: t("dashboard.rolePlaySessions", { count: 50 }) },
+        { icon: BookOpen, label: t("dashboard.flashcardDecks", { count: 30 }) },
+        { icon: FileText, label: t("dashboard.grammarExercises", { count: 300 }) },
+        { icon: Zap, label: t("dashboard.prioritySupport") },
+    ];
 
     // Check localStorage on mount
     React.useEffect(() => {
@@ -101,11 +104,11 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
                     </div>
                     <div className="space-y-1">
                         <h3 className="text-lg font-bold text-[#5D4037] flex items-center gap-2">
-                            Welcome to Pro!
+                            {t("dashboard.welcomeToPro")}
                             <span className="text-sm font-normal opacity-80">🎉</span>
                         </h3>
                         <p className="text-sm text-[#5D4037]/80 max-w-md">
-                            You've unlocked unlimited AI features. Enjoy your premium learning experience!
+                            {t("dashboard.proWelcomeMessage")}
                         </p>
                     </div>
                 </div>
@@ -114,7 +117,7 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
                 <div className="flex items-center gap-4">
                     {/* Premium features - hidden on mobile */}
                     <div className="hidden lg:flex items-center gap-3">
-                        {PREMIUM_FEATURES.map(({ icon: Icon, label }) => (
+                        {premiumFeatures.map(({ icon: Icon, label }) => (
                             <div
                                 key={label}
                                 className="flex items-center gap-2 text-sm text-[#5D4037]/90 bg-white/20 rounded-full px-3 py-1.5"
@@ -138,7 +141,7 @@ export function ProWelcomeBanner({ className }: ProWelcomeBannerProps) {
             </div>
 
             <div className="flex lg:hidden flex-wrap gap-2 mt-4">
-                {PREMIUM_FEATURES.map(({ icon: Icon, label }) => (
+                {premiumFeatures.map(({ icon: Icon, label }) => (
                     <div
                         key={label}
                         className="flex items-center gap-2 text-sm text-[#5D4037]/90 bg-white/20 rounded-full px-3 py-1.5"

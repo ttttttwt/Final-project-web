@@ -37,6 +37,8 @@ import {
   Lock,
 } from "lucide-react";
 import { ChangePasswordForm } from "@/components/profile";
+import { useTranslation } from "@/lib/i18n";
+import type { Locale } from "@/messages";
 
 interface UserSettings {
   language: string;
@@ -88,6 +90,7 @@ const TIMEZONES = [
  */
 export default function SettingsPage() {
   const { theme, setTheme, systemTheme } = useTheme();
+  const { t, setLocale } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -150,10 +153,10 @@ export default function SettingsPage() {
       };
 
       await notificationPreferencesService.updatePreferences(updatedPrefs);
-      toast.success("Notification preference saved");
+      toast.success(t("settings.notificationPrefSaved"));
     } catch (error) {
       console.error("Failed to update preference:", error);
-      toast.error("Failed to update preference");
+      toast.error(t("settings.failedToUpdatePref"));
       // Revert on error
       setNotifSettings((prev) => ({ ...prev, [key]: !value }));
     }
@@ -170,6 +173,11 @@ export default function SettingsPage() {
       // Optimistic update
       setSettings((prev) => ({ ...prev, [key]: value }));
 
+      // If changing language, also update i18n locale
+      if (key === "language" && (value === "en" || value === "vi")) {
+        setLocale(value as Locale);
+      }
+
       // Build update payload using current settings values
       // Ensure firstName and lastName are never empty strings
       const updatedProfile = {
@@ -183,15 +191,15 @@ export default function SettingsPage() {
       if (!updatedProfile.firstName || !updatedProfile.lastName) {
         console.error("firstName or lastName is missing, re-fetching profile");
         await fetchSettings();
-        toast.error("Please complete your profile first (name is required)");
+        toast.error(t("settings.completeProfileFirst"));
         return;
       }
 
       await userService.updateProfile(updatedProfile);
-      toast.success("Setting saved");
+      toast.success(t("common.settingSaved"));
     } catch (error) {
       console.error("Failed to update setting:", error);
-      toast.error("Failed to update setting");
+      toast.error(t("common.failedToUpdate"));
       // Revert by re-fetching to ensure consistency
       fetchSettings();
     }
@@ -235,10 +243,10 @@ export default function SettingsPage() {
             <SettingsIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Settings
+                {t("settings.title")}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Manage your preferences and notifications
+                {t("settings.subtitle")}
               </p>
             </div>
           </div>
@@ -248,15 +256,15 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Palette className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <CardTitle>Appearance</CardTitle>
+                <CardTitle>{t("settings.appearance")}</CardTitle>
               </div>
               <CardDescription>
-                Customize how LEXIA looks on your device
+                {t("settings.appearanceDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <Label className="text-base font-medium">Theme</Label>
+                <Label className="text-base font-medium">{t("settings.theme")}</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Light Theme */}
                   <button
@@ -275,7 +283,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Light
+                      {t("settings.themeLight")}
                     </span>
                     {theme === "light" && mounted && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
@@ -309,7 +317,7 @@ export default function SettingsPage() {
                       <div className="text-white text-sm font-medium">Aa</div>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Dark
+                      {t("settings.themeDark")}
                     </span>
                     {theme === "dark" && mounted && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
@@ -345,7 +353,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      System
+                      {t("settings.themeSystem")}
                     </span>
                     {theme === "system" && mounted && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
@@ -366,8 +374,8 @@ export default function SettingsPage() {
                 </div>
                 {mounted && theme === "system" && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Currently using:{" "}
-                    <span className="font-medium">{currentTheme}</span> mode
+                    {t("settings.currentlyUsing")}{" "}
+                    <span className="font-medium">{currentTheme}</span> {t("settings.mode")}
                   </p>
                 )}
               </div>
@@ -379,17 +387,17 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Globe className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <CardTitle>Language & Region</CardTitle>
+                <CardTitle>{t("settings.languageRegion")}</CardTitle>
               </div>
               <CardDescription>
-                Set your preferred language and timezone
+                {t("settings.languageRegionDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Language Selector */}
               <div className="space-y-3">
                 <Label htmlFor="language" className="text-base font-medium">
-                  Language
+                  {t("settings.language")}
                 </Label>
                 <Select
                   value={settings.language}
@@ -409,7 +417,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  This will be used for course content and interface text
+                  {t("settings.languageDesc")}
                 </p>
               </div>
 
@@ -420,7 +428,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   <Label htmlFor="timezone" className="text-base font-medium">
-                    Timezone
+                    {t("settings.timezone")}
                   </Label>
                 </div>
                 <Select
@@ -441,7 +449,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Used for scheduling lessons and reminders
+                  {t("settings.timezoneDesc")}
                 </p>
               </div>
             </CardContent>
@@ -452,10 +460,10 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <CardTitle>Notifications</CardTitle>
+                <CardTitle>{t("settings.notifications")}</CardTitle>
               </div>
               <CardDescription>
-                Manage how you receive updates from LEXIA
+                {t("settings.notificationsDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -466,10 +474,10 @@ export default function SettingsPage() {
                     htmlFor="email-notifications"
                     className="text-base font-medium cursor-pointer"
                   >
-                    Email Notifications
+                    {t("settings.emailNotifications")}
                   </Label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive important updates via email
+                    {t("settings.emailNotificationsDesc")}
                   </p>
                 </div>
                 <Switch
@@ -490,10 +498,10 @@ export default function SettingsPage() {
                     htmlFor="lesson-reminders"
                     className="text-base font-medium cursor-pointer"
                   >
-                    Lesson Reminders
+                    {t("settings.lessonReminders")}
                   </Label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Get reminders to complete your daily lessons
+                    {t("settings.lessonRemindersDesc")}
                   </p>
                 </div>
                 <Switch
@@ -514,10 +522,10 @@ export default function SettingsPage() {
                     htmlFor="learning-notifications"
                     className="text-base font-medium cursor-pointer"
                   >
-                    Learning Progress Notifications
+                    {t("settings.learningProgress")}
                   </Label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive updates about your learning achievements
+                    {t("settings.learningProgressDesc")}
                   </p>
                 </div>
                 <Switch
@@ -536,10 +544,10 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <CardTitle>Security</CardTitle>
+                <CardTitle>{t("settings.security")}</CardTitle>
               </div>
               <CardDescription>
-                Manage your password and account security
+                {t("settings.securityDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>

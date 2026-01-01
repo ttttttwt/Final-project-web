@@ -4,6 +4,7 @@ import { Activity } from "@/types/progress";
 import { History, BookOpen, Trophy, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 interface ActivityListProps {
     activities: Activity[];
@@ -11,6 +12,7 @@ interface ActivityListProps {
 }
 
 export function ActivityList({ activities, isLoading = false }: ActivityListProps) {
+    const { t } = useTranslation();
     const getActivityIcon = (type: string) => {
         switch (type) {
             case "LESSON_COMPLETED":
@@ -28,7 +30,7 @@ export function ActivityList({ activities, isLoading = false }: ActivityListProp
                 <CardHeader>
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                         <History className="h-5 w-5 text-primary" />
-                        Recent Activity
+                        {t("dashboard.recentActivity")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -51,16 +53,16 @@ export function ActivityList({ activities, isLoading = false }: ActivityListProp
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <History className="h-5 w-5 text-primary" />
-                    Recent Activity
+                    {t("dashboard.recentActivity")}
                 </CardTitle>
                 <Link href="/progress" className="text-xs text-primary hover:underline">
-                    View all
+                    {t("dashboard.viewAll")}
                 </Link>
             </CardHeader>
             <CardContent>
                 {activities.length === 0 ? (
                     <p className="text-muted-foreground text-sm py-4 text-center">
-                        No recent activity. Start a lesson today!
+                        {t("dashboard.noRecentActivity")}
                     </p>
                 ) : (
                     <div className="space-y-4">
@@ -81,7 +83,7 @@ export function ActivityList({ activities, isLoading = false }: ActivityListProp
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                                        {activity.score > 0 && ` • Score: ${activity.score}%`}
+                                        {activity.score > 0 && ` • ${t("dashboard.score")}: ${activity.score}%`}
                                     </p>
                                 </div>
                             </div>
