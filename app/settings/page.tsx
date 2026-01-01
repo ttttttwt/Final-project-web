@@ -24,6 +24,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { userService } from "@/services/userService";
+import { notificationPreferencesService, type NotificationPreferences } from "@/services/notificationPreferencesService";
 import { toast } from "sonner";
 import {
   Settings as SettingsIcon,
@@ -40,9 +41,14 @@ import { ChangePasswordForm } from "@/components/profile";
 interface UserSettings {
   language: string;
   timezone: string;
-  emailNotifications: boolean;
-  lessonReminders: boolean;
-  weeklyReports: boolean;
+  firstName: string;
+  lastName: string;
+}
+
+interface NotificationSettings {
+  emailEnabled: boolean;
+  remindersEnabled: boolean;
+  learningEnabled: boolean;
 }
 
 const LANGUAGES = [
@@ -88,9 +94,13 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings>({
     language: "en",
     timezone: "UTC",
-    emailNotifications: true,
-    lessonReminders: true,
-    weeklyReports: false,
+    firstName: "",
+    lastName: "",
+  });
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>({
+    emailEnabled: true,
+    remindersEnabled: true,
+    learningEnabled: true,
   });
 
   useEffect(() => {
@@ -101,13 +111,20 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      const profile = await userService.getProfile();
+      const [profile, notifPrefs] = await Promise.all([
+        userService.getProfile(),
+        notificationPreferencesService.getPreferences(),
+      ]);
       setSettings({
         language: profile.language || "en",
         timezone: profile.timezone || "UTC",
-        emailNotifications: true, // Placeholder
-        lessonReminders: true, // Placeholder
-        weeklyReports: false, // Placeholder
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+      });
+      setNotifSettings({
+        emailEnabled: notifPrefs.emailEnabled ?? true,
+        remindersEnabled: notifPrefs.remindersEnabled ?? true,
+        learningEnabled: notifPrefs.learningEnabled ?? true,
       });
     } catch (error) {
       console.error("Failed to fetch settings:", error);
@@ -117,41 +134,72 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSettings = async () => {
+  const updateNotificationPreference = async (
+    key: keyof NotificationSettings,
+    value: boolean
+  ) => {
     try {
-      setIsSaving(true);
+      // Optimistic update
+      setNotifSettings((prev) => ({ ...prev, [key]: value }));
 
-      // Update language and timezone via profile API
-      await userService.updateProfile({
-        language: settings.language,
-        timezone: settings.timezone,
-      });
+      const updatedPrefs = {
+        emailEnabled: notifSettings.emailEnabled,
+        remindersEnabled: notifSettings.remindersEnabled,
+        learningEnabled: notifSettings.learningEnabled,
+        [key]: value, // Override with new value
+      };
 
-      // TODO: Update notification preferences when backend API is ready
-      // await userService.updateNotificationSettings({
-      //   emailNotifications: settings.emailNotifications,
-      //   lessonReminders: settings.lessonReminders,
-      //   weeklyReports: settings.weeklyReports,
-      // });
-
-      toast.success("Settings saved successfully!", {
-        description: "Your preferences have been updated.",
-      });
+      await notificationPreferencesService.updatePreferences(updatedPrefs);
+      toast.success("Notification preference saved");
     } catch (error) {
-      console.error("Failed to save settings:", error);
-      toast.error("Failed to save settings", {
-        description: "Please try again.",
-      });
-    } finally {
-      setIsSaving(false);
+      console.error("Failed to update preference:", error);
+      toast.error("Failed to update preference");
+      // Revert on error
+      setNotifSettings((prev) => ({ ...prev, [key]: !value }));
+    }
+  };
+
+  const updateProfileSetting = async (
+    key: keyof UserSettings,
+    value: string
+  ) => {
+    // Store current values before optimistic update to use in API call
+    const currentSettings = { ...settings };
+
+    try {
+      // Optimistic update
+      setSettings((prev) => ({ ...prev, [key]: value }));
+
+      // Build update payload using current settings values
+      // Ensure firstName and lastName are never empty strings
+      const updatedProfile = {
+        language: key === "language" ? value : currentSettings.language,
+        timezone: key === "timezone" ? value : currentSettings.timezone,
+        firstName: currentSettings.firstName,
+        lastName: currentSettings.lastName,
+      };
+
+      // Validate required fields before sending
+      if (!updatedProfile.firstName || !updatedProfile.lastName) {
+        console.error("firstName or lastName is missing, re-fetching profile");
+        await fetchSettings();
+        toast.error("Please complete your profile first (name is required)");
+        return;
+      }
+
+      await userService.updateProfile(updatedProfile);
+      toast.success("Setting saved");
+    } catch (error) {
+      console.error("Failed to update setting:", error);
+      toast.error("Failed to update setting");
+      // Revert by re-fetching to ensure consistency
+      fetchSettings();
     }
   };
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
-    toast.success(`Theme changed to ${newTheme}`, {
-      description: "Your theme preference has been saved.",
-    });
+    toast.success(`Theme changed to ${newTheme}`);
   };
 
   const currentTheme = theme === "system" ? systemTheme : theme;
@@ -346,7 +394,7 @@ export default function SettingsPage() {
                 <Select
                   value={settings.language}
                   onValueChange={(value) =>
-                    setSettings((prev) => ({ ...prev, language: value }))
+                    updateProfileSetting("language", value)
                   }
                 >
                   <SelectTrigger id="language" className="w-full">
@@ -378,7 +426,7 @@ export default function SettingsPage() {
                 <Select
                   value={settings.timezone}
                   onValueChange={(value) =>
-                    setSettings((prev) => ({ ...prev, timezone: value }))
+                    updateProfileSetting("timezone", value)
                   }
                 >
                   <SelectTrigger id="timezone" className="w-full">
@@ -426,12 +474,9 @@ export default function SettingsPage() {
                 </div>
                 <Switch
                   id="email-notifications"
-                  checked={settings.emailNotifications}
+                  checked={notifSettings.emailEnabled}
                   onCheckedChange={(checked) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      emailNotifications: checked,
-                    }))
+                    updateNotificationPreference("emailEnabled", checked)
                   }
                 />
               </div>
@@ -453,46 +498,35 @@ export default function SettingsPage() {
                 </div>
                 <Switch
                   id="lesson-reminders"
-                  checked={settings.lessonReminders}
+                  checked={notifSettings.remindersEnabled}
                   onCheckedChange={(checked) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      lessonReminders: checked,
-                    }))
+                    updateNotificationPreference("remindersEnabled", checked)
                   }
                 />
               </div>
 
               <Separator />
 
-              {/* Weekly Reports */}
+              {/* Learning Progress Notifications */}
               <div className="flex items-center justify-between">
                 <div className="space-y-1 flex-1">
                   <Label
-                    htmlFor="weekly-reports"
+                    htmlFor="learning-notifications"
                     className="text-base font-medium cursor-pointer"
                   >
-                    Weekly Progress Reports
+                    Learning Progress Notifications
                   </Label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive a summary of your weekly learning progress
+                    Receive updates about your learning achievements
                   </p>
                 </div>
                 <Switch
-                  id="weekly-reports"
-                  checked={settings.weeklyReports}
+                  id="learning-notifications"
+                  checked={notifSettings.learningEnabled}
                   onCheckedChange={(checked) =>
-                    setSettings((prev) => ({ ...prev, weeklyReports: checked }))
+                    updateNotificationPreference("learningEnabled", checked)
                   }
                 />
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Note:</strong> Notification preferences are currently
-                  placeholders. Backend API integration required for full
-                  functionality.
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -512,34 +546,6 @@ export default function SettingsPage() {
               <ChangePasswordForm />
             </CardContent>
           </Card>
-
-          {/* Save Button */}
-          <div className="flex justify-end gap-3 pb-8">
-            <Button
-              variant="outline"
-              onClick={fetchSettings}
-              disabled={isSaving}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={handleSaveSettings}
-              disabled={isSaving}
-              className="gap-2"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Settings
-                </>
-              )}
-            </Button>
-          </div>
         </div>
       </MainLayout>
     </ProtectedRoute>

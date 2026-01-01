@@ -348,10 +348,10 @@ export default function ProfilePage() {
                     Premium Features Unlocked
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {[
-                      "50 AI Role Play Sessions/month",
-                      "30 AI Flashcard Decks/month",
-                      "300 AI Grammar Exercises/month",
+                    {aiQuota && [
+                      `${aiQuota.roleplaySessionsLimit} AI Role Play Sessions/month`,
+                      `${aiQuota.flashcardDecksLimit} AI Flashcard Decks/month`,
+                      `${aiQuota.grammarExercisesLimit} AI Grammar Exercises/month`,
                       "Priority Support",
                     ].map((feature) => (
                       <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
