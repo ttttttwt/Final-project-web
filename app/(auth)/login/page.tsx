@@ -39,7 +39,6 @@ const loginSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(100, "Password must be less than 100 characters"),
-  rememberMe: z.boolean().default(false).optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -54,7 +53,6 @@ export default function LoginPage() {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
 
@@ -211,35 +209,8 @@ export default function LoginPage() {
                 )}
               />
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <FormField
-                  control={form.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          id="rememberMe"
-                          title="Remember me"
-                          aria-label="Remember me"
-                          className="h-4 w-4 rounded border-[#E0E0E0] dark:border-[#2E2E2E] text-[#1A73E8] dark:text-[#8AB4F8] focus:ring-[#1A73E8] dark:focus:ring-[#8AB4F8]"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          disabled={form.formState.isSubmitting}
-                        />
-                      </FormControl>
-                      <FormLabel
-                        htmlFor="rememberMe"
-                        className="text-sm font-normal cursor-pointer text-[#5F6368] dark:text-[#9AA0A6]"
-                      >
-                        Remember me
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-
+              {/* Forgot Password Link */}
+              <div className="flex items-center justify-end">
                 <Link
                   href="/forgot-password"
                   className="text-sm text-[#1A73E8] dark:text-[#8AB4F8] hover:underline"
