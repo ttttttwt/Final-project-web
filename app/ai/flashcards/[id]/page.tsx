@@ -344,11 +344,15 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                         );
                       }
 
-                      // Default/Failed
+                      // Default/Failed - use default SVG image with same size
                       return (
-                        <div className="flex flex-col items-center justify-center text-muted-foreground/30">
-                          <ImageIcon className="w-8 h-8" />
-                        </div>
+                        <Image
+                          src="/images/flashcard-default.svg"
+                          alt="Default illustration"
+                          width={160}
+                          height={160}
+                          className="rounded-md object-contain opacity-50"
+                        />
                       );
                     })()}
                   </div>
