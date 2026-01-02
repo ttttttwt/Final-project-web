@@ -68,7 +68,7 @@ export function DeckCard({
   return (
     <Card
       className={cn(
-        "group h-full flex flex-col hover:shadow-lg transition-all duration-300 cursor-pointer border-2",
+        "group h-full flex flex-col xl:flex-row hover:shadow-lg transition-all duration-300 cursor-pointer border-2 overflow-hidden",
         hasDueCards
           ? "border-primary/30 hover:border-primary/60 bg-card"
           : "border-green-200/50 dark:border-green-900/20 bg-green-50/30 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-800",
@@ -76,132 +76,142 @@ export function DeckCard({
       )}
       onClick={() => onView?.(deck)}>
 
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            {/* Badges row */}
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              {deck.cefrLevel && (
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "text-xs font-semibold",
-                    CEFR_COLORS[deck.cefrLevel]
-                  )}
-                >
-                  {deck.cefrLevel}
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-xs gap-1">
-                {SOURCE_ICONS[deck.sourceType]}
-                {SOURCE_LABELS[deck.sourceType]}
-              </Badge>
-              {hasDueCards ? (
-                <Badge
-                  variant="default"
-                  className="text-xs bg-primary/10 text-primary border-primary/30"
-                >
-                  <Clock className="w-3 h-3 mr-1" />
-                  {deck.dueCount} due
-                </Badge>
-              ) : (
-                <Badge
-                  variant="secondary"
-                  className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
-                >
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Completed
-                </Badge>
-              )}
-            </div>
-
-            {/* Title */}
-            <h3 className={cn(
-              "font-semibold text-base leading-tight group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]",
-              !hasDueCards && "text-muted-foreground group-hover:text-primary/80"
-            )}>
-              {deck.title}
-            </h3>
-
-            {/* Description */}
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">
-              {deck.description || "\u00A0"}
-            </p>
-          </div>
-
-          {/* Icon */}
-          <div className="flex-shrink-0">
-            <div className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-              hasDueCards 
-                ? "bg-primary/10 group-hover:bg-primary/20" 
-                : "bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50"
-            )}>
-              {hasDueCards ? (
-                <Layers className="w-5 h-5 text-primary" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-              )}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pb-3 px-4 space-y-2 flex-1">
-        {/* Stats row */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{deck.cardCount} cards</span>
-          </div>
-          {deck.nextReview && (
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
-                Next: {formatDistanceToNow(new Date(deck.nextReview), { addSuffix: true })}
-              </span>
-            </div>
+      {/* Left side: Icon/Image area for XL, Top area for others */}
+      <div className={cn(
+        "flex-shrink-0 flex items-center justify-center p-4 xl:w-48 xl:bg-muted/30",
+        !hasDueCards && "xl:bg-green-50/50 dark:xl:bg-green-900/5"
+      )}>
+        <div className={cn(
+          "w-16 h-16 xl:w-24 xl:h-24 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+          hasDueCards
+            ? "bg-primary/10 text-primary group-hover:bg-primary/20"
+            : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:bg-green-200 dark:group-hover:bg-green-900/50"
+        )}>
+          {hasDueCards ? (
+            <Layers className="w-8 h-8 xl:w-12 xl:h-12" />
+          ) : (
+            <CheckCircle2 className="w-8 h-8 xl:w-12 xl:h-12" />
           )}
         </div>
+      </div>
 
-        {/* Mastery progress */}
-        {deck.masteryLevel !== undefined && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Mastery</span>
-              <MasteryIndicator level={deck.masteryLevel} size="sm" />
+      <div className="flex-1 flex flex-col xl:flex-row min-w-0">
+        <div className="flex-1 flex flex-col">
+          <CardHeader className="pb-2 pt-4 px-4 xl:pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                {/* Badges row */}
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {deck.cefrLevel && (
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-xs font-semibold px-2 py-0.5",
+                        CEFR_COLORS[deck.cefrLevel]
+                      )}
+                    >
+                      {deck.cefrLevel}
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="text-[10px] xl:text-xs gap-1 py-0 px-2 h-5 xl:h-6">
+                    {SOURCE_ICONS[deck.sourceType]}
+                    {SOURCE_LABELS[deck.sourceType]}
+                  </Badge>
+                  {hasDueCards ? (
+                    <Badge
+                      variant="default"
+                      className="text-[10px] xl:text-xs bg-primary/10 text-primary border-primary/30 h-5 xl:h-6"
+                    >
+                      <Clock className="w-3 h-3 mr-1" />
+                      {deck.dueCount} due
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] xl:text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800 h-5 xl:h-6"
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Completed
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Title */}
+                <h3 className={cn(
+                  "font-bold text-lg xl:text-2xl leading-tight group-hover:text-primary transition-colors line-clamp-1",
+                  !hasDueCards && "text-muted-foreground group-hover:text-primary/80"
+                )}>
+                  {deck.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2 xl:line-clamp-1 max-w-2xl">
+                  {deck.description || "\u00A0"}
+                </p>
+              </div>
             </div>
-            <Progress value={masteryPercent} className="h-1.5" />
-          </div>
-        )}
-      </CardContent>
+          </CardHeader>
 
-      <CardFooter className="pt-3 flex gap-2 mt-auto">
-        <Button
-          variant={hasDueCards ? "default" : "outline"}
-          size="sm"
-          className="flex-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            onStudy(deck);
-          }}
-          disabled={isLoading}
-        >
-          <PlayCircle className="w-4 h-4 mr-2" />
-          Study{hasDueCards ? ` (${deck.dueCount})` : ""}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onView?.(deck);
-          }}
-          aria-label="View deck details"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </CardFooter>
+          <CardContent className="pb-4 px-4 space-y-4 flex-1">
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center gap-4 xl:gap-8 text-sm">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{deck.cardCount} cards</span>
+              </div>
+              {deck.nextReview && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Next review: {formatDistanceToNow(new Date(deck.nextReview), { addSuffix: true })}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Mastery progress */}
+            {deck.masteryLevel !== undefined && (
+              <div className="space-y-2 max-w-md">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground uppercase tracking-wider font-semibold">Mastery Level</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-primary">{masteryPercent}%</span>
+                    <MasteryIndicator level={deck.masteryLevel} size="sm" />
+                  </div>
+                </div>
+                <Progress value={masteryPercent} className="h-2 rounded-full" />
+              </div>
+            )}
+          </CardContent>
+        </div>
+
+        <CardFooter className="p-4 xl:p-6 flex items-center gap-3 mt-auto xl:mt-0 xl:border-l xl:border-dashed xl:bg-muted/5 min-w-[180px]">
+          <Button
+            variant={hasDueCards ? "default" : "outline"}
+            className="flex-1 xl:h-12 text-base font-semibold shadow-sm hover:shadow-md transition-all px-6"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStudy(deck);
+            }}
+            disabled={isLoading}
+          >
+            <PlayCircle className="w-5 h-5 mr-2" />
+            Study{hasDueCards ? ` (${deck.dueCount})` : ""}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="xl:w-12 xl:h-12 rounded-full border border-border"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView?.(deck);
+            }}
+            aria-label="View deck details"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </CardFooter>
+      </div>
     </Card>
   );
 }

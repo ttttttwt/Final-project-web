@@ -214,7 +214,7 @@ export default function FlashcardsPage() {
       {isLoading && (
         <div className="space-y-4">
           <AiLoadingState variant="studying" message={t("ai.flashcards.loadingDecks")} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 gap-4 auto-rows-fr">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <FlashcardDeckSkeleton key={i} />
             ))}
@@ -293,7 +293,7 @@ export default function FlashcardsPage() {
                       </h3>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 gap-4 auto-rows-fr">
                       {decks.map((deck) => (
                         <DeckCard
                           key={deck.id}

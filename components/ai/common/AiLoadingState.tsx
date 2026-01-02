@@ -207,7 +207,7 @@ export function RoleplaySkeleton({ className }: { className?: string }) {
             <div className="h-4 bg-muted rounded w-1/3" />
           </div>
         </div>
-        
+
         {/* Context text */}
         <div className="space-y-2">
           <div className="h-4 bg-muted rounded w-full" />
@@ -293,45 +293,49 @@ export function FlashcardDeckSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-lg border border-border bg-card p-6",
+        "animate-pulse rounded-lg border border-border bg-card p-0 flex flex-col xl:flex-row overflow-hidden",
         className
       )}
       role="status"
       aria-label="Loading flashcard deck"
     >
-      <div className="space-y-4">
-        {/* Header with icon */}
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-muted" />
-          <div className="flex-1 space-y-2">
-            <div className="h-5 bg-muted rounded w-3/4" />
-            <div className="h-4 bg-muted rounded w-1/2" />
+      {/* Left icon area skeleton */}
+      <div className="flex-shrink-0 flex items-center justify-center p-4 xl:w-48 xl:bg-muted/20">
+        <div className="w-16 h-16 xl:w-24 xl:h-24 rounded-2xl bg-muted" />
+      </div>
+
+      <div className="flex-1 flex flex-col xl:flex-row">
+        <div className="flex-1 p-4 xl:p-6 space-y-4">
+          {/* Header area skeleton */}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="h-5 bg-muted rounded w-12" />
+              <div className="h-5 bg-muted rounded w-24" />
+            </div>
+            <div className="h-7 bg-muted rounded w-3/4" />
+            <div className="h-4 bg-muted rounded w-full xl:w-2/3" />
+          </div>
+
+          {/* Stats area skeleton */}
+          <div className="flex gap-6 pt-2">
+            <div className="h-4 bg-muted rounded w-20" />
+            <div className="h-4 bg-muted rounded w-32" />
+          </div>
+
+          {/* Mastery progress skeleton */}
+          <div className="space-y-2 max-w-sm">
+            <div className="flex justify-between">
+              <div className="h-3 bg-muted rounded w-20" />
+              <div className="h-3 bg-muted rounded w-10" />
+            </div>
+            <div className="h-2 bg-muted rounded-full w-full" />
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="flex gap-6 pt-2">
-          <div className="space-y-1">
-            <div className="h-3 bg-muted rounded w-10" />
-            <div className="h-5 bg-muted rounded w-8" />
-          </div>
-          <div className="space-y-1">
-            <div className="h-3 bg-muted rounded w-10" />
-            <div className="h-5 bg-muted rounded w-8" />
-          </div>
-          <div className="space-y-1">
-            <div className="h-3 bg-muted rounded w-16" />
-            <div className="h-5 bg-muted rounded w-12" />
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-2 bg-muted rounded-full w-full" />
-
-        {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
-          <div className="h-9 bg-muted rounded flex-1" />
-          <div className="h-9 bg-muted rounded flex-1" />
+        {/* Action area skeleton */}
+        <div className="p-4 xl:p-6 flex items-center gap-3 min-w-[180px] xl:border-l xl:border-dashed">
+          <div className="h-10 xl:h-12 bg-muted rounded flex-1" />
+          <div className="w-10 h-10 xl:w-12 xl:h-12 bg-muted rounded-full" />
         </div>
       </div>
     </div>
