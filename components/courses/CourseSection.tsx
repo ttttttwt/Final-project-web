@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { Section } from "@/types/course";
 import { cn } from "@/lib/utils";
 import { LessonItem } from "@/components/courses";
+import { useTranslation } from "@/lib/i18n";
 
 interface CourseSectionProps {
   section: Section;
@@ -27,6 +28,7 @@ export function CourseSection({
   courseId,
   completedLessonIds = [],
 }: CourseSectionProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -54,7 +56,7 @@ export function CourseSection({
               {section.title}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {section.lessonCount} lesson{section.lessonCount !== 1 ? "s" : ""}
+              {section.lessonCount} {t("courses.lessons")}
             </p>
           </div>
         </div>
@@ -78,7 +80,7 @@ export function CourseSection({
           ))}
           {(!section.lessons || section.lessons.length === 0) && (
             <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-              No lessons in this section yet.
+              {t("courses.noCurriculum")}
             </div>
           )}
         </div>

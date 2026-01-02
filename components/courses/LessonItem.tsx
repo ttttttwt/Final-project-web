@@ -13,6 +13,7 @@ import {
 import { LessonDetail } from "@/types/course";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface LessonItemProps {
   lesson: LessonDetail;
@@ -25,23 +26,23 @@ interface LessonItemProps {
 const LESSON_TYPE_CONFIG = {
   READING: {
     icon: BookOpen,
-    label: "Reading",
+    label: "lessons.reading",
     color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
   },
   LISTENING: {
     icon: Headphones,
-    label: "Listening",
+    label: "lessons.listening",
     color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   },
   QUIZ: {
     icon: FileCheck,
-    label: "Quiz",
+    label: "lessons.quiz",
     color:
       "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
   },
   SPEAKING: {
     icon: Mic,
-    label: "Speaking",
+    label: "lessons.speaking",
     color:
       "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
   },
@@ -62,6 +63,7 @@ export function LessonItem({
   courseId,
   isCompleted = false,
 }: LessonItemProps) {
+  const { t } = useTranslation();
   const config =
     LESSON_TYPE_CONFIG[lesson.lessonType] || LESSON_TYPE_CONFIG.READING;
   const Icon = config.icon;
@@ -108,11 +110,11 @@ export function LessonItem({
         </h4>
         <div className="flex items-center gap-3 mt-1">
           <Badge variant="secondary" className={cn("text-xs", config.color)}>
-            {config.label}
+            {t(config.label)}
           </Badge>
           <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <Clock className="h-3 w-3" aria-hidden="true" />
-            <span>{lesson.durationMinutes} min</span>
+            <span>{lesson.durationMinutes} {t("courses.mins")}</span>
           </div>
         </div>
       </div>

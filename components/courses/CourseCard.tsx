@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/course";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * CEFR Level Color Mapping
@@ -57,6 +58,7 @@ export function CourseCard({
   isCompleted = false,
   viewMode = "grid",
 }: CourseCardProps) {
+  const { t } = useTranslation();
   const handleEnrollClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onEnroll) {
@@ -111,7 +113,7 @@ export function CourseCard({
               <div className="absolute top-3 left-3">
                 <Badge className="bg-[#34A853] text-white font-semibold shadow-md flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>Completed</span>
+                  <span>{t("common.completed", { defaultValue: "Completed" })}</span>
                 </Badge>
               </div>
             )}
@@ -127,7 +129,7 @@ export function CourseCard({
                 {course.durationMinutes && (
                   <div className="flex items-center gap-1 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
                     <Clock className="w-4 h-4" />
-                    <span>{course.durationMinutes} min</span>
+                    <span>{course.durationMinutes} {t("courses.mins")}</span>
                   </div>
                 )}
               </div>
@@ -139,7 +141,7 @@ export function CourseCard({
               {course.sectionCount !== undefined && (
                 <div className="flex items-center gap-2 text-sm text-[#5F6368] dark:text-[#9AA0A6]">
                   <BookOpen className="w-4 h-4" />
-                  <span>{course.sectionCount} sections</span>
+                  <span>{course.sectionCount} {t("courses.sections")}</span>
                 </div>
               )}
             </div>
@@ -149,7 +151,7 @@ export function CourseCard({
               {isEnrolled ? (
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between text-xs text-[#5F6368] dark:text-[#9AA0A6]">
-                    <span className="font-medium">Progress</span>
+                    <span className="font-medium">{t("common.progress", { defaultValue: "Progress" })}</span>
                     <span className="font-semibold">
                       {Math.round(progressPercentage)}%
                     </span>
@@ -167,7 +169,7 @@ export function CourseCard({
                   : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
                   } text-white dark:text-[#121212] font-medium transition-colors min-w-[140px]`}
               >
-                {isEnrolled ? "Continue" : "View Detail"}
+                {isEnrolled ? t("courses.continue") : t("courses.viewDetail")}
               </Button>
             </div>
           </CardContent>
@@ -210,7 +212,7 @@ export function CourseCard({
             <div className="absolute top-3 left-3">
               <Badge className="bg-[#34A853] text-white font-semibold shadow-md flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                <span>Completed</span>
+                <span>{t("common.completed", { defaultValue: "Completed" })}</span>
               </Badge>
             </div>
           )}
@@ -233,13 +235,13 @@ export function CourseCard({
             {course.sectionCount !== undefined && (
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span>{course.sectionCount} sections</span>
+                <span>{course.sectionCount} {t("courses.sections")}</span>
               </div>
             )}
             {course.durationMinutes && (
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                <span>{course.durationMinutes} min</span>
+                <span>{course.durationMinutes} {t("courses.mins")}</span>
               </div>
             )}
           </div>
@@ -248,7 +250,7 @@ export function CourseCard({
           {isEnrolled && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-[#5F6368] dark:text-[#9AA0A6]">
-                <span className="font-medium">Progress</span>
+                <span className="font-medium">{t("common.progress", { defaultValue: "Progress" })}</span>
                 <span className="font-semibold">
                   {Math.round(progressPercentage)}%
                 </span>
@@ -267,7 +269,7 @@ export function CourseCard({
               : "bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA]"
               } text-white dark:text-[#121212] font-medium transition-colors`}
           >
-            {isEnrolled ? "Continue Learning" : "View Detail"}
+            {isEnrolled ? t("courses.continueLearning") : t("courses.viewDetail")}
           </Button>
         </CardFooter>
       </Card>

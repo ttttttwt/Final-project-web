@@ -19,8 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CourseSection } from "@/components/courses/CourseSection";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const CEFR_COLORS: Record<string, string> = {
   A1: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
@@ -36,6 +38,8 @@ const CEFR_COLORS: Record<string, string> = {
  * Displays course information, curriculum, and enrollment options
  */
 export default function CourseDetailPage() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
   const courseId = params.courseId as string;
@@ -82,7 +86,7 @@ export default function CourseDetailPage() {
         ) {
           setNotFound(true);
         } else {
-          toast.error("Failed to load course. Please try again.");
+          toast.error(t("common.failedToLoad"));
         }
       } finally {
         setIsLoading(false);
@@ -98,12 +102,18 @@ export default function CourseDetailPage() {
     if (!course) return;
 
     try {
+      if (!user?.currentLevel) {
+        toast.error(t("courses.placementTestRequired"));
+        router.push("/placement-test");
+        return;
+      }
+
       setIsEnrolling(true);
       await enrollmentService.enroll(course.id);
 
       setIsEnrolled(true);
-      toast.success("Successfully enrolled in course!", {
-        description: "You can now access all lessons.",
+      toast.success(t("courses.successfullyEnrolled"), {
+        description: t("courses.accessAllLessons"),
         duration: 4000,
       });
 
@@ -123,12 +133,12 @@ export default function CourseDetailPage() {
         ?.status;
 
       if (status === 409) {
-        toast.info("You are already enrolled in this course");
+        toast.info(t("courses.enrolledMessage"));
         setIsEnrolled(true);
       } else if (status === 404) {
-        toast.error("Course not found");
+        toast.error(t("courses.courseNotFound"));
       } else {
-        toast.error("Failed to enroll. Please try again.");
+        toast.error(t("common.failedToUpdate"));
       }
     } finally {
       setIsEnrolling(false);
@@ -164,15 +174,14 @@ export default function CourseDetailPage() {
             404
           </h1>
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Course Not Found
+            {t("courses.courseNotFound")}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            The course you&apos;re looking for doesn&apos;t exist or has been
-            removed.
+            {t("courses.courseNotFoundDesc")}
           </p>
           <Button onClick={() => router.push("/courses")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Courses
+            {t("courses.backToCourses")}
           </Button>
         </div>
       </div>
@@ -206,7 +215,7 @@ export default function CourseDetailPage() {
           onClick={() => router.push("/courses")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Courses
+          {t("courses.backToCourses")}
         </Button>
 
         {/* Course Header */}
@@ -234,7 +243,7 @@ export default function CourseDetailPage() {
                 CEFR_COLORS[course.cefrLevel]
               )}
             >
-              {course.cefrLevel} Level
+              {course.cefrLevel} {t("courses.cefrLevel", { defaultValue: "Level" })}
             </Badge>
 
             {/* Title */}
@@ -252,16 +261,16 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <BookOpen className="h-5 w-5" />
                 <span>
-                  {totalLessons} lesson{totalLessons !== 1 ? "s" : ""}
+                  {totalLessons} {t("courses.lessons")}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <Clock className="h-5 w-5" />
-                <span>{Math.ceil(totalDuration / 60)} hours total</span>
+                <span>{Math.ceil(totalDuration / 60)} {t("courses.hours")}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <Users className="h-5 w-5" />
-                <span>{course.sectionCount} sections</span>
+                <span>{course.sectionCount} {t("courses.sections")}</span>
               </div>
             </div>
 
@@ -270,7 +279,7 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                 <CheckCircle className="h-5 w-5" />
                 <span className="font-semibold">
-                  You&apos;re enrolled in this course
+                  {t("courses.enrolledMessage")}
                 </span>
               </div>
             ) : (
@@ -283,10 +292,10 @@ export default function CourseDetailPage() {
                 {isEnrolling ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Enrolling...
+                    {t("courses.enrolling")}
                   </>
                 ) : (
-                  "Enroll Now"
+                  t("courses.enrollNow")
                 )}
               </Button>
             )}
@@ -296,7 +305,7 @@ export default function CourseDetailPage() {
         {/* Course Curriculum */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 md:p-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-            Course Curriculum
+            {t("courses.courseCurriculum")}
           </h2>
 
           {course.sections && course.sections.length > 0 ? (
@@ -314,7 +323,7 @@ export default function CourseDetailPage() {
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No curriculum available yet. Check back later!</p>
+              <p>{t("courses.noCurriculum")}</p>
             </div>
           )}
         </div>

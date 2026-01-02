@@ -14,6 +14,7 @@ import { courseService, CourseSearchParams } from "@/services/courseService";
 import { enrollmentService } from "@/services/enrollmentService";
 import { useAuth } from "@/hooks/useAuth";
 import { Course, Enrollment } from "@/types/course";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -26,10 +27,10 @@ const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
  * Sort options for courses
  */
 const SORT_OPTIONS = [
-  { value: "createdAt,desc", label: "Newest First" },
-  { value: "createdAt,asc", label: "Oldest First" },
-  { value: "title,asc", label: "Title (A-Z)" },
-  { value: "title,desc", label: "Title (Z-A)" },
+  { value: "createdAt,desc", label: "courses.newestFirst" },
+  { value: "createdAt,asc", label: "courses.oldestFirst" },
+  { value: "title,asc", label: "courses.titleAZ" },
+  { value: "title,desc", label: "courses.titleZA" },
 ];
 
 /**
@@ -38,9 +39,10 @@ const SORT_OPTIONS = [
  * Browse and search available courses with filters
  */
 export default function CoursesPage() {
+  const { t } = useTranslation();
   return (
     <ProtectedRoute>
-      <MainLayout showSidebar={true} pageTitle="Courses">
+      <MainLayout showSidebar={true} pageTitle={t("courses.title")}>
         <React.Suspense fallback={<CoursesPageSkeleton />}>
           <CoursesPageContent />
         </React.Suspense>
@@ -50,6 +52,7 @@ export default function CoursesPage() {
 }
 
 function CoursesPageContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -164,7 +167,7 @@ function CoursesPageContent() {
           return;
         }
         console.error("Failed to fetch courses:", error);
-        toast.error(error.message || "Failed to load courses");
+        toast.error(error.message || t("common.failedToLoad"));
         setCourses([]);
       } finally {
         setIsLoading(false);
@@ -233,10 +236,10 @@ function CoursesPageContent() {
    */
   const handleEnroll = (courseId: string) => {
     const enrollment = getEnrollmentForCourse(Number(courseId));
-    
+
     // If not enrolled and no placement test result, block access
     if (!enrollment && !user?.currentLevel) {
-      toast.error("Please complete the placement test to enroll in courses");
+      toast.error(t("courses.placementTestRequired"));
       router.push("/placement-test");
       return;
     }
@@ -250,10 +253,10 @@ function CoursesPageContent() {
         const courseLevelIndex = levels.indexOf(course.cefrLevel);
 
         if (courseLevelIndex > userLevelIndex) {
-          toast.warning(`This course is level ${course.cefrLevel}, which is higher than your current level (${user.currentLevel}).`, {
-            description: "We recommend starting with courses at your level.",
+          toast.warning(t("courses.levelHigherWarning", { courseLevel: course.cefrLevel, userLevel: user.currentLevel }), {
+            description: t("courses.levelHigherDesc"),
             action: {
-              label: "Enroll Anyway",
+              label: t("courses.enrollAnyway"),
               onClick: () => router.push(`/courses/${courseId}`)
             },
             duration: 5000,
@@ -262,7 +265,7 @@ function CoursesPageContent() {
         }
       }
     }
-    
+
     router.push(`/courses/${courseId}`);
   };
 
@@ -283,10 +286,10 @@ function CoursesPageContent() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl md:text-4xl font-bold text-[#202124] dark:text-[#E8EAED] mb-2">
-          Courses
+          {t("courses.title")}
         </h1>
         <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-          Browse and enroll in English learning courses
+          {t("courses.subtitle")}
         </p>
       </div>
 
@@ -298,16 +301,16 @@ function CoursesPageContent() {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
-              Placement Test Required
+              {t("courses.placementTestRequired")}
             </h3>
             <p className="text-yellow-700 dark:text-yellow-400 mb-3 text-sm md:text-base">
-              To ensure you get the most out of your learning journey, please complete our quick placement test. This helps us recommend the right courses for your level. You cannot enroll in new courses until you complete this test.
+              {t("courses.placementTestRequiredDesc")}
             </p>
-            <Button 
+            <Button
               onClick={() => router.push("/placement-test")}
               className="bg-yellow-600 hover:bg-yellow-700 text-white border-none shadow-sm"
             >
-              Take Placement Test
+              {t("courses.takePlacementTest")}
             </Button>
           </div>
         </div>
@@ -320,7 +323,7 @@ function CoursesPageContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#5F6368] dark:text-[#9AA0A6]" />
           <Input
             type="text"
-            placeholder="Search courses..."
+            placeholder={t("courses.searchPlaceholder")}
             value={searchQuery}
             onChange={handleSearchChange}
             className="pl-10 bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
@@ -334,7 +337,7 @@ function CoursesPageContent() {
           className="md:hidden bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
         >
           <SlidersHorizontal className="w-4 h-4 mr-2" />
-          Filters
+          {t("courses.filters")}
         </Button>
 
         {/* View Mode Toggle */}
@@ -371,13 +374,13 @@ function CoursesPageContent() {
         {/* Enrollment Filter */}
         <div>
           <h3 className="text-sm font-medium text-[#202124] dark:text-[#E8EAED] mb-3">
-            Enrollment Status
+            {t("courses.enrollmentStatus")}
           </h3>
           <div className="flex flex-wrap gap-2">
             {[
-              { value: "all", label: "All Courses" },
-              { value: "enrolled", label: "Joined" },
-              { value: "not_enrolled", label: "Not Joined" },
+              { value: "all", label: t("courses.allCourses") },
+              { value: "enrolled", label: t("courses.joined") },
+              { value: "not_enrolled", label: t("courses.notJoined") },
             ].map((option) => (
               <Badge
                 key={option.value}
@@ -400,7 +403,7 @@ function CoursesPageContent() {
         {/* CEFR Level Filter */}
         <div>
           <h3 className="text-sm font-medium text-[#202124] dark:text-[#E8EAED] mb-3">
-            CEFR Level
+            {t("courses.cefrLevel")}
           </h3>
           <div className="flex flex-wrap gap-2">
             {CEFR_LEVELS.map((level) => (
@@ -431,7 +434,7 @@ function CoursesPageContent() {
         {/* Sort Dropdown */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-[#202124] dark:text-[#E8EAED]">
-            Sort by:
+            {t("courses.sortBy")}
           </span>
           <div className="flex flex-wrap gap-2">
             {SORT_OPTIONS.map((option) => (
@@ -453,7 +456,7 @@ function CoursesPageContent() {
                   }
                 }}
               >
-                {option.label}
+                {t(option.label)}
               </Badge>
             ))}
           </div>
@@ -465,12 +468,12 @@ function CoursesPageContent() {
         <div className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
           {totalElements > 0 ? (
             <>
-              Showing {courses.length} of {totalElements} courses
-              {searchQuery && ` for "${searchQuery}"`}
-              {selectedLevel && ` (Level: ${selectedLevel})`}
+              {t("courses.showingResults", { count: courses.length, total: totalElements })}
+              {searchQuery && ` ${t("common.for", { defaultValue: "for" })} "${searchQuery}"`}
+              {selectedLevel && ` (${t("courses.cefrLevel")}: ${selectedLevel})`}
             </>
           ) : (
-            "No courses found"
+            t("courses.noCoursesFound")
           )}
         </div>
       )}
@@ -519,7 +522,7 @@ function CoursesPageContent() {
       ) : (
         <div className="text-center py-12">
           <p className="text-[#5F6368] dark:text-[#9AA0A6] text-lg">
-            No courses found matching your criteria.
+            {t("courses.noCoursesFound")}
           </p>
           <Button
             onClick={() => {
@@ -530,7 +533,7 @@ function CoursesPageContent() {
             }}
             className="mt-4 bg-[#1A73E8] hover:bg-[#1557B0] dark:bg-[#8AB4F8] dark:hover:bg-[#A8C7FA] text-white dark:text-[#121212]"
           >
-            Clear Filters
+            {t("courses.clearFilters")}
           </Button>
         </div>
       )}
@@ -544,7 +547,7 @@ function CoursesPageContent() {
             disabled={currentPage === 0}
             className="bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
           >
-            Previous
+            {t("common.previous", { defaultValue: "Previous" })}
           </Button>
 
           <div className="flex items-center gap-2">
@@ -570,7 +573,7 @@ function CoursesPageContent() {
             disabled={currentPage === totalPages - 1}
             className="bg-white dark:bg-[#1E1E1E] border-[#E0E0E0] dark:border-[#2E2E2E]"
           >
-            Next
+            {t("common.next")}
           </Button>
         </div>
       )}
