@@ -11,12 +11,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Material Chat Page - Role-play practice interface
  * Uses full-screen layout to match the existing Role Play feature.
  */
 export default function MaterialChatPage() {
+  const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const materialId = params.id as string;
@@ -69,12 +71,12 @@ export default function MaterialChatPage() {
             <Card className="text-center py-12">
               <CardContent>
                 <p className="text-[#D32F2F] mb-4">
-                  {error || "Material not found"}
+                  {error || t("customMaterials.materialNotFound")}
                 </p>
                 <Button asChild>
                   <Link href="/custom-materials">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Library
+                    {t("customMaterials.backToLibrary")}
                   </Link>
                 </Button>
               </CardContent>
@@ -94,12 +96,12 @@ export default function MaterialChatPage() {
             <Card className="text-center py-12">
               <CardContent>
                 <p className="text-[#5F6368] mb-4">
-                  This material is still processing. Please wait until it&apos;s ready.
+                  {t("customMaterials.stillProcessing")}
                 </p>
                 <Button asChild>
                   <Link href={`/custom-materials/${materialId}`}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    View Material
+                    {t("customMaterials.viewMaterial")}
                   </Link>
                 </Button>
               </CardContent>
@@ -122,23 +124,21 @@ export default function MaterialChatPage() {
               <CardContent>
                 <BookOpen className="h-12 w-12 text-[#5F6368] mx-auto mb-4" />
                 <h2 className="text-lg font-semibold text-[#202124] dark:text-[#E8EAED] mb-2">
-                  Role-Play Not Available
+                  {t("customMaterials.roleplayNotAvailable")}
                 </h2>
                 <p className="text-[#5F6368] dark:text-[#9AA0A6] mb-4">
-                  This material doesn&apos;t have role-play practice enabled.
-                  <br />
-                  Create a new material with Role-Play mode selected.
+                  {t("customMaterials.roleplayNotAvailableDesc")}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" asChild>
                     <Link href={`/custom-materials/${materialId}`}>
                       <ArrowLeft className="h-4 w-4 mr-2" />
-                      View Material
+                      {t("customMaterials.viewMaterial")}
                     </Link>
                   </Button>
                   <Button asChild>
                     <Link href="/custom-materials/new">
-                      Create New Material
+                      {t("customMaterials.createNewMaterial")}
                     </Link>
                   </Button>
                 </div>

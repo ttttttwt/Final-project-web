@@ -16,12 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Role-Play Conversation Page
  * Displays the active conversation with chat interface.
  */
 export default function ConversationPage() {
+  const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
@@ -63,9 +65,9 @@ export default function ConversationPage() {
         }
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to load conversation";
+      const message = err.response?.data?.message || t("ai.roleplay.failedToLoadConversation");
       setError(message);
-      toast.error("Error", { description: message });
+      toast.error(t("common.error"), { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +95,9 @@ export default function ConversationPage() {
       setConversation((prev) =>
         prev
           ? {
-              ...prev,
-              messages: [...prev.messages, userMessage],
-            }
+            ...prev,
+            messages: [...prev.messages, userMessage],
+          }
           : null
       );
 
@@ -110,9 +112,9 @@ export default function ConversationPage() {
       setConversation((prev) =>
         prev
           ? {
-              ...prev,
-              messages: [...prev.messages, aiResponse],
-            }
+            ...prev,
+            messages: [...prev.messages, aiResponse],
+          }
           : null
       );
 
@@ -122,9 +124,9 @@ export default function ConversationPage() {
       setConversation((prev) =>
         prev
           ? {
-              ...prev,
-              messages: prev.messages.slice(0, -1),
-            }
+            ...prev,
+            messages: prev.messages.slice(0, -1),
+          }
           : null
       );
       throw err;
@@ -143,9 +145,9 @@ export default function ConversationPage() {
       setConversation((prev) =>
         prev
           ? {
-              ...prev,
-              status: "completed",
-            }
+            ...prev,
+            status: "completed",
+          }
           : null
       );
     } catch (err: any) {
@@ -153,9 +155,9 @@ export default function ConversationPage() {
       setConversation((prev) =>
         prev
           ? {
-              ...prev,
-              status: "completed",
-            }
+            ...prev,
+            status: "completed",
+          }
           : null
       );
     }
@@ -171,9 +173,9 @@ export default function ConversationPage() {
     return (
       <div className="h-screen flex flex-col">
         <AiHeader
-          title="AI Roleplay"
+          title={t("ai.roleplay.title")}
           backHref="/ai/roleplay"
-          backLabel="Roleplay"
+          backLabel={t("ai.roleplay.title")}
         />
         {/* Chat area skeleton */}
         <div className="flex-1 p-4 space-y-4">
@@ -200,9 +202,9 @@ export default function ConversationPage() {
     return (
       <div className="h-screen flex flex-col">
         <AiHeader
-          title="AI Roleplay"
+          title={t("ai.roleplay.title")}
           backHref="/ai/roleplay"
-          backLabel="Roleplay"
+          backLabel={t("ai.roleplay.title")}
         />
         <div className="flex-1 flex items-center justify-center p-4">
           <Card className="max-w-md w-full">
@@ -212,19 +214,19 @@ export default function ConversationPage() {
                   <AlertCircle className="w-12 h-12 text-destructive" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Conversation Not Found</h2>
+                  <h2 className="text-xl font-semibold">{t("ai.roleplay.conversationNotFound")}</h2>
                   <p className="text-muted-foreground mt-2">
-                    {error || "The conversation you're looking for doesn't exist."}
+                    {error || t("ai.roleplay.conversationNotFoundDesc")}
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button onClick={loadConversation}>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Retry
+                    {t("ai.common.retry")}
                   </Button>
                 </div>
               </div>
@@ -238,9 +240,9 @@ export default function ConversationPage() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <AiHeader
-        title={scenario?.title || "AI Roleplay"}
+        title={scenario?.title || t("ai.roleplay.title")}
         backHref="/ai/roleplay"
-        backLabel="Roleplay"
+        backLabel={t("ai.roleplay.title")}
       />
       <div className="flex-1 overflow-hidden">
         <ConversationChat

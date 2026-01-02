@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 type Step = "source" | "input" | "config" | "processing";
 
@@ -51,6 +52,7 @@ type Step = "source" | "input" | "config" | "processing";
  * Multi-step wizard for creating new learning materials
  */
 export default function NewCustomMaterialPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { isPro, isLoading: isLoadingSubscription } = useSubscriptionStore();
   const {
@@ -211,14 +213,14 @@ export default function NewCustomMaterialPage() {
     if (materialId) {
       setCreatedMaterialId(materialId);
       setStep("processing");
-      toast.success("Material submitted for processing!");
+      toast.success(t("customMaterials.processingStarted"));
       // Start polling for status updates
       startPolling(materialId, () => {
-        toast.success("Your material is ready!");
+        toast.success(t("customMaterials.materialReady"));
       });
     } else {
-      toast.error("Failed to create material", {
-        description: createError || "Please try again.",
+      toast.error(t("customMaterials.failedToCreate"), {
+        description: createError || t("common.tryAgain"),
       });
     }
   };
@@ -241,9 +243,9 @@ export default function NewCustomMaterialPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA000] flex items-center justify-center">
                   <Crown className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-2xl">Premium Feature</CardTitle>
+                <CardTitle className="text-2xl">{t("subscription.premiumFeature")}</CardTitle>
                 <CardDescription className="text-base">
-                  Custom AI Content Generator is available for Pro subscribers
+                  {t("customMaterials.premiumDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -263,10 +265,10 @@ export default function NewCustomMaterialPage() {
                 </div>
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" asChild>
-                    <Link href="/custom-materials">Back to Library</Link>
+                    <Link href="/custom-materials">{t("customMaterials.backToLibrary")}</Link>
                   </Button>
                   <Button asChild>
-                    <Link href="/pricing">Upgrade to Pro</Link>
+                    <Link href="/pricing">{t("ai.common.upgrade")}</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -288,10 +290,10 @@ export default function NewCustomMaterialPage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-[#202124] dark:text-[#E8EAED]">
-                New Learning Material
+                {t("customMaterials.createTitle")}
               </h1>
               <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-                Transform any content into personalized learning materials
+                {t("customMaterials.createDesc")}
               </p>
             </div>
           </div>
@@ -310,11 +312,11 @@ export default function NewCustomMaterialPage() {
                 <div key={s} className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === s
-                        ? "bg-[#4285F4] text-white"
-                        : idx <
-                          ["source", "input", "config"].indexOf(step as string)
-                          ? "bg-[#4CAF50] text-white"
-                          : "bg-[#E0E0E0] dark:bg-[#2E2E2E] text-[#9AA0A6]"
+                      ? "bg-[#4285F4] text-white"
+                      : idx <
+                        ["source", "input", "config"].indexOf(step as string)
+                        ? "bg-[#4CAF50] text-white"
+                        : "bg-[#E0E0E0] dark:bg-[#2E2E2E] text-[#9AA0A6]"
                       }`}
                   >
                     {idx + 1}
@@ -322,9 +324,9 @@ export default function NewCustomMaterialPage() {
                   {idx < 2 && (
                     <div
                       className={`w-12 h-0.5 ${idx <
-                          ["source", "input", "config"].indexOf(step as string)
-                          ? "bg-[#4CAF50]"
-                          : "bg-[#E0E0E0] dark:bg-[#2E2E2E]"
+                        ["source", "input", "config"].indexOf(step as string)
+                        ? "bg-[#4CAF50]"
+                        : "bg-[#E0E0E0] dark:bg-[#2E2E2E]"
                         }`}
                     />
                   )}
@@ -349,14 +351,14 @@ export default function NewCustomMaterialPage() {
           {step === "input" && sourceType && (
             <Card>
               <CardHeader>
-                <CardTitle>Add Your Content</CardTitle>
+                <CardTitle>{t("customMaterials.addContent")}</CardTitle>
                 <CardDescription>
-                  {sourceType === "PDF" && "Upload a PDF document"}
-                  {sourceType === "DOCX" && "Upload a Word document"}
-                  {sourceType === "IMAGE" && "Upload an image with text"}
-                  {sourceType === "YOUTUBE" && "Paste a YouTube video URL"}
-                  {sourceType === "WEBSITE" && "Paste a website URL"}
-                  {sourceType === "TEXT" && "Paste your text content"}
+                  {sourceType === "PDF" && t("customMaterials.uploadPdf")}
+                  {sourceType === "DOCX" && t("customMaterials.uploadDocx")}
+                  {sourceType === "IMAGE" && t("customMaterials.uploadImage")}
+                  {sourceType === "YOUTUBE" && t("customMaterials.pasteYoutube")}
+                  {sourceType === "WEBSITE" && t("customMaterials.pasteWebsite")}
+                  {sourceType === "TEXT" && t("customMaterials.pasteText")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -396,14 +398,14 @@ export default function NewCustomMaterialPage() {
                 <div className="flex gap-3 pt-4">
                   <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     onClick={handleNext}
                     disabled={!isInputValid()}
                     className="flex-1"
                   >
-                    Continue
+                    {t("common.continue")}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
@@ -417,16 +419,16 @@ export default function NewCustomMaterialPage() {
               {/* Title input */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Name Your Material</CardTitle>
+                  <CardTitle>{t("customMaterials.nameMaterial")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="title">{t("common.title")}</Label>
                     <Input
                       id="title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter a descriptive title..."
+                      placeholder={t("customMaterials.titlePlaceholder")}
                       maxLength={255}
                     />
                   </div>
@@ -457,7 +459,7 @@ export default function NewCustomMaterialPage() {
               <div className="flex gap-3">
                 <Button variant="outline" onClick={handleBack}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  {t("common.back")}
                 </Button>
                 <Button
                   onClick={handleCreate}
@@ -465,13 +467,13 @@ export default function NewCustomMaterialPage() {
                   className="flex-1"
                 >
                   {isCreating ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Generate Content
-                    </>
-                  )}
+                    <>{t("customMaterials.generating")}</>)
+                    : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {t("customMaterials.generateContent")}
+                      </>
+                    )}
                 </Button>
               </div>
             </div>

@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCefrLevelRestriction } from "@/hooks/useCefrLevelRestriction";
+import { useTranslation } from "@/lib/i18n";
 
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
@@ -69,6 +70,7 @@ const THEMES = [
  * Allows users to generate grammar exercises or view their history.
  */
 export default function GrammarPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { userLevel, isAccessible, getWarning, allLevels, hasPlacementLevel } = useCefrLevelRestriction();
   const [activeTab, setActiveTab] = useState("generate");
@@ -114,7 +116,7 @@ export default function GrammarPage() {
     const savedExercise = getGeneratedExercise();
     if (savedExercise) {
       setGeneratedSet(savedExercise);
-      toast.info("Restored your previously generated exercise");
+      toast.info(t("common.settingSaved"));
     }
   }, []);
 
@@ -174,7 +176,7 @@ export default function GrammarPage() {
 
   const handleGenerateExercises = async () => {
     if (!formData.grammarTopic) {
-      toast.error("Please select a grammar topic");
+      toast.error(t("common.error"));
       return;
     }
 
@@ -219,9 +221,9 @@ export default function GrammarPage() {
 
   return (
     <AiPageWrapper
-      title="AI Grammar"
+      title={t("ai.grammar.title")}
       backHref="/dashboard"
-      backLabel="Dashboard"
+      backLabel={t("ai.common.backToDashboard")}
       feature="grammar"
       showQuota={true}
       showNetworkStatus={true}
@@ -229,7 +231,7 @@ export default function GrammarPage() {
       {/* Page Description */}
       <div className="mb-6">
         <p className="text-muted-foreground">
-          Master English grammar with AI-generated exercises tailored to your level.
+          {t("ai.grammar.description")}
         </p>
       </div>
 
@@ -238,11 +240,11 @@ export default function GrammarPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="generate" className="gap-2">
             <Sparkles className="w-4 h-4" />
-            Generate Exercises
+            {t("ai.grammar.generateExercises")}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="w-4 h-4" />
-            History
+            {t("ai.grammar.history")}
           </TabsTrigger>
         </TabsList>
 
@@ -254,17 +256,17 @@ export default function GrammarPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
-                  Create Your Exercise Set
+                  {t("ai.grammar.createYourExercise")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* CEFR Level */}
                 <div className="space-y-2">
                   <Label htmlFor="cefr-level">
-                    Your Level
+                    {t("ai.grammar.yourLevel")}
                     {hasPlacementLevel && (
                       <span className="text-xs text-muted-foreground ml-2">
-                        (Based on Placement Test: {userLevel})
+                        ({t("ai.grammar.basedOnPlacement")}: {userLevel})
                       </span>
                     )}
                   </Label>
@@ -273,7 +275,7 @@ export default function GrammarPage() {
                     onValueChange={(value) => {
                       const warning = getWarning(value);
                       if (warning) {
-                        toast.warning("Level above your current proficiency", {
+                        toast.warning(t("ai.roleplay.levelAboveProficiency"), {
                           description: warning,
                           duration: 5000,
                         });
@@ -321,7 +323,7 @@ export default function GrammarPage() {
                   </Select>
                   {!hasPlacementLevel && (
                     <p className="text-xs text-amber-600">
-                      Take the Placement Test to get personalized level recommendations.
+                      {t("ai.grammar.takePlacementTest")}
                     </p>
                   )}
                 </div>
@@ -337,7 +339,7 @@ export default function GrammarPage() {
 
                 {/* Theme */}
                 <div className="space-y-2">
-                  <Label htmlFor="theme">Theme (Optional)</Label>
+                  <Label htmlFor="theme">{t("ai.grammar.themeOptional")}</Label>
                   <Select
                     value={formData.theme || ""}
                     onValueChange={(value) =>
@@ -345,25 +347,26 @@ export default function GrammarPage() {
                     }
                   >
                     <SelectTrigger id="theme">
-                      <SelectValue placeholder="Select a theme" />
+                      <SelectValue placeholder={t("ai.grammar.selectTheme")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {THEMES.map((theme) => (
-                        <SelectItem key={theme.value} value={theme.value}>
-                          {theme.label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="workplace">{t("ai.grammar.themeWorkplace")}</SelectItem>
+                      <SelectItem value="travel">{t("ai.grammar.themeTravel")}</SelectItem>
+                      <SelectItem value="daily-life">{t("ai.grammar.themeDailyLife")}</SelectItem>
+                      <SelectItem value="technology">{t("ai.grammar.themeTechnology")}</SelectItem>
+                      <SelectItem value="business">{t("ai.grammar.themeBusiness")}</SelectItem>
+                      <SelectItem value="academic">{t("ai.grammar.themeAcademic")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Choose a context for your exercises
+                    {t("ai.grammar.chooseContext")}
                   </p>
                 </div>
 
                 {/* Exercise Count & Time */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="exercise-count">Number of Exercises</Label>
+                    <Label htmlFor="exercise-count">{t("ai.grammar.numberOfExercises")}</Label>
                     <Select
                       value={String(formData.exerciseCount || 5)}
                       onValueChange={(value) =>
@@ -377,14 +380,14 @@ export default function GrammarPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="3">3 exercises</SelectItem>
-                        <SelectItem value="5">5 exercises</SelectItem>
-                        <SelectItem value="10">10 exercises</SelectItem>
+                        <SelectItem value="3">3 {t("ai.grammar.exercises")}</SelectItem>
+                        <SelectItem value="5">5 {t("ai.grammar.exercises")}</SelectItem>
+                        <SelectItem value="10">10 {t("ai.grammar.exercises")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="time-limit">Time Limit</Label>
+                    <Label htmlFor="time-limit">{t("ai.grammar.timeLimit")}</Label>
                     <Select
                       value={String(formData.timeLimitSeconds || 600)}
                       onValueChange={(value) =>
@@ -398,10 +401,10 @@ export default function GrammarPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="300">5 minutes</SelectItem>
-                        <SelectItem value="600">10 minutes</SelectItem>
-                        <SelectItem value="900">15 minutes</SelectItem>
-                        <SelectItem value="0">No limit</SelectItem>
+                        <SelectItem value="300">5 {t("ai.grammar.minutes")}</SelectItem>
+                        <SelectItem value="600">10 {t("ai.grammar.minutes")}</SelectItem>
+                        <SelectItem value="900">15 {t("ai.grammar.minutes")}</SelectItem>
+                        <SelectItem value="0">{t("ai.grammar.noLimit")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -425,12 +428,12 @@ export default function GrammarPage() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating...
+                      {t("ai.common.generating")}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Generate Exercises
+                      {t("ai.grammar.generateExercises")}
                     </>
                   )}
                 </Button>
@@ -443,10 +446,10 @@ export default function GrammarPage() {
                 <Card className="border-2 border-primary/50">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Ready to Practice!</CardTitle>
+                      <CardTitle className="text-lg">{t("ai.grammar.readyToPractice")}</CardTitle>
                       {generatedSet.isFallback && (
                         <span className="text-xs bg-muted px-2 py-1 rounded">
-                          Featured
+                          {t("ai.grammar.featured")}
                         </span>
                       )}
                     </div>
@@ -457,15 +460,15 @@ export default function GrammarPage() {
                         {generatedSet.grammarPoint}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Level: {generatedSet.cefrLevel}
-                        {generatedSet.theme && ` • Theme: ${generatedSet.theme}`}
+                        {t("ai.grammar.level")}: {generatedSet.cefrLevel}
+                        {generatedSet.theme && ` • ${t("ai.grammar.theme")}: ${generatedSet.theme}`}
                       </p>
                     </div>
 
                     {/* Explanation Preview */}
                     {generatedSet.explanation && (
                       <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium mb-1">Quick Rule:</p>
+                        <p className="text-sm font-medium mb-1">{t("ai.grammar.quickRule")}:</p>
                         <p className="text-sm text-muted-foreground line-clamp-3">
                           {generatedSet.explanation.rule}
                         </p>
@@ -475,12 +478,12 @@ export default function GrammarPage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <BookOpen className="w-4 h-4" />
-                        {generatedSet.exerciseCount} exercises
+                        {generatedSet.exerciseCount} {t("ai.grammar.exercises")}
                       </div>
                       {generatedSet.timeLimitSeconds && generatedSet.timeLimitSeconds > 0 && (
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {Math.floor(generatedSet.timeLimitSeconds / 60)} min
+                          {Math.floor(generatedSet.timeLimitSeconds / 60)} {t("ai.grammar.min")}
                         </div>
                       )}
                     </div>
@@ -490,7 +493,7 @@ export default function GrammarPage() {
                       className="w-full gap-2"
                       size="lg"
                     >
-                      Start Practice
+                      {t("ai.grammar.startPractice")}
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </CardContent>
@@ -501,9 +504,9 @@ export default function GrammarPage() {
                     <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                       <Sparkles className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium mb-1">No Exercise Set Yet</h3>
+                    <h3 className="font-medium mb-1">{t("ai.grammar.noExerciseSet")}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Generate exercises to start practicing
+                      {t("ai.grammar.generateToStart")}
                     </p>
                   </CardContent>
                 </Card>
@@ -526,7 +529,7 @@ export default function GrammarPage() {
             <div className="lg:col-span-2 space-y-4">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <History className="w-5 h-5" />
-                Your Exercises
+                {t("ai.grammar.yourExercises")}
               </h2>
 
               {isLoadingHistory && history.length === 0 ? (
@@ -541,15 +544,15 @@ export default function GrammarPage() {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                       <BookOpen className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium mb-1">No Exercises Yet</h3>
+                    <h3 className="font-medium mb-1">{t("ai.grammar.noExercisesYet")}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Generate exercises to start practicing
+                      {t("ai.grammar.generateToStart")}
                     </p>
                     <Button
                       variant="outline"
                       onClick={() => setActiveTab("generate")}
                     >
-                      Generate Exercises
+                      {t("ai.grammar.generateExercises")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -578,10 +581,10 @@ export default function GrammarPage() {
                       {isLoadingHistory ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          Loading...
+                          {t("ai.common.loading")}
                         </>
                       ) : (
-                        "Load More"
+                        t("ai.common.loadMore")
                       )}
                     </Button>
                   )}

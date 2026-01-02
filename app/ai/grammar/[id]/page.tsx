@@ -44,6 +44,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 type PageState = "loading" | "practice" | "submitting" | "results" | "error";
 
@@ -52,6 +53,7 @@ type PageState = "loading" | "practice" | "submitting" | "results" | "error";
  * Displays exercises and allows users to submit answers.
  */
 export default function GrammarPracticePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const exerciseSetId = params.id as string;
@@ -91,7 +93,7 @@ export default function GrammarPracticePage() {
           const progress = await aiGrammarService.getProgress(exerciseSetId);
           if (progress) {
             // We don't have full result data, so just show a message
-            toast.info("You have already completed this exercise set");
+            toast.info(t("ai.grammar.alreadyCompleted"));
           }
           // Clear any saved answers since already submitted
           clearUserAnswers();
@@ -107,14 +109,14 @@ export default function GrammarPracticePage() {
             setUserAnswers(savedData.answers);
             setCurrentQuestionIndex(savedData.currentQuestionIndex);
             timeSpentRef.current = savedData.timeSpent;
-            toast.info("Restored your previous progress");
+            toast.info(t("ai.grammar.restoredProgress"));
           }
         }
 
         setPageState(submitted ? "results" : "practice");
         startTimeRef.current = Date.now();
       } catch (err: any) {
-        const message = err.response?.data?.message || "Failed to load exercises";
+        const message = err.response?.data?.message || t("ai.grammar.failedToLoad");
         setError(message);
         setPageState("error");
       }
@@ -210,17 +212,17 @@ export default function GrammarPracticePage() {
       setPageState("results");
 
       if (resultData.passed) {
-        toast.success("Great job!", {
-          description: `You scored ${resultData.percentage.toFixed(0)}%`,
+        toast.success(t("ai.grammar.greatJob"), {
+          description: t("ai.grammar.greatJobScore", { score: resultData.percentage.toFixed(0) }),
         });
       } else {
-        toast.info("Keep practicing!", {
-          description: `You scored ${resultData.percentage.toFixed(0)}%. Try again to improve!`,
+        toast.info(t("ai.grammar.keepPracticing"), {
+          description: t("ai.grammar.keepPracticingDesc", { score: resultData.percentage.toFixed(0) }),
         });
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to submit answers";
-      toast.error("Submission failed", { description: message });
+      const message = err.response?.data?.message || t("ai.grammar.failedToSubmit");
+      toast.error(t("ai.grammar.submissionFailed"), { description: message });
       setPageState("practice");
     }
   };
@@ -242,14 +244,14 @@ export default function GrammarPracticePage() {
       await aiGrammarService.resetProgress(exerciseSetId);
       // Clear saved local data
       clearUserAnswers();
-      toast.success("Progress reset successfully!", {
-        description: "You can now retry this exercise.",
+      toast.success(t("ai.grammar.progressReset"), {
+        description: t("ai.grammar.retryNow"),
       });
       // Reload the page to start fresh
       window.location.reload();
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to reset progress";
-      toast.error("Reset failed", { description: message });
+      const message = err.response?.data?.message || t("ai.grammar.failedToResetProgress");
+      toast.error(t("ai.grammar.resetFailed"), { description: message });
     } finally {
       setIsResetting(false);
       setShowRetryDialog(false);
@@ -268,7 +270,7 @@ export default function GrammarPracticePage() {
       setCurrentQuestionIndex(0);
       timeSpentRef.current = 0;
       startTimeRef.current = Date.now();
-      toast.info("Exercise reset");
+      toast.info(t("ai.grammar.exerciseReset"));
     }
   };
 
@@ -280,8 +282,8 @@ export default function GrammarPracticePage() {
     timeSpentRef.current = 0;
     startTimeRef.current = Date.now();
     setShowRetryConfirmDialog(false);
-    toast.success("Exercise reset!", {
-      description: "You can start fresh now.",
+    toast.success(t("ai.grammar.exerciseResetSuccess"), {
+      description: t("ai.grammar.startFreshNow"),
     });
   };
 
@@ -299,9 +301,9 @@ export default function GrammarPracticePage() {
   if (pageState === "loading") {
     return (
       <AiPageWrapper
-        title="AI Grammar"
+        title={t("ai.grammar.title")}
         backHref="/ai/grammar"
-        backLabel="Grammar"
+        backLabel={t("ai.grammar.title")}
       >
         <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
@@ -325,22 +327,22 @@ export default function GrammarPracticePage() {
   if (pageState === "error") {
     return (
       <AiPageWrapper
-        title="AI Grammar"
+        title={t("ai.grammar.title")}
         backHref="/ai/grammar"
-        backLabel="Grammar"
+        backLabel={t("ai.grammar.title")}
       >
         <Card className="border-destructive">
           <CardContent className="py-12 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Failed to Load Exercises</h2>
+            <h2 className="text-xl font-semibold mb-2">{t("ai.grammar.failedToLoadExercises")}</h2>
             <p className="text-muted-foreground mb-4">{error}</p>
             <div className="flex justify-center gap-3">
               <Button variant="outline" onClick={() => router.back()}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Go Back
+                {t("ai.grammar.goBack")}
               </Button>
               <Button onClick={() => window.location.reload()}>
-                Try Again
+                {t("ai.grammar.tryAgain")}
               </Button>
             </div>
           </CardContent>
@@ -354,9 +356,9 @@ export default function GrammarPracticePage() {
     if (result) {
       return (
         <AiPageWrapper
-          title="AI Grammar - Results"
+          title={`${t("ai.grammar.title")} - ${t("ai.grammar.results")}`}
           backHref="/ai/grammar"
-          backLabel="Grammar"
+          backLabel={t("ai.grammar.title")}
         >
           {/* Result Card */}
           <ResultCard
@@ -368,7 +370,7 @@ export default function GrammarPracticePage() {
           {/* Detailed Feedback */}
           {exerciseSet && (
             <div className="mt-8 space-y-4">
-              <h2 className="text-xl font-semibold">Review Your Answers</h2>
+              <h2 className="text-xl font-semibold">{t("ai.grammar.reviewYourAnswers")}</h2>
               {exerciseSet.exercises.map((exercise, idx) => {
                 const feedback = result.feedback.find((f) => f.questionIndex === idx);
                 return (
@@ -393,25 +395,25 @@ export default function GrammarPracticePage() {
     // Already submitted but no result loaded
     return (
       <AiPageWrapper
-        title="AI Grammar"
+        title={t("ai.grammar.title")}
         backHref="/ai/grammar"
-        backLabel="Grammar"
+        backLabel={t("ai.grammar.title")}
       >
         <Card>
           <CardContent className="py-12 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Already Completed</h2>
+            <h2 className="text-xl font-semibold mb-2">{t("ai.grammar.alreadyCompletedTitle")}</h2>
             <p className="text-muted-foreground mb-6">
-              You have already submitted answers for this exercise set.
+              {t("ai.grammar.alreadySubmitted")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" onClick={() => router.push("/ai/grammar")}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Grammar
+                {t("ai.grammar.backToGrammar")}
               </Button>
               <Button onClick={() => setShowRetryDialog(true)} disabled={isResetting}>
                 <RefreshCw className={cn("w-4 h-4 mr-2", isResetting && "animate-spin")} />
-                Retry Exercise
+                {t("ai.grammar.retryExercise")}
               </Button>
             </div>
           </CardContent>
@@ -421,22 +423,21 @@ export default function GrammarPracticePage() {
         <AlertDialog open={showRetryDialog} onOpenChange={setShowRetryDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Retry this exercise?</AlertDialogTitle>
+              <AlertDialogTitle>{t("ai.grammar.retryThisExercise")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Your previous progress for this exercise will be deleted. You will start fresh
-                and can submit a new result. This action cannot be undone.
+                {t("ai.grammar.retryConfirmDesc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isResetting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isResetting}>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction onClick={handleRetry} disabled={isResetting}>
                 {isResetting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Resetting...
+                    {t("ai.grammar.resetting")}
                   </>
                 ) : (
-                  "Reset & Retry"
+                  t("ai.grammar.resetAndRetry")
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -449,9 +450,9 @@ export default function GrammarPracticePage() {
   // Practice state
   return (
     <AiPageWrapper
-      title={exerciseSet?.grammarPoint || "AI Grammar Practice"}
+      title={exerciseSet?.grammarPoint || t("ai.grammar.title")}
       backHref="/ai/grammar"
-      backLabel="Grammar"
+      backLabel={t("ai.grammar.title")}
       showBackButton={true}
     >
       {/* Timer - isolated component to prevent re-renders */}
@@ -482,7 +483,7 @@ export default function GrammarPracticePage() {
               className="flex-shrink-0"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Làm lại
+              {t("ai.grammar.restart")}
             </Button>
           </div>
 
@@ -495,7 +496,7 @@ export default function GrammarPracticePage() {
                   <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      Grammar Rule
+                      {t("ai.grammar.grammarRule")}
                     </h3>
                     <p className="text-sm text-blue-800 dark:text-blue-200">
                       {exerciseSet.explanation.rule}
@@ -503,7 +504,7 @@ export default function GrammarPracticePage() {
                     {exerciseSet.explanation.examples && exerciseSet.explanation.examples.length > 0 && (
                       <div className="mt-2">
                         <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                          Examples:
+                          {t("ai.grammar.examples")}:
                         </p>
                         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                           {exerciseSet.explanation.examples.slice(0, 2).map((ex, idx) => (
@@ -522,10 +523,10 @@ export default function GrammarPracticePage() {
           <div className="mb-6 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                Question {currentQuestionIndex + 1} of {exerciseSet.exercises.length}
+                {t("ai.grammar.questionOf", { current: currentQuestionIndex + 1, total: exerciseSet.exercises.length })}
               </span>
               <span className="text-muted-foreground">
-                {getAnsweredCount()} / {exerciseSet.exercises.length} answered
+                {getAnsweredCount()} / {exerciseSet.exercises.length} {t("ai.grammar.answered")}
               </span>
             </div>
             <Progress
@@ -574,7 +575,7 @@ export default function GrammarPracticePage() {
               disabled={currentQuestionIndex === 0}
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
+              {t("ai.grammar.previous")}
             </Button>
 
             {currentQuestionIndex === exerciseSet.exercises.length - 1 ? (
@@ -586,18 +587,18 @@ export default function GrammarPracticePage() {
                 {pageState === "submitting" ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
+                    {t("ai.grammar.submitting")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Submit Answers
+                    {t("ai.grammar.submitAnswers")}
                   </>
                 )}
               </Button>
             ) : (
               <Button onClick={() => navigateQuestion("next")}>
-                Next
+                {t("ai.grammar.next")}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -609,19 +610,17 @@ export default function GrammarPracticePage() {
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit with unanswered questions?</AlertDialogTitle>
+            <AlertDialogTitle>{t("ai.grammar.submitWithUnanswered")}</AlertDialogTitle>
             <AlertDialogDescription>
-              You have{" "}
-              {exerciseSet
-                ? exerciseSet.exercises.length - getAnsweredCount()
-                : 0}{" "}
-              unanswered question(s). Unanswered questions will be marked as incorrect.
+              {t("ai.grammar.unansweredDesc", {
+                count: exerciseSet ? exerciseSet.exercises.length - getAnsweredCount() : 0
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Review Answers</AlertDialogCancel>
+            <AlertDialogCancel>{t("ai.grammar.reviewAnswers")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => handleSubmit(true)}>
-              Submit Anyway
+              {t("ai.grammar.submitAnyway")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -631,15 +630,15 @@ export default function GrammarPracticePage() {
       <AlertDialog open={showRetryConfirmDialog} onOpenChange={setShowRetryConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc muốn làm lại bài tập?</AlertDialogTitle>
+            <AlertDialogTitle>{t("ai.grammar.confirmRetryTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Kết quả hiện tại sẽ bị xóa và không thể khôi phục. Bạn có {getAnsweredCount()} câu trả lời chưa được lưu.
+              {t("ai.grammar.confirmRetryDesc", { count: getAnsweredCount() })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Tiếp tục làm bài</AlertDialogCancel>
+            <AlertDialogCancel>{t("ai.grammar.continueExercise")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRetryDuringPractice} className="bg-destructive hover:bg-destructive/90">
-              Làm lại từ đầu
+              {t("ai.grammar.restartFromBeginning")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

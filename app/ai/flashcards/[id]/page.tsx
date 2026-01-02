@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 interface DeckDetailPageProps {
   params: Promise<{ id: string }>;
@@ -67,6 +68,7 @@ const SOURCE_LABELS: Record<string, string> = {
  */
 export default function DeckDetailPage({ params }: DeckDetailPageProps) {
   const { id } = use(params);
+  const { t } = useTranslation();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       const deckData = await aiFlashcardService.getDeck(id);
       setDeck(deckData);
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to load deck";
+      const message = err.response?.data?.message || t("ai.flashcards.failedToLoad");
       setError(message);
     } finally {
       setIsLoading(false);
@@ -103,11 +105,11 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
     setIsDeleting(true);
     try {
       await aiFlashcardService.deleteDeck(id);
-      toast.success("Deck deleted successfully");
+      toast.success(t("ai.flashcards.deckDeletedSuccess"));
       router.push("/ai/flashcards");
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to delete deck";
-      toast.error("Error", { description: message });
+      const message = err.response?.data?.message || t("ai.flashcards.failedToDeleteDeck");
+      toast.error(t("common.error"), { description: message });
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -129,12 +131,12 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
   if (isLoading) {
     return (
       <AiPageWrapper
-        title="AI Flashcards"
+        title={t("ai.flashcards.title")}
         backHref="/ai/flashcards"
-        backLabel="Flashcards"
+        backLabel={t("ai.flashcards.title")}
         maxWidth="7xl"
       >
-        <AiLoadingState variant="studying" message="Loading deck..." />
+        <AiLoadingState variant="studying" message={t("ai.flashcards.loadingDeck")} />
       </AiPageWrapper>
     );
   }
@@ -142,14 +144,14 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
   if (error || !deck) {
     return (
       <AiPageWrapper
-        title="AI Flashcards"
+        title={t("ai.flashcards.title")}
         backHref="/ai/flashcards"
-        backLabel="Flashcards"
+        backLabel={t("ai.flashcards.title")}
         maxWidth="7xl"
       >
         <AiErrorCard
-          title="Failed to load deck"
-          message={error || "Deck not found"}
+          title={t("ai.flashcards.failedToLoad")}
+          message={error || t("ai.flashcards.deckNotFound")}
           onRetry={loadDeck}
           onReset={() => router.push("/ai/flashcards")}
         />
@@ -163,7 +165,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
     <AiPageWrapper
       title={deck.title}
       backHref="/ai/flashcards"
-      backLabel="Flashcards"
+      backLabel={t("ai.flashcards.title")}
       maxWidth="7xl"
     >
 
@@ -184,7 +186,9 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                 )}
                 <Badge variant="outline" className="gap-1">
                   {SOURCE_ICONS[deck.sourceType]}
-                  {SOURCE_LABELS[deck.sourceType]}
+                  {deck.sourceType === "LESSON" ? t("ai.flashcards.fromLesson") :
+                    deck.sourceType === "AI_GENERATED" ? t("ai.flashcards.aiGenerated") :
+                      t("ai.flashcards.custom")}
                 </Badge>
                 {hasDueCards && (
                   <Badge
@@ -192,7 +196,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                     className="bg-primary/10 text-primary border-primary/30"
                   >
                     <Clock className="w-3 h-3 mr-1" />
-                    {deck.dueCount} due
+                    {deck.dueCount} {t("ai.flashcards.dueNow")}
                   </Badge>
                 )}
               </div>
@@ -234,21 +238,21 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
             <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Layers className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-xs text-muted-foreground">Total Cards</p>
+                <p className="text-xs text-muted-foreground">{t("ai.flashcards.totalCards")}</p>
                 <p className="text-base font-semibold">{deck.cardCount}</p>
               </div>
             </div>
             <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Clock className="w-5 h-5 text-yellow-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Due Now</p>
+                <p className="text-xs text-muted-foreground">{t("ai.flashcards.dueNow")}</p>
                 <p className="text-base font-semibold">{deck.dueCount ?? 0}</p>
               </div>
             </div>
             <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
               <Calendar className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Created</p>
+                <p className="text-xs text-muted-foreground">{t("ai.flashcards.created")}</p>
                 <p className="text-xs font-medium">
                   {formatDistanceToNow(new Date(deck.createdAt), { addSuffix: true })}
                 </p>
@@ -257,7 +261,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
             {deck.masteryLevel !== undefined && (
               <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/50">
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">Mastery</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("ai.flashcards.mastery")}</p>
                   <MasteryIndicator level={deck.masteryLevel} showLabel size="sm" />
                 </div>
               </div>
@@ -270,14 +274,14 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
             onClick={handleStudy}
           >
             <PlayCircle className="w-5 h-5 mr-2" />
-            {hasDueCards ? `Study Now (${deck.dueCount} due)` : "Start Study Session"}
+            {hasDueCards ? t("ai.flashcards.studyNowWithDue", { count: deck.dueCount ?? 0 }) : t("ai.flashcards.startStudySession")}
           </Button>
         </CardContent>
       </Card>
 
       {/* Card Preview List */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Cards ({deck.cardCount})</h2>
+        <h2 className="text-lg font-semibold">{t("ai.flashcards.cards")} ({deck.cardCount})</h2>
         <div className="space-y-1.5">
           {deck.cards.map((card, index) => (
             <Card
@@ -302,7 +306,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                     {expandedCards.has(index) && (
                       <div className="mt-3 pl-8 space-y-2 text-sm">
                         <p className="text-muted-foreground">
-                          <strong>Definition:</strong> {card.back.definition}
+                          <strong>{t("ai.flashcards.definition")}:</strong> {card.back.definition}
                         </p>
                         {card.back.pronunciation && (
                           <p className="text-muted-foreground font-mono">
@@ -335,10 +339,9 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Deck</DialogTitle>
+            <DialogTitle>{t("ai.flashcards.deleteDeck")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deck.title}"? This will remove all{" "}
-              {deck.cardCount} cards and cannot be undone.
+              {t("ai.flashcards.deleteConfirmDesc", { title: deck.title, count: deck.cardCount })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -347,14 +350,14 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
               onClick={() => setShowDeleteDialog(false)}
               disabled={isDeleting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete Deck"}
+              {isDeleting ? t("ai.flashcards.deleting") : t("ai.flashcards.deleteDeck")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -35,6 +35,7 @@ import {
   BookOpen,
   HelpCircle,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 const sourceTypeIcons: Record<string, React.ReactNode> = {
   PDF: <FileText className="h-5 w-5" />,
@@ -98,9 +99,21 @@ export function MaterialCard({
   onDelete,
   className,
 }: MaterialCardProps) {
+  const { t } = useTranslation();
   const status = statusConfig[material.status];
   const isReady = material.status === "COMPLETED";
   const hasRolePlay = material.hasRolePlay;
+
+  // Get localized status label
+  const getStatusLabel = (s: CustomMaterialStatus) => {
+    switch (s) {
+      case "PENDING": return t("customMaterials.statusPending");
+      case "PROCESSING": return t("customMaterials.statusProcessing");
+      case "COMPLETED": return t("customMaterials.statusReady");
+      case "FAILED": return t("customMaterials.statusFailed");
+      default: return s;
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -114,18 +127,17 @@ export function MaterialCard({
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden transition-all duration-200",
+        "group relative overflow-hidden transition-all duration-200 flex flex-col h-full",
         "hover:shadow-md hover:border-[#4285F4]/50 cursor-pointer",
         !isReady && "opacity-80",
         className
       )}
       onClick={() => isReady && onView(material.id)}
     >
-      {/* Status badge */}
       <div className="absolute top-3 right-3 z-10">
         <Badge className={cn("gap-1", status.bgColor, status.color, "border-0")}>
           {status.icon}
-          {status.label}
+          {getStatusLabel(material.status)}
         </Badge>
       </div>
 
@@ -148,37 +160,39 @@ export function MaterialCard({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        {/* Content counts */}
-        {isReady && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {(material.vocabularyCount ?? 0) > 0 && (
-              <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
-                <BookOpen className="h-3 w-3" />
-                {material.vocabularyCount} words
-              </div>
-            )}
-            {(material.quizCount ?? 0) > 0 && (
-              <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
-                <HelpCircle className="h-3 w-3" />
-                {material.quizCount} questions
-              </div>
-            )}
-            {material.hasRolePlay && (
-              <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
-                <MessageSquare className="h-3 w-3" />
-                Role-play
-              </div>
-            )}
-          </div>
-        )}
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        {/* Content counts - fixed height area */}
+        <div className="flex flex-wrap gap-2 mb-3 min-h-[40px]">
+          {isReady && (
+            <>
+              {(material.vocabularyCount ?? 0) > 0 && (
+                <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                  <BookOpen className="h-3 w-3" />
+                  {t("customMaterials.wordsCount", { count: material.vocabularyCount ?? 0 })}
+                </div>
+              )}
+              {(material.quizCount ?? 0) > 0 && (
+                <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                  <HelpCircle className="h-3 w-3" />
+                  {t("customMaterials.questionsCount", { count: material.quizCount ?? 0 })}
+                </div>
+              )}
+              {material.hasRolePlay && (
+                <div className="flex items-center gap-1 text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                  <MessageSquare className="h-3 w-3" />
+                  {t("customMaterials.roleplay")}
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-        {/* Action buttons */}
+        {/* Action buttons - pushed to bottom */}
         <div
-          className="flex gap-2 mt-2"
+          className="flex gap-2 mt-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {isReady && (
+          {isReady ? (
             <>
               <Button
                 variant="outline"
@@ -187,19 +201,21 @@ export function MaterialCard({
                 onClick={() => onView(material.id)}
               >
                 <Eye className="h-3 w-3 mr-1" />
-                View
+                {t("customMaterials.view")}
               </Button>
-              {hasRolePlay && onChat && (
+              {hasRolePlay && onChat ? (
                 <Button
                   size="sm"
                   className="flex-1 h-8 text-xs"
                   onClick={() => onChat(material.id)}
                 >
                   <MessageSquare className="h-3 w-3 mr-1" />
-                  Practice
+                  {t("customMaterials.practice")}
                 </Button>
-              )}
+              ) : null}
             </>
+          ) : (
+            <div className="flex-1 h-8" />
           )}
 
           {/* Dropdown menu */}
@@ -213,7 +229,7 @@ export function MaterialCard({
               {isReady && (
                 <DropdownMenuItem onClick={() => onView(material.id)}>
                   <Eye className="h-4 w-4 mr-2" />
-                  View Details
+                  {t("customMaterials.viewDetails")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
@@ -221,7 +237,7 @@ export function MaterialCard({
                 className="text-[#D32F2F] focus:text-[#D32F2F]"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t("customMaterials.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

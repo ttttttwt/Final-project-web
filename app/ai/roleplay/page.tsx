@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useTranslation } from "@/lib/i18n";
 
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 const DOMAINS = [
@@ -61,6 +62,7 @@ const DOMAINS = [
  * Allows users to generate new scenarios or browse existing ones.
  */
 export default function RolePlayPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { userLevel, isAccessible, getWarning, allLevels, hasPlacementLevel } = useCefrLevelRestriction();
   const [activeTab, setActiveTab] = useState("generate");
@@ -131,9 +133,9 @@ export default function RolePlayPage() {
 
   return (
     <AiPageWrapper
-      title="AI Roleplay"
+      title={t("ai.roleplay.title")}
       backHref="/dashboard"
-      backLabel="Dashboard"
+      backLabel={t("ai.common.backToDashboard")}
       feature="roleplay"
       showQuota={true}
       showNetworkStatus={true}
@@ -141,7 +143,7 @@ export default function RolePlayPage() {
       {/* Page Description */}
       <div className="mb-6">
         <p className="text-muted-foreground">
-          Practice English conversations in realistic business scenarios with AI.
+          {t("ai.roleplay.description")}
         </p>
       </div>
 
@@ -151,7 +153,7 @@ export default function RolePlayPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">
-                Conversation Mode
+                {t("ai.roleplay.conversationMode")}
               </Label>
               <ModeDescription mode={mode} />
             </div>
@@ -165,11 +167,11 @@ export default function RolePlayPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="generate" className="gap-2">
             <Sparkles className="w-4 h-4" />
-            Generate Scenario
+            {t("ai.roleplay.generateScenario")}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="w-4 h-4" />
-            Past Conversations
+            {t("ai.roleplay.pastConversations")}
           </TabsTrigger>
         </TabsList>
 
@@ -181,17 +183,17 @@ export default function RolePlayPage() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Plus className="w-5 h-5" />
-                  Create New Scenario
+                  {t("ai.roleplay.createNewScenario")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* CEFR Level */}
                 <div className="space-y-2">
                   <Label htmlFor="cefrLevel">
-                    CEFR Level
+                    {t("ai.roleplay.cefrLevel")}
                     {hasPlacementLevel && (
                       <span className="text-xs text-muted-foreground ml-2">
-                        (Recommended: {userLevel})
+                        ({t("ai.roleplay.recommended")}: {userLevel})
                       </span>
                     )}
                   </Label>
@@ -200,7 +202,7 @@ export default function RolePlayPage() {
                     onValueChange={(value) => {
                       const warning = getWarning(value);
                       if (warning) {
-                        toast.warning("Level above your proficiency", {
+                        toast.warning(t("ai.roleplay.levelAboveProficiency"), {
                           description: warning,
                           duration: 5000,
                         });
@@ -212,7 +214,7 @@ export default function RolePlayPage() {
                     }}
                   >
                     <SelectTrigger id="cefrLevel">
-                      <SelectValue placeholder="Select level" />
+                      <SelectValue placeholder={t("ai.roleplay.selectLevel")} />
                     </SelectTrigger>
                     <SelectContent>
                       {allLevels.map((level) => {
@@ -236,14 +238,14 @@ export default function RolePlayPage() {
                   </Select>
                   {!hasPlacementLevel && (
                     <p className="text-xs text-amber-600">
-                      Take the Placement Test for personalized recommendations.
+                      {t("ai.roleplay.takePlacement")}
                     </p>
                   )}
                 </div>
 
                 {/* Domain */}
                 <div className="space-y-2">
-                  <Label htmlFor="domain">Business Domain</Label>
+                  <Label htmlFor="domain">{t("ai.roleplay.businessDomain")}</Label>
                   <Select
                     value={formData.domain}
                     onValueChange={(value) =>
@@ -251,24 +253,27 @@ export default function RolePlayPage() {
                     }
                   >
                     <SelectTrigger id="domain">
-                      <SelectValue placeholder="Select domain" />
+                      <SelectValue placeholder={t("ai.roleplay.selectDomain")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {DOMAINS.map((domain) => (
-                        <SelectItem key={domain} value={domain}>
-                          {formatDomain(domain)}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="meetings">{t("ai.roleplay.domainMeetings")}</SelectItem>
+                      <SelectItem value="negotiations">{t("ai.roleplay.domainNegotiations")}</SelectItem>
+                      <SelectItem value="presentations">{t("ai.roleplay.domainPresentations")}</SelectItem>
+                      <SelectItem value="interviews">{t("ai.roleplay.domainInterviews")}</SelectItem>
+                      <SelectItem value="networking">{t("ai.roleplay.domainNetworking")}</SelectItem>
+                      <SelectItem value="customer-service">{t("ai.roleplay.domainCustomerService")}</SelectItem>
+                      <SelectItem value="emails">{t("ai.roleplay.domainEmails")}</SelectItem>
+                      <SelectItem value="phone-calls">{t("ai.roleplay.domainPhoneCalls")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Industry (Optional) */}
                 <div className="space-y-2">
-                  <Label htmlFor="industry">Industry (Optional)</Label>
+                  <Label htmlFor="industry">{t("ai.roleplay.industryOptional")}</Label>
                   <Input
                     id="industry"
-                    placeholder="e.g., Technology, Healthcare, Finance"
+                    placeholder={t("ai.roleplay.industryPlaceholder")}
                     value={formData.industry || ""}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -281,10 +286,10 @@ export default function RolePlayPage() {
 
                 {/* User Context (Optional) */}
                 <div className="space-y-2">
-                  <Label htmlFor="userContext">Additional Context (Optional)</Label>
+                  <Label htmlFor="userContext">{t("ai.roleplay.additionalContext")}</Label>
                   <Input
                     id="userContext"
-                    placeholder="e.g., I want to practice handling objections"
+                    placeholder={t("ai.roleplay.contextPlaceholder")}
                     value={formData.userContext || ""}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -295,7 +300,6 @@ export default function RolePlayPage() {
                   />
                 </div>
 
-                {/* Generate Button */}
                 <Button
                   onClick={handleGenerateScenario}
                   disabled={isGenerating}
@@ -304,12 +308,12 @@ export default function RolePlayPage() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
+                      {t("ai.common.generating")}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Scenario
+                      {t("ai.roleplay.generateScenario")}
                     </>
                   )}
                 </Button>
@@ -323,7 +327,7 @@ export default function RolePlayPage() {
                   <RoleplaySkeleton />
                   <AiLoadingState
                     variant="generating"
-                    message="Creating your personalized scenario..."
+                    message={t("ai.roleplay.creatingScenario")}
                   />
                 </div>
               )}
@@ -352,10 +356,9 @@ export default function RolePlayPage() {
                         <Sparkles className="w-8 h-8 text-muted-foreground" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">No Scenario Yet</h3>
+                        <h3 className="font-semibold text-lg">{t("ai.roleplay.noScenarioYet")}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Fill out the form and click &quot;Generate Scenario&quot; to create
-                          a custom practice scenario.
+                          {t("ai.roleplay.fillFormToGenerate")}
                         </p>
                       </div>
                     </div>
@@ -379,6 +382,7 @@ export default function RolePlayPage() {
 type StatusFilter = "all" | "in_progress" | "completed";
 
 function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -409,13 +413,13 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
     e.stopPropagation();
 
     if (status === "in_progress") {
-      toast.error("Cannot delete", {
-        description: "Please complete or end this conversation first.",
+      toast.error(t("ai.roleplay.cannotDelete"), {
+        description: t("ai.roleplay.completeFirst"),
       });
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
+    if (!confirm(t("ai.roleplay.deleteConfirm"))) {
       return;
     }
 
@@ -423,9 +427,9 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
     try {
       await aiRolePlayService.deleteConversation(convId);
       setConversations((prev) => prev.filter((c) => c.id !== convId));
-      toast.success("Conversation deleted");
+      toast.success(t("ai.roleplay.conversationDeleted"));
     } catch (err) {
-      toast.error("Failed to delete conversation");
+      toast.error(t("ai.roleplay.failedToDelete"));
     } finally {
       setDeletingId(null);
     }
@@ -470,7 +474,7 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
           <p className="text-muted-foreground">{error}</p>
           <Button variant="outline" onClick={loadConversations} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
+            {t("ai.common.retry")}
           </Button>
         </CardContent>
       </Card>
@@ -485,7 +489,7 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search conversations..."
+            placeholder={t("ai.roleplay.searchConversations")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -495,9 +499,9 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
         {/* Status Filter Tabs */}
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
           {[
-            { value: "all", label: "All" },
-            { value: "in_progress", label: "Ongoing" },
-            { value: "completed", label: "Completed" },
+            { value: "all", label: t("ai.roleplay.all") },
+            { value: "in_progress", label: t("ai.roleplay.ongoing") },
+            { value: "completed", label: t("ai.roleplay.completed") },
           ].map((tab) => (
             <button
               key={tab.value}
@@ -521,12 +525,12 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
           <CardContent className="pt-6 text-center py-12">
             <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold text-lg">
-              {conversations.length === 0 ? "No Conversations Yet" : "No Matches"}
+              {conversations.length === 0 ? t("ai.roleplay.noConversationsYet") : t("ai.roleplay.noMatches")}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
               {conversations.length === 0
-                ? "Start a new conversation to see it here."
-                : "No conversations match your filter."}
+                ? t("ai.roleplay.startNewConversation")
+                : t("ai.roleplay.noMatchFilter")}
             </p>
           </CardContent>
         </Card>
@@ -550,18 +554,18 @@ function ConversationHistory({ onResume }: { onResume: (id: string) => void }) {
                           : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {conv.status === "in_progress" ? "Ongoing" : conv.status === "completed" ? "Completed" : "Ended"}
+                    {conv.status === "in_progress" ? t("ai.roleplay.ongoing") : conv.status === "completed" ? t("ai.roleplay.completed") : "Ended"}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {conv.mode === "learning" ? "Learning" : "Immersive"}
+                    {conv.mode === "learning" ? t("ai.roleplay.learning") : t("ai.roleplay.immersive")}
                   </span>
                 </div>
                 <p className="text-sm font-medium line-clamp-2 pr-8">
-                  {conv.messages?.[0]?.content || "No messages yet"}
+                  {conv.messages?.[0]?.content || t("ai.roleplay.noMessagesYet")}
                 </p>
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-muted-foreground">
-                    {conv.messages?.length || 0} messages
+                    {conv.messages?.length || 0} {t("ai.roleplay.messages")}
                   </p>
                   {conv.createdAt && (
                     <p className="text-xs text-muted-foreground">

@@ -26,6 +26,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Sidebar Component
@@ -60,7 +61,7 @@ interface SidebarProps {
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   ariaLabel: string;
 }
@@ -68,25 +69,25 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     href: "/dashboard",
-    label: "Dashboard",
+    labelKey: "nav.dashboard",
     icon: Home,
     ariaLabel: "Go to Dashboard",
   },
   {
     href: "/courses",
-    label: "Courses",
+    labelKey: "nav.courses",
     icon: BookOpen,
     ariaLabel: "Browse Courses",
   },
   {
     href: "/progress",
-    label: "Progress",
+    labelKey: "nav.progress",
     icon: TrendingUp,
     ariaLabel: "View Your Progress",
   },
   {
     href: "/profile",
-    label: "Profile",
+    labelKey: "nav.profile",
     icon: User,
     ariaLabel: "View Your Profile",
   },
@@ -95,25 +96,25 @@ const navigationItems: NavItem[] = [
 const aiFeatures: NavItemWithPro[] = [
   {
     href: "/ai/flashcards",
-    label: "AI Flashcards",
+    labelKey: "nav.aiFlashcards",
     icon: CreditCard,
     ariaLabel: "AI Flashcards Generator",
   },
   {
     href: "/ai/grammar",
-    label: "AI Grammar",
+    labelKey: "nav.aiGrammar",
     icon: BookText,
     ariaLabel: "AI Grammar Practice",
   },
   {
     href: "/ai/roleplay",
-    label: "AI Roleplay",
+    labelKey: "nav.aiRoleplay",
     icon: MessageSquare,
     ariaLabel: "AI Conversation Roleplay",
   },
   {
     href: "/custom-materials",
-    label: "Custom Materials",
+    labelKey: "nav.customMaterials",
     icon: FileUp,
     ariaLabel: "Custom AI Materials Generator",
     isPro: true,
@@ -131,6 +132,7 @@ export function Sidebar({
   onToggleCollapse,
   className,
 }: SidebarProps) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
@@ -247,7 +249,7 @@ export function Sidebar({
                       )}
                       aria-label={item.ariaLabel}
                       aria-current={isActive ? "page" : undefined}
-                      title={isCollapsed ? item.label : undefined}
+                      title={isCollapsed ? t(item.labelKey) : undefined}
                     >
                       <Icon
                         className={cn(
@@ -255,7 +257,7 @@ export function Sidebar({
                           isCollapsed && "mx-auto"
                         )}
                       />
-                      {!isCollapsed && <span>{item.label}</span>}
+                      {!isCollapsed && <span>{t(item.labelKey)}</span>}
                     </Link>
                   </li>
                 );
@@ -285,7 +287,7 @@ export function Sidebar({
                             : "text-[#5F6368] dark:text-[#9AA0A6]"
                         )}
                       />
-                      {!isCollapsed && <span>AI Features</span>}
+                      {!isCollapsed && <span>{t("nav.aiFeatures")}</span>}
                     </div>
                     {!isCollapsed && (
                       <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -312,7 +314,7 @@ export function Sidebar({
                             )}
                             aria-label={item.ariaLabel}
                             aria-current={isActive ? "page" : undefined}
-                            title={isCollapsed ? item.label : undefined}
+                            title={isCollapsed ? t(item.labelKey) : undefined}
                           >
                             <Icon
                               className={cn(
@@ -322,7 +324,7 @@ export function Sidebar({
                             />
                             {!isCollapsed && (
                               <span className="flex items-center gap-2">
-                                {item.label}
+                                {t(item.labelKey)}
                                 {item.isPro && (
                                   <Badge
                                     variant="secondary"
@@ -361,7 +363,7 @@ export function Sidebar({
                 ) : (
                   <>
                     <ChevronLeft className="h-5 w-5 mr-2" />
-                    <span>Collapse</span>
+                    <span>{t("nav.collapse")}</span>
                   </>
                 )}
               </Button>

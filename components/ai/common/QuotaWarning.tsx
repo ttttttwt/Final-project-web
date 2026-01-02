@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock, Crown, Sparkles } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface QuotaWarningProps {
   used: number;
@@ -30,6 +31,7 @@ export function QuotaWarning({
   planType = 'FREE',
   className,
 }: QuotaWarningProps) {
+  const { t } = useTranslation();
   const percentage = Math.min((used / limit) * 100, 100);
   const isNearLimit = percentage >= 80;
   const isCritical = percentage >= 95;
@@ -41,8 +43,8 @@ export function QuotaWarning({
 
   const formatResetTime = () => {
     if (daysUntilReset !== undefined) {
-      if (daysUntilReset <= 1) return "tomorrow";
-      return `in ${daysUntilReset} days`;
+      if (daysUntilReset <= 1) return t("ai.common.tomorrow");
+      return t("ai.common.inDays", { count: daysUntilReset });
     }
 
     if (resetTime) {
@@ -51,9 +53,9 @@ export function QuotaWarning({
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-      if (days > 0) return `in ${days} days`;
-      if (hours > 0) return `in ${hours} hours`;
-      return "soon";
+      if (days > 0) return t("ai.common.inDays", { count: days });
+      if (hours > 0) return t("ai.common.inHours", { count: hours });
+      return t("ai.common.soon");
     }
 
     return "";
@@ -82,9 +84,11 @@ export function QuotaWarning({
           isCritical ? "text-orange-800 dark:text-orange-400" :
             "text-yellow-800 dark:text-yellow-400"
       )}>
-        {isAtLimit ? `${feature} Quota Exhausted` :
-          isCritical ? `${feature} Quota Critical` :
-            `${feature} Quota Warning`}
+        {isAtLimit
+          ? t("ai.common.quotaExhausted", { feature })
+          : isCritical
+            ? t("ai.common.quotaCritical", { feature })
+            : t("ai.common.quotaWarning", { feature })}
       </AlertTitle>
       <AlertDescription>
         <div className="space-y-3 mt-2">
@@ -95,8 +99,8 @@ export function QuotaWarning({
                 "text-yellow-700 dark:text-yellow-300"
           )}>
             {isAtLimit
-              ? `You've used all ${limit} ${feature} requests this month.`
-              : `You've used ${used} of ${limit} ${feature} requests this month (${Math.round(percentage)}%).`}
+              ? t("ai.common.quotaUsedAll", { limit, feature })
+              : t("ai.common.quotaUsedProgress", { used, limit, feature, percentage: Math.round(percentage) })}
           </p>
 
           <Progress
@@ -113,7 +117,7 @@ export function QuotaWarning({
             {resetText && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
-                <span>Resets {resetText}</span>
+                <span>{t("ai.common.resetsIn", { time: resetText })}</span>
               </div>
             )}
 
@@ -121,7 +125,7 @@ export function QuotaWarning({
               <Button asChild size="sm" variant="outline" className="gap-2 border-[#FFB300] text-[#5D4037] hover:bg-[#FFF8E1]">
                 <Link href="/subscription">
                   <Crown className="h-3.5 w-3.5" />
-                  Upgrade to Pro
+                  {t("ai.common.upgrade")}
                 </Link>
               </Button>
             )}

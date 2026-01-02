@@ -4,25 +4,26 @@ import { Component, ErrorInfo, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  AlertCircle, 
-  RefreshCw, 
-  Home, 
-  WifiOff, 
-  Clock, 
+import {
+  AlertCircle,
+  RefreshCw,
+  Home,
+  WifiOff,
+  Clock,
   ShieldAlert,
   HelpCircle,
   ExternalLink,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Error types for categorization
  */
-export type AiErrorType = 
-  | "network" 
-  | "timeout" 
-  | "rate_limit" 
-  | "server" 
+export type AiErrorType =
+  | "network"
+  | "timeout"
+  | "rate_limit"
+  | "server"
   | "auth"
   | "quota"
   | "unknown";
@@ -32,10 +33,10 @@ export type AiErrorType =
  */
 export function categorizeError(error: Error | null | undefined): AiErrorType {
   if (!error) return "unknown";
-  
+
   const message = error.message.toLowerCase();
   const name = error.name.toLowerCase();
-  
+
   // Network errors
   if (
     message.includes("network") ||
@@ -47,7 +48,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "network";
   }
-  
+
   // Timeout errors
   if (
     message.includes("timeout") ||
@@ -57,7 +58,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "timeout";
   }
-  
+
   // Rate limit errors
   if (
     message.includes("rate limit") ||
@@ -66,7 +67,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "rate_limit";
   }
-  
+
   // Quota errors
   if (
     message.includes("quota") ||
@@ -75,7 +76,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "quota";
   }
-  
+
   // Auth errors
   if (
     message.includes("unauthorized") ||
@@ -85,7 +86,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "auth";
   }
-  
+
   // Server errors
   if (
     message.includes("500") ||
@@ -96,7 +97,7 @@ export function categorizeError(error: Error | null | undefined): AiErrorType {
   ) {
     return "server";
   }
-  
+
   return "unknown";
 }
 
@@ -264,10 +265,74 @@ export function AiErrorCard({
   isRetrying = false,
   className,
 }: AiErrorCardProps) {
+  const { t } = useTranslation();
+
   // Determine error type and details
   const type = errorType || categorizeError(error);
-  const details = getErrorDetails(type);
-  
+
+  // Get translated error details
+  const getTranslatedDetails = () => {
+    switch (type) {
+      case "network":
+        return {
+          title: t("ai.common.connectionLost"),
+          message: t("ai.common.connectionLostDesc"),
+          icon: WifiOff,
+          canRetry: true,
+          helpText: t("ai.common.connectionLostHelp"),
+        };
+      case "timeout":
+        return {
+          title: t("ai.common.requestTimedOut"),
+          message: t("ai.common.requestTimedOutDesc"),
+          icon: Clock,
+          canRetry: true,
+          helpText: t("ai.common.requestTimedOutHelp"),
+        };
+      case "rate_limit":
+        return {
+          title: t("ai.common.tooManyRequests"),
+          message: t("ai.common.tooManyRequestsDesc"),
+          icon: ShieldAlert,
+          canRetry: true,
+          helpText: t("ai.common.tooManyRequestsHelp"),
+        };
+      case "quota":
+        return {
+          title: t("ai.common.dailyLimitReached"),
+          message: t("ai.common.dailyLimitReachedDesc"),
+          icon: AlertCircle,
+          canRetry: false,
+          helpText: t("ai.common.dailyLimitReachedHelp"),
+        };
+      case "auth":
+        return {
+          title: t("ai.common.authRequired"),
+          message: t("ai.common.authRequiredDesc"),
+          icon: ShieldAlert,
+          canRetry: false,
+          helpText: t("ai.common.authRequiredHelp"),
+        };
+      case "server":
+        return {
+          title: t("ai.common.serverError"),
+          message: t("ai.common.serverErrorDesc"),
+          icon: AlertCircle,
+          canRetry: true,
+          helpText: t("ai.common.serverErrorHelp"),
+        };
+      default:
+        return {
+          title: t("ai.common.somethingWentWrong"),
+          message: t("ai.common.somethingWentWrongDesc"),
+          icon: AlertCircle,
+          canRetry: true,
+        };
+    }
+  };
+
+  const details = getTranslatedDetails();
+
   const displayTitle = title || details.title;
   const displayMessage = message || error?.message || details.message;
   const Icon = details.icon;
@@ -275,7 +340,7 @@ export function AiErrorCard({
   const isExhausted = attemptNumber >= maxRetries;
 
   return (
-    <Card 
+    <Card
       className={cn("border-destructive/50", className)}
       role="alert"
       aria-live="assertive"
@@ -288,7 +353,7 @@ export function AiErrorCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-muted-foreground">{displayMessage}</p>
-        
+
         {details.helpText && (
           <p className="text-sm text-muted-foreground/80 flex items-start gap-2">
             <HelpCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -300,42 +365,42 @@ export function AiErrorCard({
         {retryCountdown > 0 && !isExhausted && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span>Retrying in {retryCountdown}s...</span>
+            <span>{t("ai.common.retryingIn", { seconds: retryCountdown })}</span>
           </div>
         )}
 
         {/* Retry attempts indicator */}
         {attemptNumber > 0 && (
           <p className="text-xs text-muted-foreground">
-            Attempt {attemptNumber} of {maxRetries}
+            {t("ai.common.attemptOf", { current: attemptNumber, total: maxRetries })}
           </p>
         )}
 
         {/* Exhausted state */}
         {isExhausted && (
           <div className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm">
-            <p className="font-medium">Maximum retry attempts reached</p>
-            <p className="text-xs mt-1">Please try again later or contact support if the problem persists.</p>
+            <p className="font-medium">{t("ai.common.maxRetriesReached")}</p>
+            <p className="text-xs mt-1">{t("ai.common.maxRetriesReachedDesc")}</p>
           </div>
         )}
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
         {showRetry && !isExhausted && (
-          <Button 
-            variant="default" 
-            size="sm" 
+          <Button
+            variant="default"
+            size="sm"
             onClick={onRetry}
             disabled={isRetrying || retryCountdown > 0}
           >
             {isRetrying ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Retrying...
+                {t("ai.common.retrying")}
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
+                {t("ai.common.tryAgain")}
               </>
             )}
           </Button>
@@ -343,18 +408,18 @@ export function AiErrorCard({
         {onReset && (
           <Button variant="outline" size="sm" onClick={onReset}>
             <Home className="w-4 h-4 mr-2" />
-            Go Back
+            {t("ai.common.goBack")}
           </Button>
         )}
         {isExhausted && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             asChild
           >
             <a href="mailto:support@lexia.app" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-4 h-4 mr-2" />
-              Contact Support
+              {t("ai.common.contactSupport")}
             </a>
           </Button>
         )}
@@ -409,6 +474,7 @@ export function NetworkOfflineBanner({
   className?: string;
   onRetry?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -420,8 +486,8 @@ export function NetworkOfflineBanner({
       aria-live="assertive"
     >
       <WifiOff className="w-5 h-5" />
-      <span className="font-medium">You're offline</span>
-      <span className="text-sm opacity-90">Check your internet connection</span>
+      <span className="font-medium">{t("ai.common.youreOffline")}</span>
+      <span className="text-sm opacity-90">{t("ai.common.checkConnection")}</span>
       {onRetry && (
         <Button
           variant="secondary"
@@ -430,7 +496,7 @@ export function NetworkOfflineBanner({
           className="ml-2"
         >
           <RefreshCw className="w-4 h-4 mr-1" />
-          Retry
+          {t("ai.common.retry")}
         </Button>
       )}
     </div>
@@ -445,6 +511,7 @@ export function NetworkReconnectedBanner({
 }: {
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -456,8 +523,8 @@ export function NetworkReconnectedBanner({
       aria-live="polite"
     >
       <WifiOff className="w-5 h-5" />
-      <span className="font-medium">Back online</span>
-      <span className="text-sm opacity-90">Connection restored</span>
+      <span className="font-medium">{t("ai.common.backOnline")}</span>
+      <span className="text-sm opacity-90">{t("ai.common.connectionRestored")}</span>
     </div>
   );
 }

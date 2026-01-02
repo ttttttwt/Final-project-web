@@ -53,11 +53,13 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Material Detail Page - View generated content
  */
 export default function MaterialDetailPage() {
+  const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -268,9 +270,9 @@ export default function MaterialDetailPage() {
 
     try {
       await scoreShadowing(materialId, sentenceId, audioBlob);
-      toast.success("Pronunciation assessed successfully!");
+      toast.success(t("customMaterials.pronunciationAssessed"));
     } catch (err) {
-      toast.error("Failed to assess pronunciation. Please try again.");
+      toast.error(t("customMaterials.assessmentFailed"));
     }
   };
 
@@ -308,7 +310,7 @@ export default function MaterialDetailPage() {
     onComplete: (status) => {
       if (status.status === "COMPLETED") {
         fetchMaterial(materialId);
-        toast.success("Material is ready!");
+        toast.success(t("customMaterials.materialReady"));
       }
     },
   });
@@ -339,12 +341,12 @@ export default function MaterialDetailPage() {
             <Card className="text-center py-12">
               <CardContent>
                 <p className="text-[#D32F2F] mb-4">
-                  {error || "Material not found"}
+                  {error || t("customMaterials.materialNotFound")}
                 </p>
                 <Button asChild>
                   <Link href="/custom-materials">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Library
+                    {t("customMaterials.backToLibrary")}
                   </Link>
                 </Button>
               </CardContent>
@@ -365,7 +367,7 @@ export default function MaterialDetailPage() {
               <Button variant="ghost" asChild>
                 <Link href="/custom-materials">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Library
+                  {t("customMaterials.backToLibrary")}
                 </Link>
               </Button>
             </div>
@@ -420,7 +422,7 @@ export default function MaterialDetailPage() {
             <Button variant="ghost" asChild className="mb-4">
               <Link href="/custom-materials">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Library
+                {t("customMaterials.backToLibrary")}
               </Link>
             </Button>
 
@@ -443,7 +445,7 @@ export default function MaterialDetailPage() {
                     onCheckedChange={setEditMode}
                   />
                   <Label htmlFor="edit-mode" className="text-sm font-medium cursor-pointer">
-                    Manage Content
+                    {t("customMaterials.manageContent")}
                   </Label>
                 </div>
               </div>
@@ -469,20 +471,20 @@ export default function MaterialDetailPage() {
                           {(currentMaterial.sourceType === "YOUTUBE" || currentMaterial.sourceType === "WEBSITE") && (
                             <ExternalLink className="h-5 w-5 text-[#9334EA]" />
                           )}
-                          <h3 className="text-lg font-semibold">Original Source</h3>
+                          <h3 className="text-lg font-semibold">{t("customMaterials.originalSource")}</h3>
                         </div>
                         <Badge variant="outline">{currentMaterial.sourceType}</Badge>
                       </div>
                       <p className="text-sm text-[#5F6368] dark:text-[#9AA0A6]">
                         {currentMaterial.sourceType === "TEXT"
-                          ? "View the original text content"
+                          ? t("customMaterials.viewOriginalText")
                           : currentMaterial.sourceType === "PDF"
-                            ? "PDF document preview"
+                            ? t("customMaterials.pdfPreview")
                             : currentMaterial.sourceType === "DOCX"
-                              ? "Word document - download to view"
+                              ? t("customMaterials.wordDownload")
                               : currentMaterial.sourceType === "IMAGE"
-                                ? "Image preview with zoom controls"
-                                : "External source link"
+                                ? t("customMaterials.imagePreview")
+                                : t("customMaterials.externalLink")
                         }
                       </p>
                     </CardHeader>
@@ -512,22 +514,22 @@ export default function MaterialDetailPage() {
                               {currentMaterial.sourceType === "IMAGE" && <ImageIcon className="h-8 w-8 text-green-500" />}
                             </div>
                             <h4 className="font-medium text-lg mb-1">
-                              {currentMaterial.sourceType === "PDF" && "PDF Document"}
-                              {currentMaterial.sourceType === "DOCX" && "Word Document"}
-                              {currentMaterial.sourceType === "IMAGE" && "Image File"}
+                              {currentMaterial.sourceType === "PDF" && t("customMaterials.pdfDocument")}
+                              {currentMaterial.sourceType === "DOCX" && t("customMaterials.wordDocument")}
+                              {currentMaterial.sourceType === "IMAGE" && t("customMaterials.imageFile")}
                             </h4>
                             <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
                               {currentMaterial.sourceType === "PDF"
-                                ? "Click to preview the PDF document in a viewer"
+                                ? t("customMaterials.clickToPreviewPdf")
                                 : currentMaterial.sourceType === "DOCX"
-                                  ? "DOCX files cannot be previewed in browser. Click to download."
-                                  : "Click to view the image with zoom controls"
+                                  ? t("customMaterials.docxCannotPreview")
+                                  : t("customMaterials.clickToViewImage")
                               }
                             </p>
                             <div className="flex gap-2">
                               <Button onClick={() => setIsPreviewOpen(true)} className="gap-2">
                                 <Eye className="h-4 w-4" />
-                                {currentMaterial.sourceType === "DOCX" ? "Download / View" : "Preview"}
+                                {currentMaterial.sourceType === "DOCX" ? t("customMaterials.downloadView") : t("customMaterials.preview")}
                               </Button>
                             </div>
                           </div>
@@ -540,12 +542,12 @@ export default function MaterialDetailPage() {
                             <ExternalLink className="h-8 w-8 text-purple-500" />
                           </div>
                           <h4 className="font-medium text-lg mb-1">
-                            {currentMaterial.sourceType === "YOUTUBE" ? "YouTube Video" : "Website"}
+                            {currentMaterial.sourceType === "YOUTUBE" ? t("customMaterials.youtubeVideo") : t("customMaterials.website")}
                           </h4>
                           <p className="text-sm text-muted-foreground mb-4 text-center max-w-md break-all">
                             {(() => {
                               const metadata = currentMaterial.inputMetadata as Record<string, unknown> | undefined;
-                              return metadata?.sourceUrl as string || currentMaterial.originalFileUrl || "No URL available";
+                              return metadata?.sourceUrl as string || currentMaterial.originalFileUrl || t("customMaterials.noUrlAvailable");
                             })()}
                           </p>
                           <Button
@@ -557,7 +559,7 @@ export default function MaterialDetailPage() {
                             className="gap-2"
                           >
                             <ExternalLink className="h-4 w-4" />
-                            Open in New Tab
+                            {t("customMaterials.openInNewTab")}
                           </Button>
                         </div>
                       )}
@@ -578,7 +580,7 @@ export default function MaterialDetailPage() {
                               <div className="flex items-start gap-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                                   <div className="space-y-2">
-                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Word</Label>
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.word")}</Label>
                                     <Input
                                       value={wordText}
                                       onChange={(e) => {
@@ -589,7 +591,7 @@ export default function MaterialDetailPage() {
                                     />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Part of Speech</Label>
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.partOfSpeech")}</Label>
                                     <Input
                                       value={item.partOfSpeech || ""}
                                       onChange={(e) => {
@@ -597,11 +599,11 @@ export default function MaterialDetailPage() {
                                         newVocab[index] = { ...newVocab[index], partOfSpeech: e.target.value };
                                         setLocalContent({ ...localContent, vocabulary: newVocab });
                                       }}
-                                      placeholder="e.g. noun, verb"
+                                      placeholder={t("customMaterials.posPlaceholder")}
                                     />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label className="text-xs uppercase font-bold text-muted-foreground">IPA</Label>
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.ipa")}</Label>
                                     <Input
                                       value={item.ipa || ""}
                                       onChange={(e) => {
@@ -609,7 +611,7 @@ export default function MaterialDetailPage() {
                                         newVocab[index] = { ...newVocab[index], ipa: e.target.value };
                                         setLocalContent({ ...localContent, vocabulary: newVocab });
                                       }}
-                                      placeholder="e.g. /wɜːrd/"
+                                      placeholder={t("customMaterials.ipaPlaceholder")}
                                     />
                                   </div>
                                 </div>
@@ -627,7 +629,7 @@ export default function MaterialDetailPage() {
                               </div>
 
                               <div className="space-y-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Definition</Label>
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.definition")}</Label>
                                 <Textarea
                                   value={item.definition || ""}
                                   onChange={(e) => {
@@ -640,7 +642,7 @@ export default function MaterialDetailPage() {
                               </div>
 
                               <div className="space-y-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Example Sentence</Label>
+                                <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.exampleSentence")}</Label>
                                 <Textarea
                                   value={item.example || ""}
                                   onChange={(e) => {
@@ -722,7 +724,7 @@ export default function MaterialDetailPage() {
                         }}
                       >
                         <Plus className="h-5 w-5" />
-                        Add Vocabulary Item
+                        {t("customMaterials.addVocabularyItem")}
                       </Button>
                     )}
                   </div>
@@ -743,18 +745,18 @@ export default function MaterialDetailPage() {
                           </div>
                           <div>
                             <h3 className="text-sm font-bold">
-                              {isQuizPracticeMode ? "Practice Mode" : "Review Mode"}
+                              {isQuizPracticeMode ? t("customMaterials.practiceMode") : t("customMaterials.reviewMode")}
                             </h3>
                             <p className="text-xs text-muted-foreground">
                               {isQuizPracticeMode
-                                ? "Hide answers and test your knowledge"
-                                : "View question and explanation directly"}
+                                ? t("customMaterials.hideAnswersTest")
+                                : t("customMaterials.viewDirectly")}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Label htmlFor="quiz-practice-mode" className="text-xs font-medium cursor-pointer">
-                            Practice
+                            {t("customMaterials.practice")}
                           </Label>
                           <Switch
                             id="quiz-practice-mode"
@@ -776,7 +778,7 @@ export default function MaterialDetailPage() {
                             <Card key={question.id || `quiz-edit-${idx}`} className="border-primary/20">
                               <CardHeader className="pb-2">
                                 <div className="flex items-center justify-between">
-                                  <CardTitle className="text-base">Question {idx + 1}</CardTitle>
+                                  <CardTitle className="text-base">{t("customMaterials.question")} {idx + 1}</CardTitle>
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -792,7 +794,7 @@ export default function MaterialDetailPage() {
                               </CardHeader>
                               <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Question Text</Label>
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.questionText")}</Label>
                                   <Textarea
                                     value={question.question || ""}
                                     onChange={(e) => {
@@ -805,7 +807,7 @@ export default function MaterialDetailPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Options</Label>
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.options")}</Label>
                                   <div className="space-y-2">
                                     {question.options?.map((option: string, optIdx: number) => (
                                       <div key={optIdx} className="flex items-center gap-2">
@@ -819,7 +821,7 @@ export default function MaterialDetailPage() {
                                             newQuiz[idx] = { ...newQuiz[idx], answer: option };
                                             setLocalContent({ ...localContent, quiz: newQuiz });
                                           }}
-                                          title="Mark as correct answer"
+                                          title={t("customMaterials.markAsCorrect")}
                                         >
                                           {optIdx + 1}
                                         </div>
@@ -862,13 +864,13 @@ export default function MaterialDetailPage() {
                                       }}
                                     >
                                       <Plus className="h-3 w-3 mr-1" />
-                                      Add Option
+                                      {t("customMaterials.addOption")}
                                     </Button>
                                   </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                  <Label className="text-xs uppercase font-bold text-muted-foreground">Explanation</Label>
+                                  <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.explanation")}</Label>
                                   <Textarea
                                     value={question.explanation || ""}
                                     onChange={(e) => {
@@ -877,7 +879,7 @@ export default function MaterialDetailPage() {
                                       setLocalContent({ ...localContent, quiz: newQuiz });
                                     }}
                                     rows={2}
-                                    placeholder="Explain why the answer is correct..."
+                                    placeholder={t("customMaterials.explanationPlaceholder")}
                                   />
                                 </div>
                               </CardContent>
@@ -889,7 +891,7 @@ export default function MaterialDetailPage() {
                           <Card key={question.id || `quiz-${idx}`}>
                             <CardHeader>
                               <CardTitle className="text-base">
-                                Question {idx + 1}
+                                {t("customMaterials.question")} {idx + 1}
                               </CardTitle>
                               <CardDescription>{question.question}</CardDescription>
                             </CardHeader>
@@ -927,7 +929,7 @@ export default function MaterialDetailPage() {
                               {question.explanation && (
                                 <div className="mt-4 p-3 rounded-lg bg-[#E3F2FD] dark:bg-[#4285F4]/10">
                                   <p className="text-sm text-[#1565C0] dark:text-[#90CAF9]">
-                                    <strong>Explanation:</strong> {question.explanation}
+                                    <strong>{t("customMaterials.explanation")}:</strong> {question.explanation}
                                   </p>
                                 </div>
                               )}
@@ -954,7 +956,7 @@ export default function MaterialDetailPage() {
                         }}
                       >
                         <Plus className="h-5 w-5" />
-                        Add Quiz Question
+                        {t("customMaterials.addQuizQuestion")}
                       </Button>
                     )}
                   </div>
@@ -967,7 +969,7 @@ export default function MaterialDetailPage() {
                       <CardContent className="pt-6">
                         {isEditMode ? (
                           <div className="space-y-2">
-                            <Label className="text-xs uppercase font-bold text-muted-foreground">Summary Content</Label>
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.summaryContent")}</Label>
                             <Textarea
                               value={localContent.summary || ""}
                               onChange={(e) => setLocalContent({ ...localContent, summary: e.target.value })}
@@ -994,7 +996,7 @@ export default function MaterialDetailPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <MessageSquare className="h-5 w-5 text-[#4285F4]" />
-                          <h3 className="text-lg font-semibold">Role-Play Scenario</h3>
+                          <h3 className="text-lg font-semibold">{t("customMaterials.roleplayScenario")}</h3>
                         </div>
                       </div>
                     </CardHeader>
@@ -1002,7 +1004,7 @@ export default function MaterialDetailPage() {
                       {isEditMode ? (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-xs uppercase font-bold text-muted-foreground">Scenario</Label>
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.scenario")}</Label>
                             <Textarea
                               value={localContent.roleplay?.scenario || localContent.rolePlay?.scenario || ""}
                               onChange={(e) => {
@@ -1018,7 +1020,7 @@ export default function MaterialDetailPage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label className="text-xs uppercase font-bold text-muted-foreground">Your Role</Label>
+                              <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.yourRole")}</Label>
                               <Input
                                 value={localContent.roleplay?.yourRole || localContent.rolePlay?.yourRole || ""}
                                 onChange={(e) => {
@@ -1031,7 +1033,7 @@ export default function MaterialDetailPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-xs uppercase font-bold text-muted-foreground">AI Role</Label>
+                              <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.aiRole")}</Label>
                               <Input
                                 value={localContent.roleplay?.aiRole || localContent.rolePlay?.aiRole || ""}
                                 onChange={(e) => {
@@ -1046,7 +1048,7 @@ export default function MaterialDetailPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-xs uppercase font-bold text-muted-foreground">Objectives</Label>
+                            <Label className="text-xs uppercase font-bold text-muted-foreground">{t("customMaterials.objectives")}</Label>
                             <div className="space-y-2">
                               {(localContent.roleplay?.objectives || localContent.rolePlay?.objectives || [])?.map((obj: string, i: number) => (
                                 <div key={i} className="flex items-center gap-2">
@@ -1094,7 +1096,7 @@ export default function MaterialDetailPage() {
                                 }}
                               >
                                 <Plus className="h-4 w-4 mr-1" />
-                                Add Objective
+                                {t("customMaterials.addObjective")}
                               </Button>
                             </div>
                           </div>
@@ -1102,7 +1104,7 @@ export default function MaterialDetailPage() {
                       ) : (
                         <>
                           <div className="space-y-2">
-                            <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Scenario</h4>
+                            <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">{t("customMaterials.scenario")}</h4>
                             <p className="text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
                               {content?.roleplay?.scenario || content?.rolePlay?.scenario}
                             </p>
@@ -1110,11 +1112,11 @@ export default function MaterialDetailPage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Role</span>
+                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("customMaterials.yourRole")}</span>
                               <p className="font-semibold text-lg mt-1">{content?.roleplay?.yourRole || content?.rolePlay?.yourRole}</p>
                             </div>
                             <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AI Role</span>
+                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("customMaterials.aiRole")}</span>
                               <p className="font-semibold text-lg mt-1">{content?.roleplay?.aiRole || content?.rolePlay?.aiRole}</p>
                             </div>
                           </div>
@@ -1122,7 +1124,7 @@ export default function MaterialDetailPage() {
                           {((content?.roleplay?.objectives && content.roleplay.objectives.length > 0) ||
                             (content?.rolePlay?.objectives && content.rolePlay.objectives.length > 0)) && (
                               <div className="space-y-2">
-                                <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">Objectives</h4>
+                                <h4 className="font-medium text-[#202124] dark:text-[#E8EAED]">{t("customMaterials.objectives")}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-[#5F6368] dark:text-[#9AA0A6]">
                                   {(content?.roleplay?.objectives || content?.rolePlay?.objectives)?.map((obj: string, i: number) => (
                                     <li key={i}>{obj}</li>
@@ -1134,7 +1136,7 @@ export default function MaterialDetailPage() {
                           <Button asChild className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20">
                             <Link href={`/custom-materials/${materialId}/chat`}>
                               <MessageSquare className="h-5 w-5 mr-2" />
-                              Start Practice Session
+                              {t("customMaterials.startPracticeSession")}
                             </Link>
                           </Button>
                         </>

@@ -6,6 +6,7 @@ import { MaterialCard } from "./MaterialCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FolderOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface MaterialsGridProps {
   materials: MaterialListItem[];
@@ -28,15 +29,17 @@ export function MaterialsGrid({
   onChat,
   onDelete,
   onCreateNew,
-  emptyMessage = "No materials found",
+  emptyMessage,
   className,
 }: MaterialsGridProps) {
+  const { t } = useTranslation();
+  const displayEmptyMessage = emptyMessage || t("customMaterials.noMaterialsFound");
   // Loading state
   if (isLoading) {
     return (
       <div
         className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4",
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch",
           className
         )}
       >
@@ -72,15 +75,15 @@ export function MaterialsGrid({
           <FolderOpen className="h-8 w-8 text-[#9AA0A6]" />
         </div>
         <p className="text-[#5F6368] dark:text-[#9AA0A6] font-medium mb-2">
-          {emptyMessage}
+          {displayEmptyMessage}
         </p>
         <p className="text-sm text-[#9AA0A6] max-w-sm mb-4">
-          Upload documents, videos, or paste text to create personalized learning materials.
+          {t("customMaterials.emptyStateDescription")}
         </p>
         {onCreateNew && (
           <Button onClick={onCreateNew} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Your First Material
+            {t("customMaterials.createFirstMaterial")}
           </Button>
         )}
       </div>
@@ -91,7 +94,7 @@ export function MaterialsGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4",
+        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch",
         className
       )}
     >

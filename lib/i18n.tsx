@@ -51,7 +51,8 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
 
 /**
  * Interpolate variables in translation string
- * e.g., "Hello, {name}!" with {name: "John"} => "Hello, John!"
+ * Supports both {name} and {{name}} syntax for compatibility
+ * e.g., "Hello, {{name}}!" with {name: "John"} => "Hello, John!"
  */
 function interpolate(
     text: string,
@@ -59,9 +60,14 @@ function interpolate(
 ): string {
     if (!params) return text;
 
-    return text.replace(/\{(\w+)\}/g, (match, key) => {
-        return params[key] !== undefined ? String(params[key]) : match;
-    });
+    // Support both {{variable}} and {variable} syntax
+    return text
+        .replace(/\{\{(\w+)\}\}/g, (match, key) => {
+            return params[key] !== undefined ? String(params[key]) : match;
+        })
+        .replace(/\{(\w+)\}/g, (match, key) => {
+            return params[key] !== undefined ? String(params[key]) : match;
+        });
 }
 
 interface I18nProviderProps {

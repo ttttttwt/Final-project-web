@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { QuotaInfo } from "@/types/custom-materials";
 import { AlertTriangle, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "@/lib/i18n";
 
 interface QuotaDisplayProps {
   quota: QuotaInfo | null;
@@ -19,6 +20,7 @@ export function QuotaDisplay({
   isLoading,
   className,
 }: QuotaDisplayProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div
@@ -49,8 +51,8 @@ export function QuotaDisplay({
         isExhausted
           ? "bg-[#FFEBEE] dark:bg-[#D32F2F]/10 border-[#FFCDD2] dark:border-[#D32F2F]/30"
           : isLow
-          ? "bg-[#FFF8E1] dark:bg-[#F57F17]/10 border-[#FFE082] dark:border-[#F57F17]/30"
-          : "bg-[#F5F5F5] dark:bg-[#2E2E2E] border-[#E0E0E0] dark:border-[#2E2E2E]",
+            ? "bg-[#FFF8E1] dark:bg-[#F57F17]/10 border-[#FFE082] dark:border-[#F57F17]/30"
+            : "bg-[#F5F5F5] dark:bg-[#2E2E2E] border-[#E0E0E0] dark:border-[#2E2E2E]",
         className
       )}
     >
@@ -69,7 +71,7 @@ export function QuotaDisplay({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-[#202124] dark:text-[#E8EAED]">
-              Daily Quota
+              {t("customMaterials.monthlyQuota")}
             </span>
             <span
               className={cn(
@@ -77,11 +79,11 @@ export function QuotaDisplay({
                 isExhausted
                   ? "text-[#D32F2F]"
                   : isLow
-                  ? "text-[#F57F17]"
-                  : "text-[#5F6368] dark:text-[#9AA0A6]"
+                    ? "text-[#F57F17]"
+                    : "text-[#5F6368] dark:text-[#9AA0A6]"
               )}
             >
-              {quota.remaining} / {quota.limit} remaining
+              {quota.remaining} / {quota.limit} {t("customMaterials.remaining")}
             </span>
           </div>
 
@@ -96,7 +98,7 @@ export function QuotaDisplay({
 
           {isExhausted && (
             <p className="mt-2 text-xs text-[#D32F2F]">
-              You&apos;ve reached your daily limit. Resets at midnight.
+              {t("customMaterials.quotaExhausted")}
             </p>
           )}
         </div>

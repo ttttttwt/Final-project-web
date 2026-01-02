@@ -27,6 +27,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAiQuota } from "@/hooks/useAiQuota";
 import { QuotaIndicator, QuotaWarning } from "./QuotaWarning";
 import { NetworkOfflineBanner, NetworkReconnectedBanner } from "./AiErrorBoundary";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * AI Header Component
@@ -44,28 +45,28 @@ import { NetworkOfflineBanner, NetworkReconnectedBanner } from "./AiErrorBoundar
 
 interface AiFeatureItem {
   href: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const aiFeatures: AiFeatureItem[] = [
+const aiFeatureKeys: AiFeatureItem[] = [
   {
     href: "/ai/flashcards",
-    label: "AI Flashcards",
-    description: "Study vocabulary with spaced repetition",
+    labelKey: "ai.common.aiFlashcards",
+    descKey: "ai.common.aiFlashcardsDesc",
     icon: CreditCard,
   },
   {
     href: "/ai/grammar",
-    label: "AI Grammar",
-    description: "Practice grammar with AI exercises",
+    labelKey: "ai.common.aiGrammar",
+    descKey: "ai.common.aiGrammarDesc",
     icon: BookText,
   },
   {
     href: "/ai/roleplay",
-    label: "AI Roleplay",
-    description: "Practice conversations in scenarios",
+    labelKey: "ai.common.aiRoleplay",
+    descKey: "ai.common.aiRoleplayDesc",
     icon: MessageSquare,
   },
 ];
@@ -88,13 +89,23 @@ interface AiHeaderProps {
 export function AiHeader({
   title,
   backHref,
-  backLabel = "Back",
+  backLabel,
   showBackButton = true,
   className,
   actions,
 }: AiHeaderProps) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Translate feature items
+  const aiFeatures = React.useMemo(() =>
+    aiFeatureKeys.map(f => ({
+      ...f,
+      label: t(f.labelKey),
+      description: t(f.descKey),
+    })),
+    [t]);
 
   // Determine the back URL based on current path
   const getBackUrl = () => {
@@ -121,7 +132,8 @@ export function AiHeader({
   };
 
   const currentFeature = getCurrentFeature();
-  const displayTitle = title || currentFeature?.label || "AI Features";
+  const displayTitle = title || currentFeature?.label || t("ai.common.aiFeatures");
+  const displayBackLabel = backLabel || t("common.back");
 
   const handleBack = () => {
     router.push(getBackUrl());
@@ -149,10 +161,10 @@ export function AiHeader({
               size="sm"
               onClick={handleBack}
               className="gap-2 text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#202124] dark:hover:text-[#E8EAED] -ml-2"
-              aria-label={`Go back to ${backLabel}`}
+              aria-label={`${t("common.goBackTo")} ${displayBackLabel}`}
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{backLabel}</span>
+              <span className="hidden sm:inline">{displayBackLabel}</span>
             </Button>
           )}
 
@@ -184,14 +196,14 @@ export function AiHeader({
                 )}
               >
                 <Sparkles className="h-4 w-4 text-[#FFB300] dark:text-[#FDD663]" />
-                <span className="hidden sm:inline">AI Features</span>
+                <span className="hidden sm:inline">{t("ai.common.aiFeatures")}</span>
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#FFB300] dark:text-[#FDD663]" />
-                AI Features
+                {t("ai.common.aiFeatures")}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
@@ -241,7 +253,7 @@ export function AiHeader({
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href="/dashboard" className="flex items-center gap-3">
                   <Home className="h-5 w-5 text-[#5F6368] dark:text-[#9AA0A6]" />
-                  <span>Back to Dashboard</span>
+                  <span>{t("ai.common.backToDashboardFull")}</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

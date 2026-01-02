@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Save, Sparkles, Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "@/lib/i18n";
 
 const manualFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -47,6 +48,7 @@ const aiFormSchema = z.object({
 });
 
 export default function CreateDeckPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("ai");
@@ -81,12 +83,12 @@ export default function CreateDeckPage() {
         sourceType: "USER_CREATED",
         cards: [],
       });
-      
-      toast.success("Deck created successfully");
+
+      toast.success(t("ai.flashcards.deckCreatedSuccess"));
       router.push(`/ai/flashcards/${deck.id}/edit`);
     } catch (error: any) {
-      toast.error("Failed to create deck", {
-        description: error.response?.data?.message || "Something went wrong",
+      toast.error(t("ai.flashcards.failedToCreateDeck"), {
+        description: error.response?.data?.message || t("common.error"),
       });
     } finally {
       setIsSubmitting(false);
@@ -103,14 +105,14 @@ export default function CreateDeckPage() {
         cefrLevel: values.cefrLevel,
         cardCount: values.cardCount,
       });
-      
-      toast.success(`Generated ${deck.cardCount} flashcards!`, {
-        description: `Deck "${deck.title}" is ready for study.`,
+
+      toast.success(t("ai.flashcards.generatedCards", { count: deck.cardCount }), {
+        description: t("ai.flashcards.deckReadyToStudy", { title: deck.title }),
       });
       router.push(`/ai/flashcards/${deck.id}`);
     } catch (error: any) {
-      toast.error("Failed to generate flashcards", {
-        description: error.response?.data?.message || "AI generation failed. Please try again.",
+      toast.error(t("ai.flashcards.failedToGenerate"), {
+        description: error.response?.data?.message || t("ai.flashcards.aiGenerationFailed"),
       });
     } finally {
       setIsSubmitting(false);
@@ -119,9 +121,9 @@ export default function CreateDeckPage() {
 
   return (
     <AiPageWrapper
-      title="Create Flashcard Deck"
+      title={t("ai.flashcards.createFlashcardDeck")}
       backHref="/ai/flashcards"
-      backLabel="Back to Decks"
+      backLabel={t("ai.flashcards.backToDecks")}
       feature="flashcards"
       showQuota={true}
     >
@@ -130,11 +132,11 @@ export default function CreateDeckPage() {
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="ai" className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
-              Generate with AI
+              {t("ai.flashcards.generateWithAI")}
             </TabsTrigger>
             <TabsTrigger value="manual" className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              Create Empty Deck
+              {t("ai.flashcards.createEmptyDeck")}
             </TabsTrigger>
           </TabsList>
 
@@ -144,10 +146,10 @@ export default function CreateDeckPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
-                  AI-Powered Generation
+                  {t("ai.flashcards.aiPoweredGeneration")}
                 </CardTitle>
                 <CardDescription>
-                  Enter a topic and let AI generate vocabulary flashcards for you.
+                  {t("ai.flashcards.aiGenerationDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -160,13 +162,13 @@ export default function CreateDeckPage() {
                         <FormItem>
                           <FormLabel>Topic *</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="e.g., Business negotiations, Travel vocabulary, Medical terminology" 
-                              {...field} 
+                            <Input
+                              placeholder={t("ai.flashcards.topicPlaceholder")}
+                              {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Describe the topic you want to learn vocabulary for.
+                            {t("ai.flashcards.topicDesc")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -179,11 +181,11 @@ export default function CreateDeckPage() {
                         name="cefrLevel"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CEFR Level</FormLabel>
+                            <FormLabel>{t("ai.flashcards.cefrLevel")}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select level" />
+                                  <SelectValue placeholder={t("ai.flashcards.selectLevel")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -204,9 +206,9 @@ export default function CreateDeckPage() {
                         name="cardCount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Number of Cards</FormLabel>
-                            <Select 
-                              onValueChange={(v) => field.onChange(parseInt(v))} 
+                            <FormLabel>{t("ai.flashcards.numberOfCards")}</FormLabel>
+                            <Select
+                              onValueChange={(v) => field.onChange(parseInt(v))}
                               defaultValue={field.value?.toString()}
                             >
                               <FormControl>
@@ -217,7 +219,7 @@ export default function CreateDeckPage() {
                               <SelectContent>
                                 {[5, 10, 15, 20, 25, 30, 40, 50].map((count) => (
                                   <SelectItem key={count} value={count.toString()}>
-                                    {count} cards
+                                    {count} {t("ai.flashcards.cards")}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -233,11 +235,11 @@ export default function CreateDeckPage() {
                       name="customTitle"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Custom Title (Optional)</FormLabel>
+                          <FormLabel>{t("ai.flashcards.customTitleOptional")}</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="Leave empty to auto-generate from topic" 
-                              {...field} 
+                            <Input
+                              placeholder={t("ai.flashcards.autoGenerateTitle")}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -250,12 +252,12 @@ export default function CreateDeckPage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormLabel>{t("ai.flashcards.descriptionOptional")}</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Additional context about this deck..." 
-                              className="resize-none" 
-                              {...field} 
+                            <Textarea
+                              placeholder={t("ai.flashcards.descriptionPlaceholder")}
+                              className="resize-none"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -266,23 +268,23 @@ export default function CreateDeckPage() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        AI generation uses your daily quota. Each generation creates one deck.
+                        {t("ai.flashcards.quotaNote")}
                       </AlertDescription>
                     </Alert>
 
                     <div className="flex justify-end gap-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => router.back()}
                         disabled={isSubmitting}
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </Button>
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generate Flashcards
+                        {t("ai.flashcards.generateFlashcards")}
                       </Button>
                     </div>
                   </form>
@@ -295,9 +297,9 @@ export default function CreateDeckPage() {
           <TabsContent value="manual">
             <Card>
               <CardHeader>
-                <CardTitle>Create Empty Deck</CardTitle>
+                <CardTitle>{t("ai.flashcards.emptyDeckTitle")}</CardTitle>
                 <CardDescription>
-                  Create a new empty deck and add cards manually.
+                  {t("ai.flashcards.emptyDeckDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -310,7 +312,7 @@ export default function CreateDeckPage() {
                         <FormItem>
                           <FormLabel>Title *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Business Vocabulary" {...field} />
+                            <Input placeholder={t("ai.flashcards.titlePlaceholder")} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -322,12 +324,12 @@ export default function CreateDeckPage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormLabel>{t("ai.flashcards.descriptionOptional")}</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="What is this deck about?" 
-                              className="resize-none" 
-                              {...field} 
+                            <Textarea
+                              placeholder={t("ai.flashcards.deckDescPlaceholder")}
+                              className="resize-none"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -340,11 +342,11 @@ export default function CreateDeckPage() {
                       name="cefrLevel"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Target CEFR Level</FormLabel>
+                          <FormLabel>{t("ai.flashcards.targetCefrLevel")}</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a level" />
+                                <SelectValue placeholder={t("ai.flashcards.selectLevel")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -361,18 +363,18 @@ export default function CreateDeckPage() {
                     />
 
                     <div className="flex justify-end gap-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => router.back()}
                         disabled={isSubmitting}
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </Button>
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <Save className="mr-2 h-4 w-4" />
-                        Create Deck
+                        {t("ai.flashcards.createDeck")}
                       </Button>
                     </div>
                   </form>

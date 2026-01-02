@@ -57,6 +57,7 @@ import {
   Undo,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 interface StudyPageProps {
   params: Promise<{ id: string }>;
@@ -74,6 +75,7 @@ interface ReviewAction {
  */
 export default function StudyPage({ params }: StudyPageProps) {
   const { id } = use(params);
+  const { t } = useTranslation();
   const router = useRouter();
   const sessionStartRef = useRef<Date>(new Date());
 
@@ -196,7 +198,7 @@ export default function StudyPage({ params }: StudyPageProps) {
       setIncorrectCount((c) => Math.max(0, c - 1));
     }
 
-    toast.success("Undone", { description: "Reverted last card review" });
+    toast.success(t("ai.flashcards.undone"), { description: t("ai.flashcards.revertedReview") });
   }, [reviewHistory, currentIndex]);
 
   // Exit handler
@@ -223,15 +225,15 @@ export default function StudyPage({ params }: StudyPageProps) {
         reviews,
         sessionTimeMs: Date.now() - sessionStartRef.current.getTime(),
       });
-      toast.success("Progress saved!", {
-        description: `${reviews.length} cards reviewed`,
+      toast.success(t("ai.flashcards.progressSaved"), {
+        description: t("ai.flashcards.cardsReviewed", { count: reviews.length }),
       });
       if (navigateAfter) {
         router.push(`/ai/flashcards/${id}`);
       }
     } catch (err: any) {
-      toast.error("Failed to save progress", {
-        description: "Your progress may not be saved.",
+      toast.error(t("ai.flashcards.failedToSaveProgress"), {
+        description: t("ai.flashcards.progressMayNotSave"),
       });
     } finally {
       setIsSubmitting(false);
@@ -252,14 +254,14 @@ export default function StudyPage({ params }: StudyPageProps) {
   if (isLoading) {
     return (
       <AiPageWrapper
-        title="Study Session"
+        title={t("ai.flashcards.studySession")}
         backHref={`/ai/flashcards/${id}`}
-        backLabel="Deck"
+        backLabel={t("ai.flashcards.backToDeck")}
       >
         <div className="flex items-center justify-center py-12">
           <AiLoadingState
             variant="studying"
-            message="Preparing your study session..."
+            message={t("ai.flashcards.preparingSession")}
           />
         </div>
       </AiPageWrapper>
@@ -270,13 +272,13 @@ export default function StudyPage({ params }: StudyPageProps) {
   if (error || !deck || !session) {
     return (
       <AiPageWrapper
-        title="Study Session"
+        title={t("ai.flashcards.studySession")}
         backHref="/ai/flashcards"
-        backLabel="Flashcards"
+        backLabel={t("ai.flashcards.title")}
       >
         <AiErrorCard
-          title="Failed to load study session"
-          message={error || "Session not found"}
+          title={t("ai.flashcards.failedToLoadSession")}
+          message={error || t("ai.flashcards.sessionNotFound")}
           onRetry={loadSession}
           onReset={() => router.push(`/ai/flashcards/${id}`)}
         />
@@ -288,21 +290,21 @@ export default function StudyPage({ params }: StudyPageProps) {
   if (totalCards === 0) {
     return (
       <AiPageWrapper
-        title="Study Session"
+        title={t("ai.flashcards.studySession")}
         backHref={`/ai/flashcards/${id}`}
-        backLabel="Deck"
+        backLabel={t("ai.flashcards.backToDeck")}
       >
         <Card className="p-8">
           <CardContent className="flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
               <Trophy className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("ai.flashcards.allCaughtUpNoDue")}</h3>
             <p className="text-muted-foreground mb-4">
-              No cards are due for review right now. Check back later!
+              {t("ai.flashcards.noCardsDueNow")}
             </p>
             <Button onClick={() => router.push(`/ai/flashcards/${id}`)}>
-              Back to Deck
+              {t("ai.flashcards.backToDeck")}
             </Button>
           </CardContent>
         </Card>
@@ -318,7 +320,7 @@ export default function StudyPage({ params }: StudyPageProps) {
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={handleExit}>
               <X className="w-4 h-4 mr-2" />
-              Exit
+              {t("ai.flashcards.exit")}
             </Button>
 
             <div className="flex-1 mx-4">
@@ -344,15 +346,15 @@ export default function StudyPage({ params }: StudyPageProps) {
               </Button>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Keyboard shortcuts">
+                  <Button variant="ghost" size="icon" aria-label={t("ai.flashcards.keyboardShortcuts")}>
                     <Keyboard className="w-4 h-4" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent>
                   <SheetHeader>
-                    <SheetTitle>Keyboard Shortcuts</SheetTitle>
+                    <SheetTitle>{t("ai.flashcards.keyboardShortcuts")}</SheetTitle>
                     <SheetDescription>
-                      Use these shortcuts for faster studying
+                      {t("ai.flashcards.shortcutsDesc")}
                     </SheetDescription>
                   </SheetHeader>
                   <div className="mt-6">
@@ -374,7 +376,7 @@ export default function StudyPage({ params }: StudyPageProps) {
               <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
                 <Trophy className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-              <CardTitle>Session Complete!</CardTitle>
+              <CardTitle>{t("ai.flashcards.sessionCompleteTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4 text-center">
@@ -382,19 +384,19 @@ export default function StudyPage({ params }: StudyPageProps) {
                   <div className="text-2xl font-bold text-green-600">
                     {correctCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">Correct</div>
+                  <div className="text-sm text-muted-foreground">{t("ai.flashcards.correct")}</div>
                 </div>
                 <div className="p-4 rounded-lg bg-muted">
                   <div className="text-2xl font-bold text-destructive">
                     {incorrectCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">Need Review</div>
+                  <div className="text-sm text-muted-foreground">{t("ai.flashcards.needReview")}</div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Accuracy</span>
+                  <span className="text-muted-foreground">{t("ai.flashcards.accuracy")}</span>
                   <span className="font-medium">
                     {totalCards > 0
                       ? Math.round((correctCount / totalCards) * 100)
@@ -415,14 +417,14 @@ export default function StudyPage({ params }: StudyPageProps) {
                   onClick={() => router.push(`/ai/flashcards/${id}`)}
                   disabled={isSubmitting}
                 >
-                  Back to Deck
+                  {t("ai.flashcards.backToDeck")}
                 </Button>
                 <Button
                   className="flex-1"
                   onClick={() => submitReviews(true)}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Saving..." : "Save & Exit"}
+                  {isSubmitting ? t("ai.flashcards.saving") : t("ai.flashcards.saveAndExit")}
                 </Button>
               </div>
             </CardContent>
@@ -451,7 +453,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 onClick={handleSwipeLeft}
               >
                 <X className="w-5 h-5 mr-2" />
-                Don't Know
+                {t("ai.flashcards.dontKnow")}
               </Button>
               <Button
                 variant="outline"
@@ -468,7 +470,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 onClick={handleSwipeRight}
               >
                 <Check className="w-5 h-5 mr-2" />
-                Know
+                {t("ai.flashcards.know")}
               </Button>
             </div>
 
@@ -478,8 +480,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 <MasteryIndicator level={currentProgress.masteryLevel} size="sm" />
                 <span>•</span>
                 <span>
-                  Reviewed {currentProgress.reviewCount} time
-                  {currentProgress.reviewCount !== 1 ? "s" : ""}
+                  {t("ai.flashcards.reviewed")} {currentProgress.reviewCount} {t("ai.flashcards.times")}
                 </span>
               </div>
             )}
@@ -491,10 +492,9 @@ export default function StudyPage({ params }: StudyPageProps) {
       <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Exit Study Session?</DialogTitle>
+            <DialogTitle>{t("ai.flashcards.exitStudySession")}</DialogTitle>
             <DialogDescription>
-              You've reviewed {reviews.length} card{reviews.length !== 1 ? "s" : ""}.
-              Would you like to save your progress before exiting?
+              {t("ai.flashcards.exitConfirmDesc", { count: reviews.length })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:gap-0">
@@ -502,7 +502,7 @@ export default function StudyPage({ params }: StudyPageProps) {
               variant="outline"
               onClick={() => router.push(`/ai/flashcards/${id}`)}
             >
-              Exit Without Saving
+              {t("ai.flashcards.exitWithoutSaving")}
             </Button>
             <Button
               onClick={() => {
@@ -511,7 +511,7 @@ export default function StudyPage({ params }: StudyPageProps) {
               }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save & Exit"}
+              {isSubmitting ? t("ai.flashcards.saving") : t("ai.flashcards.saveAndExit")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -523,22 +523,21 @@ export default function StudyPage({ params }: StudyPageProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Great job!
+              {t("ai.flashcards.greatJob")}
             </DialogTitle>
             <DialogDescription>
-              You've completed this study session. Your progress will be saved
-              automatically.
+              {t("ai.flashcards.completedSessionDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30">
                 <div className="text-xl font-bold text-green-600">{correctCount}</div>
-                <div className="text-xs text-muted-foreground">Correct</div>
+                <div className="text-xs text-muted-foreground">{t("ai.flashcards.correct")}</div>
               </div>
               <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30">
                 <div className="text-xl font-bold text-destructive">{incorrectCount}</div>
-                <div className="text-xs text-muted-foreground">Need Review</div>
+                <div className="text-xs text-muted-foreground">{t("ai.flashcards.needReview")}</div>
               </div>
             </div>
           </div>
@@ -551,7 +550,7 @@ export default function StudyPage({ params }: StudyPageProps) {
               disabled={isSubmitting}
               className="w-full"
             >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
+              {isSubmitting ? t("ai.flashcards.saving") : t("ai.flashcards.saveAndContinue")}
             </Button>
           </DialogFooter>
         </DialogContent>

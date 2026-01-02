@@ -24,12 +24,14 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Flashcard Decks List Page
  * Shows all user's flashcard decks with study options.
  */
 export default function FlashcardsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -55,9 +57,9 @@ export default function FlashcardsPage() {
       setDecks(decksResponse.content || []);
       setTotalDue(dueResponse.totalDueCards || 0);
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to load flashcard decks";
+      const message = err.response?.data?.message || t("ai.flashcards.failedToLoad");
       setError(message);
-      toast.error("Error", { description: message });
+      toast.error(t("common.error"), { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -96,22 +98,22 @@ export default function FlashcardsPage() {
       {totalDue > 0 && (
         <Badge variant="default" className="text-sm py-1 px-3 hidden sm:flex">
           <Clock className="w-4 h-4 mr-1" />
-          {totalDue} cards due
+          {totalDue} {t("ai.flashcards.cardsDue")}
         </Badge>
       )}
       <Button onClick={handleCreateDeck} size="sm">
         <Plus className="w-4 h-4 mr-2" />
-        <span className="hidden sm:inline">Create Deck</span>
-        <span className="sm:hidden">Create</span>
+        <span className="hidden sm:inline">{t("ai.flashcards.createDeck")}</span>
+        <span className="sm:hidden">{t("ai.flashcards.create")}</span>
       </Button>
     </div>
   );
 
   return (
     <AiPageWrapper
-      title="AI Flashcards"
+      title={t("ai.flashcards.title")}
       backHref="/dashboard"
-      backLabel="Dashboard"
+      backLabel={t("ai.common.backToDashboard")}
       headerActions={headerActions}
       feature="flashcards"
       showQuota={true}
@@ -121,7 +123,7 @@ export default function FlashcardsPage() {
       {/* Page Description */}
       <div className="mb-4">
         <p className="text-muted-foreground">
-          Study vocabulary with spaced repetition
+          {t("ai.flashcards.description")}
         </p>
       </div>
 
@@ -134,19 +136,16 @@ export default function FlashcardsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-base">Ready to study?</h3>
+                <h3 className="font-semibold text-base">{t("ai.flashcards.readyToStudy")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  You have <strong>{totalDue}</strong> cards due across{" "}
-                  <strong>{dueDecks.length}</strong> deck
-                  {dueDecks.length !== 1 ? "s" : ""}.
+                  {t("ai.flashcards.cardsDueAcross", { count: totalDue, decks: dueDecks.length })}
                 </p>
               </div>
             </div>
             <Button
               onClick={() => {
-                // Guard against empty array
                 if (dueDecks.length === 0) {
-                  toast.error("No cards due", { description: "All decks are up to date!" });
+                  toast.error(t("ai.flashcards.noCardsDue"), { description: t("ai.flashcards.allDecksUpToDate") });
                   return;
                 }
                 // Start with the deck that has the most due cards
@@ -159,7 +158,7 @@ export default function FlashcardsPage() {
               }}
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Start Study Session
+              {t("ai.flashcards.startStudySession")}
             </Button>
           </CardContent>
         </Card>
@@ -172,7 +171,7 @@ export default function FlashcardsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search decks..."
+              placeholder={t("ai.flashcards.searchDecks")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -192,10 +191,10 @@ export default function FlashcardsPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="all">
-              All Decks ({decks.length})
+              {t("ai.flashcards.allDecks")} ({decks.length})
             </TabsTrigger>
             <TabsTrigger value="due">
-              Due for Review ({dueDecks.length})
+              {t("ai.flashcards.dueForReview")} ({dueDecks.length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -204,7 +203,7 @@ export default function FlashcardsPage() {
       {/* Error State */}
       {error && (
         <AiErrorCard
-          title="Failed to load decks"
+          title={t("ai.flashcards.failedToLoad")}
           message={error}
           onRetry={loadDecks}
           className="mb-6"
@@ -214,7 +213,7 @@ export default function FlashcardsPage() {
       {/* Loading State */}
       {isLoading && (
         <div className="space-y-4">
-          <AiLoadingState variant="studying" message="Loading your flashcard decks..." />
+          <AiLoadingState variant="studying" message={t("ai.flashcards.loadingDecks")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <FlashcardDeckSkeleton key={i} />
@@ -232,27 +231,27 @@ export default function FlashcardsPage() {
             </div>
             <h3 className="text-lg font-semibold mb-2">
               {searchQuery
-                ? "No matching decks found"
+                ? t("ai.flashcards.noMatchingDecks")
                 : activeTab === "due"
-                  ? "No cards due for review"
-                  : "No flashcard decks yet"}
+                  ? t("ai.flashcards.noCardsDueReview")
+                  : t("ai.flashcards.noDecksYet")}
             </h3>
             <p className="text-muted-foreground mb-4 max-w-md">
               {searchQuery
-                ? "Try a different search term."
+                ? t("ai.flashcards.tryDifferentSearch")
                 : activeTab === "due"
-                  ? "Great job! You're all caught up. Check back later."
-                  : "Create your first deck or generate flashcards from a lesson to get started."}
+                  ? t("ai.flashcards.allCaughtUp")
+                  : t("ai.flashcards.createFirstDeck")}
             </p>
             {!searchQuery && activeTab === "all" && (
               <div className="flex gap-3">
                 <Button onClick={handleCreateDeck}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Deck
+                  {t("ai.flashcards.createDeck")}
                 </Button>
                 <Button variant="outline" onClick={() => router.push("/courses")}>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Browse Lessons
+                  {t("ai.flashcards.browseLessons")}
                 </Button>
               </div>
             )}
@@ -265,8 +264,8 @@ export default function FlashcardsPage() {
         <div className="space-y-6">
           {Object.entries(
             filteredDecks.reduce((acc, deck) => {
-              const courseTitle = deck.courseTitle || "Other Decks";
-              const lessonTitle = deck.lessonTitle || "General";
+              const courseTitle = deck.courseTitle || t("ai.flashcards.otherDecks");
+              const lessonTitle = deck.lessonTitle || t("ai.flashcards.general");
 
               if (!acc[courseTitle]) {
                 acc[courseTitle] = {};
@@ -283,17 +282,17 @@ export default function FlashcardsPage() {
                 <Layers className="w-5 h-5" />
                 {courseTitle}
               </h2>
-              
+
               <div className="pl-3 border-l-2 border-muted space-y-4">
                 {Object.entries(lessons).map(([lessonTitle, decks]) => (
                   <div key={lessonTitle} className="space-y-2">
-                    {lessonTitle !== "General" && (
+                    {lessonTitle !== t("ai.flashcards.general") && (
                       <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
                         <BookOpen className="w-4 h-4" />
                         {lessonTitle}
                       </h3>
                     )}
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
                       {decks.map((deck) => (
                         <DeckCard

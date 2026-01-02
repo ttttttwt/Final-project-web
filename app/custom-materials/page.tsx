@@ -24,11 +24,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Custom Materials Library Page - View and manage all custom materials
  */
 export default function CustomMaterialsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const {
     materials,
@@ -86,7 +88,7 @@ export default function CustomMaterialsPage() {
     setIsDeleting(true);
     try {
       await deleteMaterial(deleteId);
-      toast.success("Material deleted");
+      toast.success(t("customMaterials.materialDeleted"));
       // Refresh the list
       const params: { status?: CustomMaterialStatus } = {};
       if (statusFilter !== "ALL") {
@@ -94,7 +96,7 @@ export default function CustomMaterialsPage() {
       }
       fetchMaterials(params);
     } catch {
-      toast.error("Failed to delete material");
+      toast.error(t("customMaterials.failedToDelete"));
     } finally {
       setIsDeleting(false);
       setDeleteId(null);
@@ -124,11 +126,10 @@ export default function CustomMaterialsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-[#202124] dark:text-[#E8EAED]">
-                Custom Materials Library
+                {t("customMaterials.title")}
               </h1>
               <p className="text-[#5F6368] dark:text-[#9AA0A6]">
-                {totalMaterials} material{totalMaterials !== 1 ? "s" : ""}{" "}
-                created
+                {t("customMaterials.materialsCreated", { count: totalMaterials })}
               </p>
             </div>
             <div className="flex gap-2">
@@ -148,11 +149,11 @@ export default function CustomMaterialsPage() {
                 className="gap-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 dark:border-blue-900/30 dark:hover:bg-blue-900/20"
               >
                 <Sparkles className="h-4 w-4 text-blue-600" />
-                Style Transformer
+                {t("customMaterials.styleTransformer")}
               </Button>
               <Button onClick={handleCreateNew} className="gap-2">
                 <Plus className="h-4 w-4" />
-                New Material
+                {t("customMaterials.newMaterial")}
               </Button>
             </div>
           </div>
@@ -181,7 +182,7 @@ export default function CustomMaterialsPage() {
                 onClick={clearError}
                 className="text-[#D32F2F] p-0 h-auto mt-2"
               >
-                Dismiss
+                {t("customMaterials.dismiss")}
               </Button>
             </div>
           )}
@@ -196,8 +197,8 @@ export default function CustomMaterialsPage() {
             onCreateNew={handleCreateNew}
             emptyMessage={
               statusFilter === "ALL"
-                ? "No materials yet"
-                : `No ${statusFilter.toLowerCase()} materials`
+                ? t("customMaterials.noMaterialsYet")
+                : t("customMaterials.noStatusMaterials", { status: statusFilter.toLowerCase() })
             }
           />
 
@@ -208,23 +209,21 @@ export default function CustomMaterialsPage() {
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Material?</AlertDialogTitle>
+                <AlertDialogTitle>{t("customMaterials.deleteMaterial")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete this material and all associated
-                  data including vocabulary, quizzes, and chat history. This
-                  action cannot be undone.
+                  {t("customMaterials.deleteConfirmDesc")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeleting}>
-                  Cancel
+                  {t("common.cancel")}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteConfirm}
                   disabled={isDeleting}
                   className="bg-[#D32F2F] hover:bg-[#B71C1C]"
                 >
-                  {isDeleting ? "Deleting..." : "Delete"}
+                  {isDeleting ? t("customMaterials.deleting") : t("customMaterials.delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

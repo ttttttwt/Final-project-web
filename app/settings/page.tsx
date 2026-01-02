@@ -55,14 +55,6 @@ interface NotificationSettings {
 
 const LANGUAGES = [
   { value: "en", label: "English" },
-  { value: "es", label: "Español" },
-  { value: "fr", label: "Français" },
-  { value: "de", label: "Deutsch" },
-  { value: "it", label: "Italiano" },
-  { value: "pt", label: "Português" },
-  { value: "ja", label: "日本語" },
-  { value: "ko", label: "한국어" },
-  { value: "zh", label: "中文" },
   { value: "vi", label: "Tiếng Việt" },
 ];
 
@@ -188,12 +180,13 @@ export default function SettingsPage() {
       };
 
       // Validate required fields before sending
-      if (!updatedProfile.firstName || !updatedProfile.lastName) {
+      // Removed validation to allow updating language even if name is missing
+      /* if (!updatedProfile.firstName || !updatedProfile.lastName) {
         console.error("firstName or lastName is missing, re-fetching profile");
         await fetchSettings();
         toast.error(t("settings.completeProfileFirst"));
         return;
-      }
+      } */
 
       await userService.updateProfile(updatedProfile);
       toast.success(t("common.settingSaved"));
@@ -421,9 +414,8 @@ export default function SettingsPage() {
                 </p>
               </div>
 
+              {/* Timezone Selector - Hidden as requested
               <Separator />
-
-              {/* Timezone Selector */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -452,6 +444,7 @@ export default function SettingsPage() {
                   {t("settings.timezoneDesc")}
                 </p>
               </div>
+              */}
             </CardContent>
           </Card>
 
