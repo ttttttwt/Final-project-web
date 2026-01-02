@@ -232,6 +232,7 @@ export interface FlashcardBackDTO {
   collocations?: string[];
   notes?: string[];
   imageUrl?: string;
+  imageStatus?: 'PENDING' | 'GENERATING' | 'COMPLETED' | 'FAILED';
   audioUrl?: string;
 }
 

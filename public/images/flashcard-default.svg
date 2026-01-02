@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#E5E7EB"/>
+  
+  <!-- Image placeholder icon (mountain + sun) -->
+  <g transform="translate(100, 120)">
+    <!-- Frame -->
+    <rect x="0" y="0" width="200" height="160" rx="8" ry="8" fill="none" stroke="#9CA3AF" stroke-width="3"/>
+    
+    <!-- Sun -->
+    <circle cx="150" cy="45" r="20" fill="#9CA3AF"/>
+    
+    <!-- Mountains -->
+    <polygon points="30,130 80,60 130,130" fill="#9CA3AF"/>
+    <polygon points="90,130 140,70 190,130" fill="#6B7280"/>
+    
+    <!-- Bottom line -->
+    <line x1="0" y1="130" x2="200" y2="130" stroke="#9CA3AF" stroke-width="2"/>
+  </g>
+</svg>

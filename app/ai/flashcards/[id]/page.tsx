@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { FlashcardDeckDTO, FlashcardCardDTO } from "@/types/ai";
 import { aiFlashcardService } from "@/services/ai-flashcard.service";
@@ -32,6 +33,8 @@ import {
   User,
   ChevronDown,
   ChevronUp,
+  ImageIcon,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -81,6 +84,23 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
   useEffect(() => {
     loadDeck();
   }, [id]);
+
+  // Polling for image generation status
+  useEffect(() => {
+    if (!deck) return;
+
+    const hasPendingImages = deck.cards?.some(
+      card => card.back.imageStatus === 'PENDING' || card.back.imageStatus === 'GENERATING'
+    );
+
+    if (!hasPendingImages) return;
+
+    const interval = setInterval(() => {
+      loadDeck();
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [deck]);
 
   const loadDeck = async () => {
     setIsLoading(true);
@@ -282,52 +302,120 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       {/* Card Preview List */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">{t("ai.flashcards.cards")} ({deck.cardCount})</h2>
-        <div className="space-y-1.5">
+        <div className="space-y-3">
           {deck.cards.map((card, index) => (
             <Card
               key={index}
-              className="cursor-pointer hover:border-primary/50 transition-colors"
+              className="group cursor-pointer hover:border-primary/50 transition-all duration-200 overflow-hidden"
               onClick={() => toggleCardExpand(index)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground font-mono">
-                        #{index + 1}
-                      </span>
-                      <span className="font-medium truncate">{card.front}</span>
-                      {card.back.partOfSpeech && (
-                        <Badge variant="outline" className="text-xs">
-                          {card.back.partOfSpeech}
-                        </Badge>
-                      )}
-                    </div>
-                    {expandedCards.has(index) && (
-                      <div className="mt-3 pl-8 space-y-2 text-sm">
-                        <p className="text-muted-foreground">
-                          <strong>{t("ai.flashcards.definition")}:</strong> {card.back.definition}
-                        </p>
-                        {card.back.pronunciation && (
-                          <p className="text-muted-foreground font-mono">
-                            {card.back.pronunciation}
-                          </p>
-                        )}
-                        {card.back.exampleSentence && (
-                          <p className="text-muted-foreground italic">
-                            "{card.back.exampleSentence}"
-                          </p>
+              <CardContent className="p-0">
+                <div className="flex items-stretch min-h-[5rem]">
+                  {/* Image Thumbnail - Fixed size with padding */}
+                  <div className="w-44 flex-shrink-0 bg-muted/10 border-r border-border/50 flex items-center justify-center p-3 group-hover:bg-muted/20 transition-colors">
+                    {(() => {
+                      const imageStatus = card.back.imageStatus;
+                      const imageUrl = card.back.imageUrl;
+
+                      if (imageStatus === 'PENDING' || imageStatus === 'GENERATING') {
+                        return (
+                          <div className="flex flex-col items-center justify-center gap-2 text-center">
+                            {imageStatus === 'GENERATING' ? (
+                              <>
+                                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("status.generating")}</span>
+                              </>
+                            ) : (
+                              <Sparkles className="w-8 h-8 text-muted-foreground/40" />
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if ((imageStatus === 'COMPLETED' && imageUrl) || (imageUrl && !imageStatus)) {
+                        return (
+                          <Image
+                            src={imageUrl}
+                            alt={card.front}
+                            width={160}
+                            height={160}
+                            className="rounded-md object-contain"
+                          />
+                        );
+                      }
+
+                      // Default/Failed
+                      return (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground/30">
+                          <ImageIcon className="w-8 h-8" />
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="flex-1 p-4 sm:p-5 flex items-center justify-between min-w-0">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-xs font-mono text-muted-foreground/60 w-6">
+                          #{String(index + 1).padStart(2, '0')}
+                        </span>
+                        <h3 className="font-semibold text-lg truncate text-foreground group-hover:text-primary transition-colors">
+                          {card.front}
+                        </h3>
+                        {card.back.partOfSpeech && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal bg-muted text-muted-foreground border-border/50">
+                            {card.back.partOfSpeech}
+                          </Badge>
                         )}
                       </div>
-                    )}
+
+                      {/* Show definition preview when collapsed, or full details when expanded */}
+                      {!expandedCards.has(index) && card.back.definition && (
+                        <p className="text-sm text-muted-foreground line-clamp-1 pl-9">
+                          {card.back.definition}
+                        </p>
+                      )}
+
+                      {expandedCards.has(index) && (
+                        <div className="mt-4 pl-9 space-y-3 text-sm animate-in slide-in-from-top-2 duration-200">
+                          <div>
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">
+                              {t("ai.flashcards.definition")}
+                            </span>
+                            <p className="text-foreground/90 leading-relaxed">
+                              {card.back.definition}
+                            </p>
+                          </div>
+
+                          {card.back.pronunciation && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                IPA:
+                              </span>
+                              <code className="px-1.5 py-0.5 rounded bg-muted/50 font-mono text-xs text-primary">
+                                {card.back.pronunciation}
+                              </code>
+                            </div>
+                          )}
+
+                          {card.back.exampleSentence && (
+                            <div className="relative pl-3 border-l-2 border-primary/20 italic text-muted-foreground">
+                              "{card.back.exampleSentence}"
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <Button variant="ghost" size="icon" className="flex-shrink-0 text-muted-foreground/50 group-hover:text-foreground transition-colors self-start mt-0.5">
+                      {expandedCards.has(index) ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="flex-shrink-0">
-                    {expandedCards.has(index) ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </Button>
                 </div>
               </CardContent>
             </Card>

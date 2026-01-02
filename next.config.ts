@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
     ],
     unoptimized: false, // Keep image optimization enabled
   },
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: "http://localhost:8088/uploads/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

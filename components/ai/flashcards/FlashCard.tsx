@@ -7,7 +7,8 @@ import { FlashcardCardDTO } from "@/types/ai";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon, ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
 
 interface FlashCardProps {
   card: FlashcardCardDTO;
@@ -50,7 +51,7 @@ export const FlashCard = memo(function FlashCard({
     },
     [onFlip]
   );
-// ... existing code ...
+  // ... existing code ...
 
   const playAudio = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -119,6 +120,27 @@ export const FlashCard = memo(function FlashCard({
                 {card.back.partOfSpeech}
               </Badge>
             )}
+
+            {/* Image preview on front */}
+            {(() => {
+              const imageUrl = card.back.imageUrl;
+              const imageStatus = card.back.imageStatus;
+              if ((imageStatus === 'COMPLETED' && imageUrl) || (imageUrl && !imageStatus)) {
+                return (
+                  <div className="relative w-40 h-40 mx-auto mt-4 rounded-lg overflow-hidden bg-muted/20">
+                    <Image
+                      src={imageUrl}
+                      alt={card.front}
+                      fill
+                      className="object-contain"
+                      sizes="160px"
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             {showHint && (
               <div className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
                 <Lightbulb className="w-4 h-4" />
@@ -158,18 +180,78 @@ export const FlashCard = memo(function FlashCard({
               )}
             </div>
 
-            {/* Image */}
-            {card.back.imageUrl && (
-              <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted/30 border border-border">
-                <Image
-                  src={card.back.imageUrl}
-                  alt={card.front}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, 300px"
-                />
-              </div>
-            )}
+            {/* Image Section */}
+            {(() => {
+              const imageStatus = card.back.imageStatus;
+              const imageUrl = card.back.imageUrl;
+
+              // Show skeleton for PENDING or GENERATING
+              if (imageStatus === 'PENDING' || imageStatus === 'GENERATING') {
+                return (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted/30 border border-border flex flex-col items-center justify-center gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      {imageStatus === 'GENERATING' ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-5 h-5" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {imageStatus === 'GENERATING' ? 'Generating image...' : 'Image pending...'}
+                      </span>
+                    </div>
+                    <Skeleton className="w-3/4 h-24 rounded" />
+                  </div>
+                );
+              }
+
+              // Show image for COMPLETED with valid URL
+              if (imageStatus === 'COMPLETED' && imageUrl) {
+                return (
+                  <div className="relative w-full h-64 rounded-lg overflow-hidden bg-muted/30 border border-border">
+                    <Image
+                      src={imageUrl}
+                      alt={card.front}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, 300px"
+                    />
+                  </div>
+                );
+              }
+
+              // Show fallback for FAILED or no imageStatus (legacy cards)
+              if (imageStatus === 'FAILED') {
+                return (
+                  <div className="relative w-full h-64 rounded-lg overflow-hidden bg-muted/20 border border-dashed border-muted-foreground/30">
+                    <Image
+                      src="/images/flashcard-default.svg"
+                      alt="Default flashcard illustration"
+                      fill
+                      className="object-contain p-4"
+                      sizes="(max-width: 768px) 100vw, 300px"
+                    />
+                  </div>
+                );
+              }
+
+              // Legacy: show image if URL exists but no status
+              if (imageUrl && !imageStatus) {
+                return (
+                  <div className="relative w-full h-64 rounded-lg overflow-hidden bg-muted/30 border border-border">
+                    <Image
+                      src={imageUrl}
+                      alt={card.front}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, 300px"
+                    />
+                  </div>
+                );
+              }
+
+              // No image section if no status and no URL
+              return null;
+            })()}
 
             {/* Definition */}
             <div>
