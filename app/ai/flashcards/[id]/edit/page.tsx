@@ -39,7 +39,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Trash2, GripVertical } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, GripVertical, Sparkles, Upload, ImageOff } from "lucide-react";
+import Image from "next/image";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface EditDeckPageProps {
   params: Promise<{ id: string }>;
@@ -57,6 +60,7 @@ const cardSchema = z.object({
   partOfSpeech: z.string().optional(),
   pronunciation: z.string().optional(),
   exampleSentence: z.string().optional(),
+  imageSource: z.enum(["AI", "UPLOAD", "NONE"]),
 });
 
 /**
@@ -74,6 +78,11 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
   const [showAddCardDialog, setShowAddCardDialog] = useState(false);
   const [editingCardIndex, setEditingCardIndex] = useState<number | null>(null);
   const [showDeleteCardDialog, setShowDeleteCardDialog] = useState<number | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  // Track pending uploads per card index
+  const [pendingUploads, setPendingUploads] = useState<Map<number, File>>(new Map());
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,12 +101,13 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
       partOfSpeech: "",
       pronunciation: "",
       exampleSentence: "",
+      imageSource: "AI",
     },
   });
 
   useEffect(() => {
     loadDeck();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadDeck = useCallback(async () => {
@@ -108,7 +118,7 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
       const deckData = await aiFlashcardService.getDeck(id);
       setDeck(deckData);
       setCards(deckData.cards || []);
-      
+
       // Populate form with deck data
       form.reset({
         title: deckData.title,
@@ -127,14 +137,36 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
   const handleSave = async (values: z.infer<typeof formSchema>) => {
     setIsSaving(true);
     try {
+      // First, upload any pending images
+      const updatedCards = [...cards];
+      for (const [cardIndex, file] of pendingUploads.entries()) {
+        if (cardIndex < updatedCards.length && updatedCards[cardIndex].back.imageSource === "UPLOAD") {
+          try {
+            const imageUrl = await aiFlashcardService.uploadCardImage(file, id, cardIndex);
+            updatedCards[cardIndex] = {
+              ...updatedCards[cardIndex],
+              back: {
+                ...updatedCards[cardIndex].back,
+                imageUrl,
+                imageStatus: "COMPLETED",
+              },
+            };
+          } catch (uploadErr) {
+            console.error(`Failed to upload image for card ${cardIndex}:`, uploadErr);
+            toast.error(`Failed to upload image for card #${cardIndex + 1}`);
+          }
+        }
+      }
+
       const updateData: UpdateFlashcardDeckDTO = {
         title: values.title,
         description: values.description,
         cefrLevel: values.cefrLevel,
-        cards: cards,
+        cards: updatedCards,
       };
 
       await aiFlashcardService.updateDeck(id, updateData);
+      setPendingUploads(new Map()); // Clear pending uploads
       toast.success("Deck updated successfully");
       router.push(`/ai/flashcards/${id}`);
     } catch (err: unknown) {
@@ -154,22 +186,41 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
         partOfSpeech: values.partOfSpeech || undefined,
         pronunciation: values.pronunciation || undefined,
         exampleSentence: values.exampleSentence || undefined,
+        imageSource: values.imageSource,
+        imageStatus: values.imageSource === "AI" ? "PENDING" : undefined,
+        // For UPLOAD with preview, set temporary local preview URL
+        imageUrl: values.imageSource === "UPLOAD" && imagePreview ? imagePreview : undefined,
       },
     };
 
+    let targetIndex: number;
     if (editingCardIndex !== null) {
       // Update existing card
       const newCards = [...cards];
       newCards[editingCardIndex] = newCard;
       setCards(newCards);
+      targetIndex = editingCardIndex;
       setEditingCardIndex(null);
     } else {
       // Add new card
       setCards([...cards, newCard]);
+      targetIndex = cards.length; // Index of the new card
     }
 
+    // Track uploaded file for later upload
+    if (values.imageSource === "UPLOAD" && uploadedFile) {
+      setPendingUploads(prev => {
+        const newMap = new Map(prev);
+        newMap.set(targetIndex, uploadedFile);
+        return newMap;
+      });
+    }
+
+    // Reset form and file state
     cardForm.reset();
     setShowAddCardDialog(false);
+    setUploadedFile(null);
+    setImagePreview(null);
   };
 
   const handleEditCard = (index: number) => {
@@ -180,9 +231,13 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
       partOfSpeech: card.back.partOfSpeech || "",
       pronunciation: card.back.pronunciation || "",
       exampleSentence: card.back.exampleSentence || "",
+      imageSource: card.back.imageSource || "AI",
     });
     setEditingCardIndex(index);
     setShowAddCardDialog(true);
+    // Reset file upload state when editing
+    setUploadedFile(null);
+    setImagePreview(card.back.imageUrl || null);
   };
 
   const handleDeleteCard = (index: number) => {
@@ -196,6 +251,9 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
     setShowAddCardDialog(false);
     setEditingCardIndex(null);
     cardForm.reset();
+    // Reset file upload state
+    setUploadedFile(null);
+    setImagePreview(null);
   };
 
   if (isLoading) {
@@ -488,6 +546,112 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
                   </FormItem>
                 )}
               />
+
+              {/* Current Image Preview (shown when editing and image exists) */}
+              {editingCardIndex !== null && cards[editingCardIndex]?.back.imageUrl && (
+                <div className="space-y-2">
+                  <FormLabel>Current Image</FormLabel>
+                  <div className="flex items-center gap-4 p-3 border border-border rounded-lg bg-muted/10">
+                    <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border bg-background">
+                      <Image
+                        src={cards[editingCardIndex].back.imageUrl!}
+                        alt="Current card image"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>This card has an existing image.</p>
+                      <p className="text-xs">Change the source below to replace it.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Source Selection */}
+              <FormField
+                control={cardForm.control}
+                name="imageSource"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Card Image</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-wrap gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="AI" id="image-ai" />
+                          <Label htmlFor="image-ai" className="flex items-center gap-1.5 cursor-pointer">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            AI Generate
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="UPLOAD" id="image-upload" />
+                          <Label htmlFor="image-upload" className="flex items-center gap-1.5 cursor-pointer">
+                            <Upload className="w-4 h-4 text-blue-500" />
+                            Upload
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="NONE" id="image-none" />
+                          <Label htmlFor="image-none" className="flex items-center gap-1.5 cursor-pointer">
+                            <ImageOff className="w-4 h-4 text-muted-foreground" />
+                            None
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* AI Default Image Preview (shown when AI selected) */}
+              {cardForm.watch("imageSource") === "AI" && (
+                <div className="flex items-center gap-4 p-3 border border-border rounded-lg bg-muted/10">
+                  <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border bg-background">
+                    <Image
+                      src="/images/flashcard-default.svg"
+                      alt="AI generated image preview"
+                      fill
+                      className="object-cover opacity-70"
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p>AI will generate an image based on the card content.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* File Upload (shown when UPLOAD selected) */}
+              {cardForm.watch("imageSource") === "UPLOAD" && (
+                <div className="space-y-3 p-4 border border-dashed border-border rounded-lg bg-muted/20">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error("File too large", { description: "Max size is 5MB" });
+                          return;
+                        }
+                        setUploadedFile(file);
+                        setImagePreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-primary-foreground file:cursor-pointer hover:file:bg-primary/90"
+                  />
+                  {imagePreview && (
+                    <div className="relative w-24 h-24 mx-auto rounded-lg overflow-hidden border">
+                      <Image src={imagePreview} alt="Preview" fill className="object-contain" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleCloseCardDialog}>

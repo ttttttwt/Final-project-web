@@ -74,9 +74,7 @@ export const aiFlashcardService = {
    * Get details of a specific flashcard deck.
    */
   getDeck: async (id: string): Promise<FlashcardDeckDTO> => {
-    const response = await api.get<FlashcardDeckDTO>(
-      `${BASE_URL}/decks/${id}`
-    );
+    const response = await api.get<FlashcardDeckDTO>(`${BASE_URL}/decks/${id}?t=${new Date().getTime()}`);
     return response.data;
   },
 
@@ -147,5 +145,34 @@ export const aiFlashcardService = {
       `${BASE_URL}/lessons/${lessonId}/deck`
     );
     return response.data;
+  },
+
+  /**
+   * Upload a custom image for a flashcard.
+   * @param file The image file to upload
+   * @param deckId The deck ID
+   * @param cardIndex The card index within the deck
+   * @returns The URL of the uploaded image
+   */
+  uploadCardImage: async (
+    file: File,
+    deckId: string,
+    cardIndex: number
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("deckId", deckId);
+    formData.append("cardIndex", cardIndex.toString());
+
+    const response = await api.post<{ imageUrl: string }>(
+      `${BASE_URL}/upload-image`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data.imageUrl;
   },
 };

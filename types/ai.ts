@@ -233,6 +233,7 @@ export interface FlashcardBackDTO {
   notes?: string[];
   imageUrl?: string;
   imageStatus?: 'PENDING' | 'GENERATING' | 'COMPLETED' | 'FAILED';
+  imageSource?: 'AI' | 'UPLOAD' | 'NONE';
   audioUrl?: string;
 }
 

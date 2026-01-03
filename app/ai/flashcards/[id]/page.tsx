@@ -96,14 +96,16 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
     if (!hasPendingImages) return;
 
     const interval = setInterval(() => {
-      loadDeck();
+      loadDeck(true); // Silent refresh - don't show loading state
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
   }, [deck]);
 
-  const loadDeck = async () => {
-    setIsLoading(true);
+  const loadDeck = async (silentRefresh = false) => {
+    if (!silentRefresh) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -113,7 +115,9 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
       const message = err.response?.data?.message || t("ai.flashcards.failedToLoad");
       setError(message);
     } finally {
-      setIsLoading(false);
+      if (!silentRefresh) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -339,7 +343,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                             alt={card.front}
                             width={160}
                             height={160}
-                            className="rounded-md object-contain"
+                            className="rounded-md object-cover"
                           />
                         );
                       }

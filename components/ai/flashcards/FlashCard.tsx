@@ -127,13 +127,13 @@ export const FlashCard = memo(function FlashCard({
               const imageStatus = card.back.imageStatus;
               if ((imageStatus === 'COMPLETED' && imageUrl) || (imageUrl && !imageStatus)) {
                 return (
-                  <div className="relative w-40 h-40 mx-auto mt-4 rounded-lg overflow-hidden bg-muted/20">
+                  <div className="relative w-48 h-48 mx-auto mt-4 rounded-lg overflow-hidden bg-muted/20 border border-border/30">
                     <Image
                       src={imageUrl}
                       alt={card.front}
                       fill
-                      className="object-contain"
-                      sizes="160px"
+                      className="object-cover"
+                      sizes="192px"
                     />
                   </div>
                 );
