@@ -19,6 +19,15 @@ export const vi = {
     settingSaved: "Đã lưu cài đặt",
     failedToLoad: "Không thể tải",
     failedToUpdate: "Không thể cập nhật",
+    continue: "Tiếp tục",
+    title: "Tiêu đề",
+    goBackTo: "Quay lại",
+    tryAgain: "Thử lại",
+  },
+
+  subscription: {
+    premiumFeature: "Tính năng Cao cấp",
+    upgradeToPro: "Nâng cấp lên Pro",
   },
 
   // Navigation & Layout

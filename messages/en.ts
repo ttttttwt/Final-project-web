@@ -18,6 +18,15 @@ export const en = {
     settingSaved: "Setting saved",
     failedToLoad: "Failed to load",
     failedToUpdate: "Failed to update",
+    continue: "Continue",
+    title: "Title",
+    goBackTo: "Go back to",
+    tryAgain: "Try Again",
+  },
+
+  subscription: {
+    premiumFeature: "Premium Feature",
+    upgradeToPro: "Upgrade to Pro",
   },
 
   // Navigation & Layout
