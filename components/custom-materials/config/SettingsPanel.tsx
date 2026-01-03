@@ -11,6 +11,7 @@ import {
   RefreshCw,
   BookMarked,
   ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import {
   Collapsible,
@@ -23,9 +24,11 @@ interface SettingsPanelProps {
   aiCorrectionMode: AiCorrectionMode;
   styleLearnMode: boolean;
   syncVocabToSrs: boolean;
+  generateFlashcardImages: boolean;
   onAiCorrectionModeChange: (mode: AiCorrectionMode) => void;
   onStyleLearnModeChange: (enabled: boolean) => void;
   onSyncVocabToSrsChange: (enabled: boolean) => void;
+  onGenerateFlashcardImagesChange: (enabled: boolean) => void;
   className?: string;
 }
 
@@ -36,9 +39,11 @@ export function SettingsPanel({
   aiCorrectionMode,
   styleLearnMode,
   syncVocabToSrs,
+  generateFlashcardImages,
   onAiCorrectionModeChange,
   onStyleLearnModeChange,
   onSyncVocabToSrsChange,
+  onGenerateFlashcardImagesChange,
   className,
 }: SettingsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -188,6 +193,28 @@ export function SettingsPanel({
             aria-label="Toggle vocabulary sync"
           />
         </div>
+
+        {/* Generate Flashcard Images Toggle - Only visible when sync is enabled */}
+        {syncVocabToSrs && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[#F5F5F5] dark:bg-[#2E2E2E] ml-6 border-l-2 border-[#4285F4]">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-[#4285F4]" />
+              <div>
+                <p className="font-medium text-sm text-[#202124] dark:text-[#E8EAED]">
+                  Generate Flashcard Images
+                </p>
+                <p className="text-xs text-[#5F6368] dark:text-[#9AA0A6]">
+                  Use AI to create images for each vocabulary card
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={generateFlashcardImages}
+              onCheckedChange={onGenerateFlashcardImagesChange}
+              aria-label="Toggle flashcard image generation"
+            />
+          </div>
+        )}
 
         {/* Info box */}
         <div className="p-3 rounded-lg bg-[#E8F5E9] dark:bg-[#1B5E20]/20 border border-[#A5D6A7] dark:border-[#1B5E20]/30">

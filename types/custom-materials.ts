@@ -155,6 +155,7 @@ export interface MaterialSettingsInput {
   aiCorrectionMode?: AiCorrectionMode;
   styleLearnMode?: boolean;
   syncVocabToSrs?: boolean;
+  generateFlashcardImages?: boolean;
 }
 
 export interface CreateMaterialRequest {
@@ -187,6 +188,7 @@ export interface MaterialSettings {
   aiCorrectionMode: AiCorrectionMode;
   styleLearnMode: boolean;
   syncVocabToSrs: boolean;
+  generateFlashcardImages?: boolean;
 }
 
 export interface CustomMaterial {
@@ -310,6 +312,7 @@ export interface ConfigState {
   aiCorrectionMode: AiCorrectionMode;
   styleLearnMode: boolean;
   syncVocabToSrs: boolean;
+  generateFlashcardImages: boolean;
 }
 
 export interface ChatSessionState {

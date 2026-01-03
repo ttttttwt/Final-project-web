@@ -343,7 +343,7 @@ export const FlashCard = memo(function FlashCard({
             )}
 
             {/* Notes */}
-            {card.back.notes && card.back.notes.length > 0 && (
+            {card.back.notes && (
               <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-lg p-4 border border-yellow-100 dark:border-yellow-900/30">
                 <div className="flex items-center gap-2 mb-2">
                   <FileText className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
@@ -351,13 +351,17 @@ export const FlashCard = memo(function FlashCard({
                     Notes
                   </h4>
                 </div>
-                <ul className="list-disc list-inside space-y-1">
-                  {card.back.notes.map((note, index) => (
-                    <li key={index} className="text-sm text-foreground/90">
-                      {note}
-                    </li>
-                  ))}
-                </ul>
+                {Array.isArray(card.back.notes) ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {card.back.notes.map((note, index) => (
+                      <li key={index} className="text-sm text-foreground/90">
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-foreground/90">{card.back.notes}</p>
+                )}
               </div>
             )}
 

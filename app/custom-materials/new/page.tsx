@@ -87,6 +87,7 @@ export default function NewCustomMaterialPage() {
     useState<AiCorrectionMode>("POLITE");
   const [styleLearnMode, setStyleLearnMode] = useState(true);
   const [syncVocabToSrs, setSyncVocabToSrs] = useState(false);
+  const [generateFlashcardImages, setGenerateFlashcardImages] = useState(false);
 
   // Created material ID for tracking
   const [createdMaterialId, setCreatedMaterialId] = useState<string | null>(
@@ -193,6 +194,7 @@ export default function NewCustomMaterialPage() {
         aiCorrectionMode,
         styleLearnMode,
         syncVocabToSrs,
+        generateFlashcardImages,
       },
     };
 
@@ -450,9 +452,11 @@ export default function NewCustomMaterialPage() {
                 aiCorrectionMode={aiCorrectionMode}
                 styleLearnMode={styleLearnMode}
                 syncVocabToSrs={syncVocabToSrs}
+                generateFlashcardImages={generateFlashcardImages}
                 onAiCorrectionModeChange={setAiCorrectionMode}
                 onStyleLearnModeChange={setStyleLearnMode}
                 onSyncVocabToSrsChange={setSyncVocabToSrs}
+                onGenerateFlashcardImagesChange={setGenerateFlashcardImages}
               />
 
               {/* Navigation */}
