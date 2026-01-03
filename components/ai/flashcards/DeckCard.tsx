@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { MasteryIndicator, MasteryBar } from "./MasteryIndicator";
 import {
   Layers,
-  Calendar,
   PlayCircle,
   ChevronRight,
   BookOpen,
@@ -159,10 +158,17 @@ export function DeckCard({
                 <Layers className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">{deck.cardCount} cards</span>
               </div>
+              {/* Show next review time - more prominent for completed decks */}
               {deck.nextReview && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
+                <div className={cn(
+                  "flex items-center gap-2",
+                  !hasDueCards && "text-green-600 dark:text-green-400 font-medium"
+                )}>
+                  <Clock className={cn(
+                    "w-4 h-4",
+                    hasDueCards ? "text-muted-foreground" : "text-green-500"
+                  )} />
+                  <span className={hasDueCards ? "text-muted-foreground" : ""}>
                     Next review: {formatDistanceToNow(new Date(deck.nextReview), { addSuffix: true })}
                   </span>
                 </div>

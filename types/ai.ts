@@ -265,6 +265,8 @@ export interface FlashcardDeckDTO {
   accuracyRate?: number;
   masteryLevel?: number;
   nextReview?: string;
+  // Per-card progress data
+  cardProgress?: FlashcardProgressDTO[];
 }
 
 export interface CreateFlashcardDeckDTO {
@@ -313,6 +315,7 @@ export interface FlashcardStudySessionDTO {
     reviewCount: number;
     masteredCount: number;
   };
+  isPracticeMode?: boolean;
 }
 
 export interface CardReviewDTO {

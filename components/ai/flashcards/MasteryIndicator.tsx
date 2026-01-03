@@ -65,7 +65,11 @@ export function MasteryIndicator({
   size = "md",
   className,
 }: MasteryIndicatorProps) {
-  const mastery = MASTERY_LABELS[Math.min(Math.max(level, 0), 5)];
+  // Ensure level is a valid number, default to 0
+  const safeLevel = typeof level === "number" && !isNaN(level) ? level : 0;
+  // Round to nearest integer for looking up the label/color
+  const roundedLevel = Math.round(Math.min(Math.max(safeLevel, 0), 5));
+  const mastery = MASTERY_LABELS[roundedLevel];
   const sizeStyles = SIZES[size];
 
   return (
@@ -132,7 +136,11 @@ export function MasteryBar({
   showLabel = false,
   className,
 }: MasteryIndicatorProps) {
-  const mastery = MASTERY_LABELS[Math.min(Math.max(level, 0), 5)];
+  // Ensure level is a valid number, default to 0
+  const safeLevel = typeof level === "number" && !isNaN(level) ? level : 0;
+  // Round to nearest integer for looking up the label/color
+  const roundedLevel = Math.round(Math.min(Math.max(safeLevel, 0), 5));
+  const mastery = MASTERY_LABELS[roundedLevel];
   const progressPercent = (level / 5) * 100;
 
   return (
@@ -170,7 +178,11 @@ export function MasteryDots({
   level,
   className,
 }: Omit<MasteryIndicatorProps, "showLabel" | "size">) {
-  const mastery = MASTERY_LABELS[Math.min(Math.max(level, 0), 5)];
+  // Ensure level is a valid number, default to 0
+  const safeLevel = typeof level === "number" && !isNaN(level) ? level : 0;
+  // Round to nearest integer for looking up the label/color
+  const roundedLevel = Math.round(Math.min(Math.max(safeLevel, 0), 5));
+  const mastery = MASTERY_LABELS[roundedLevel];
 
   return (
     <div

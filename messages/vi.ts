@@ -574,6 +574,11 @@ export const vi = {
       shortcutsDesc: "Sử dụng phím tắt để học nhanh hơn",
       reviewed: "Đã ôn",
       times: "lần",
+      // Practice Mode
+      practiceAnyway: "Vẫn luyện tập",
+      practiceComplete: "Hoàn thành phiên luyện tập!",
+      progressNotSaved: "Tiến độ không được lưu (chế độ luyện tập).",
+      seenThisSession: "Đã xem {{count}} lần trong phiên này",
     },
 
     // Grammar

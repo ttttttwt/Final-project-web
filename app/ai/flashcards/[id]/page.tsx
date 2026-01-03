@@ -368,6 +368,13 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                         <span className="text-xs font-mono text-muted-foreground/60 w-6">
                           #{String(index + 1).padStart(2, '0')}
                         </span>
+                        {/* Per-card mastery level */}
+                        {deck.cardProgress && deck.cardProgress[index] && (
+                          <MasteryIndicator
+                            level={deck.cardProgress[index].masteryLevel}
+                            size="sm"
+                          />
+                        )}
                         <h3 className="font-semibold text-lg truncate text-foreground group-hover:text-primary transition-colors">
                           {card.front}
                         </h3>

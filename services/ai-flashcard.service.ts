@@ -101,12 +101,15 @@ export const aiFlashcardService = {
 
   /**
    * Get a study session for a deck (cards due for review).
+   * @param mode 'normal' (default) or 'practice' for all cards
    */
   getStudySession: async (
-    deckId: string
+    deckId: string,
+    mode: 'normal' | 'practice' = 'normal'
   ): Promise<FlashcardStudySessionDTO> => {
     const response = await api.get<FlashcardStudySessionDTO>(
-      `${BASE_URL}/decks/${deckId}/study`
+      `${BASE_URL}/decks/${deckId}/study`,
+      { params: { mode } }
     );
     return response.data;
   },

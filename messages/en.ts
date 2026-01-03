@@ -573,6 +573,11 @@ export const en = {
       shortcutsDesc: "Use these shortcuts for faster studying",
       reviewed: "Reviewed",
       times: "time(s)",
+      // Practice Mode
+      practiceAnyway: "Practice Anyway",
+      practiceComplete: "Practice session complete!",
+      progressNotSaved: "Progress was not saved (practice mode).",
+      seenThisSession: "Seen {{count}}x this session",
     },
 
     // Grammar

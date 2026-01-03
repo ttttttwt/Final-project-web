@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   FlashcardDeckDTO,
@@ -69,6 +69,13 @@ interface ReviewAction {
   timestamp: number;
 }
 
+// Queue item for study session
+interface StudyQueueItem {
+  cardIndex: number;
+  progress: FlashcardProgressDTO;
+  repetitionCount: number; // How many times this card has been shown in this session
+}
+
 /**
  * Flashcard Study Session Page
  * Interactive study experience with swipe gestures and keyboard shortcuts.
@@ -77,14 +84,19 @@ export default function StudyPage({ params }: StudyPageProps) {
   const { id } = use(params);
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const sessionStartRef = useRef<Date>(new Date());
+
+  // Detect practice mode from URL query param
+  const isPracticeMode = searchParams.get("mode") === "practice";
 
   // State
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deck, setDeck] = useState<FlashcardDeckDTO | null>(null);
   const [session, setSession] = useState<FlashcardStudySessionDTO | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [studyQueue, setStudyQueue] = useState<StudyQueueItem[]>([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviews, setReviews] = useState<CardReviewDTO[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewAction[]>([]);
@@ -93,18 +105,18 @@ export default function StudyPage({ params }: StudyPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [initialCardCount, setInitialCardCount] = useState(0);
 
-  // Get current card
-  const cardsToStudy = session?.cardsToStudy ?? [];
-  const totalCards = cardsToStudy.length;
-  const currentProgress = cardsToStudy[currentIndex];
-  const currentCard = currentProgress && deck?.cards[currentProgress.cardIndex];
-  const isComplete = currentIndex >= totalCards;
+  // Get current card from dynamic queue
+  const currentQueueItem = studyQueue[currentQueueIndex];
+  const currentProgress = currentQueueItem?.progress;
+  const currentCard = currentQueueItem && deck?.cards[currentQueueItem.cardIndex];
+  const isComplete = currentQueueIndex >= studyQueue.length;
 
-  // Load session on mount
+  // Load session on mount or when mode changes
   useEffect(() => {
     loadSession();
-  }, [id]);
+  }, [id, isPracticeMode]);
 
   const loadSession = async () => {
     setIsLoading(true);
@@ -113,10 +125,21 @@ export default function StudyPage({ params }: StudyPageProps) {
     try {
       const [deckData, sessionData] = await Promise.all([
         aiFlashcardService.getDeck(id),
-        aiFlashcardService.getStudySession(id),
+        aiFlashcardService.getStudySession(id, isPracticeMode ? "practice" : "normal"),
       ]);
       setDeck(deckData);
       setSession(sessionData);
+
+      // Initialize study queue from session cards
+      const initialQueue: StudyQueueItem[] = (sessionData.cardsToStudy || []).map(progress => ({
+        cardIndex: progress.cardIndex,
+        progress,
+        repetitionCount: 0,
+      }));
+      setStudyQueue(initialQueue);
+      setInitialCardCount(initialQueue.length);
+      setCurrentQueueIndex(0);
+
       sessionStartRef.current = new Date();
     } catch (err: any) {
       const message =
@@ -130,10 +153,10 @@ export default function StudyPage({ params }: StudyPageProps) {
   // Handle card review
   const handleReview = useCallback(
     (quality: 0 | 1 | 2 | 3 | 4 | 5) => {
-      if (!currentProgress || isComplete) return;
+      if (!currentQueueItem || !currentProgress || isComplete) return;
 
       const review: CardReviewDTO = {
-        cardIndex: currentProgress.cardIndex,
+        cardIndex: currentQueueItem.cardIndex,
         quality,
         timeTakenMs: Date.now() - sessionStartRef.current.getTime(),
       };
@@ -142,7 +165,7 @@ export default function StudyPage({ params }: StudyPageProps) {
       setReviewHistory((prev) => [
         ...prev,
         {
-          cardIndex: currentProgress.cardIndex,
+          cardIndex: currentQueueItem.cardIndex,
           quality,
           timestamp: Date.now(),
         },
@@ -153,19 +176,32 @@ export default function StudyPage({ params }: StudyPageProps) {
         setCorrectCount((c) => c + 1);
       } else {
         setIncorrectCount((c) => c + 1);
+
+        // Always re-queue failed cards (Anki-like behavior)
+        // Cards will keep appearing until user marks them as "Know"
+        setStudyQueue((prev) => [
+          ...prev,
+          {
+            cardIndex: currentQueueItem.cardIndex,
+            progress: currentQueueItem.progress,
+            repetitionCount: currentQueueItem.repetitionCount + 1,
+          },
+        ]);
       }
 
       // Move to next card
-      setCurrentIndex((prev) => prev + 1);
+      setCurrentQueueIndex((prev) => prev + 1);
       setIsFlipped(false);
-
-      // Check if session complete
-      if (currentIndex + 1 >= totalCards) {
-        setShowCompletionDialog(true);
-      }
     },
-    [currentProgress, currentIndex, totalCards, isComplete]
+    [currentQueueItem, currentProgress, currentQueueIndex, studyQueue.length, isComplete]
   );
+
+  // Watch for session completion
+  useEffect(() => {
+    if (isComplete && studyQueue.length > 0 && !showCompletionDialog) {
+      setShowCompletionDialog(true);
+    }
+  }, [isComplete, studyQueue.length, showCompletionDialog]);
 
   // Swipe handlers
   const handleSwipeLeft = useCallback(() => {
@@ -183,13 +219,25 @@ export default function StudyPage({ params }: StudyPageProps) {
 
   // Undo last action
   const handleUndo = useCallback(() => {
-    if (reviewHistory.length === 0 || currentIndex === 0) return;
+    if (reviewHistory.length === 0 || currentQueueIndex === 0) return;
 
     const lastReview = reviewHistory[reviewHistory.length - 1];
     setReviewHistory((prev) => prev.slice(0, -1));
     setReviews((prev) => prev.slice(0, -1));
-    setCurrentIndex((prev) => prev - 1);
+    setCurrentQueueIndex((prev) => prev - 1);
     setIsFlipped(false);
+
+    // If last review was incorrect, we need to remove the re-queued card
+    if (lastReview.quality < 3) {
+      setStudyQueue((prev) => {
+        // Remove the last added item if it matches the undone card
+        const lastItem = prev[prev.length - 1];
+        if (lastItem && lastItem.cardIndex === lastReview.cardIndex && lastItem.repetitionCount > 0) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
+    }
 
     // Update counts
     if (lastReview.quality >= 3) {
@@ -199,7 +247,7 @@ export default function StudyPage({ params }: StudyPageProps) {
     }
 
     toast.success(t("ai.flashcards.undone"), { description: t("ai.flashcards.revertedReview") });
-  }, [reviewHistory, currentIndex]);
+  }, [reviewHistory, currentQueueIndex, t]);
 
   // Exit handler
   const handleExit = useCallback(() => {
@@ -221,13 +269,20 @@ export default function StudyPage({ params }: StudyPageProps) {
 
     setIsSubmitting(true);
     try {
-      await aiFlashcardService.submitReview(id, {
-        reviews,
-        sessionTimeMs: Date.now() - sessionStartRef.current.getTime(),
-      });
-      toast.success(t("ai.flashcards.progressSaved"), {
-        description: t("ai.flashcards.cardsReviewed", { count: reviews.length }),
-      });
+      // In practice mode, don't save progress to backend
+      if (!isPracticeMode) {
+        await aiFlashcardService.submitReview(id, {
+          reviews,
+          sessionTimeMs: Date.now() - sessionStartRef.current.getTime(),
+        });
+        toast.success(t("ai.flashcards.progressSaved"), {
+          description: t("ai.flashcards.cardsReviewed", { count: reviews.length }),
+        });
+      } else {
+        toast.success(t("ai.flashcards.practiceComplete") || "Practice session complete!", {
+          description: t("ai.flashcards.progressNotSaved") || "Progress was not saved (practice mode).",
+        });
+      }
       if (navigateAfter) {
         router.push(`/ai/flashcards/${id}`);
       }
@@ -287,7 +342,7 @@ export default function StudyPage({ params }: StudyPageProps) {
   }
 
   // Empty session state
-  if (totalCards === 0) {
+  if (initialCardCount === 0) {
     return (
       <AiPageWrapper
         title={t("ai.flashcards.studySession")}
@@ -300,12 +355,18 @@ export default function StudyPage({ params }: StudyPageProps) {
               <Trophy className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-lg font-semibold mb-2">{t("ai.flashcards.allCaughtUpNoDue")}</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-6">
               {t("ai.flashcards.noCardsDueNow")}
             </p>
-            <Button onClick={() => router.push(`/ai/flashcards/${id}`)}>
-              {t("ai.flashcards.backToDeck")}
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => router.push(`/ai/flashcards/${id}`)}>
+                {t("ai.flashcards.backToDeck")}
+              </Button>
+              <Button onClick={() => router.push(`/ai/flashcards/${id}/study?mode=practice`)}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                {t("ai.flashcards.practiceAnyway") || "Practice Anyway"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </AiPageWrapper>
@@ -325,8 +386,8 @@ export default function StudyPage({ params }: StudyPageProps) {
 
             <div className="flex-1 mx-4">
               <StudyProgress
-                current={currentIndex}
-                total={totalCards}
+                current={currentQueueIndex}
+                total={studyQueue.length}
                 correctCount={correctCount}
                 incorrectCount={incorrectCount}
                 stats={session.stats}
@@ -398,14 +459,14 @@ export default function StudyPage({ params }: StudyPageProps) {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t("ai.flashcards.accuracy")}</span>
                   <span className="font-medium">
-                    {totalCards > 0
-                      ? Math.round((correctCount / totalCards) * 100)
+                    {initialCardCount > 0
+                      ? Math.round((correctCount / initialCardCount) * 100)
                       : 0}
                     %
                   </span>
                 </div>
                 <Progress
-                  value={(correctCount / totalCards) * 100}
+                  value={initialCardCount > 0 ? (correctCount / initialCardCount) * 100 : 0}
                   className="h-2"
                 />
               </div>
@@ -475,13 +536,21 @@ export default function StudyPage({ params }: StudyPageProps) {
             </div>
 
             {/* Current card info */}
-            {currentProgress && (
+            {currentProgress && currentQueueItem && (
               <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
                 <MasteryIndicator level={currentProgress.masteryLevel} size="sm" />
                 <span>•</span>
                 <span>
                   {t("ai.flashcards.reviewed")} {currentProgress.reviewCount} {t("ai.flashcards.times")}
                 </span>
+                {currentQueueItem.repetitionCount > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-500 font-medium">
+                      Seen {currentQueueItem.repetitionCount + 1}x this session
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>
