@@ -1,5 +1,37 @@
-// Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+
+// Mock i18n with readable test values
+const mockTranslations = {
+  'courses.sections': 'sections',
+  'courses.mins': 'min',
+  'courses.continue': 'Continue',
+  'courses.continueLearning': 'Continue Learning',
+  'courses.viewDetail': 'View Detail',
+  'common.progress': 'Progress',
+  'common.completed': 'Completed',
+};
+
+jest.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    locale: 'en',
+    setLocale: jest.fn(),
+    t: (key, params) => {
+      // Return mapped translation or key
+      const translation = mockTranslations[key] || key;
+      if (params) {
+        let result = translation;
+        Object.entries(params).forEach(([k, v]) => {
+          result = result.replace(`{{${k}}}`, v).replace(`{${k}}`, v);
+        });
+        return result;
+      }
+      return translation;
+    },
+    messages: {},
+  }),
+  useT: () => (key) => mockTranslations[key] || key,
+  I18nProvider: ({ children }) => children,
+}));
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -44,21 +76,21 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
+  constructor() { }
+  disconnect() { }
+  observe() { }
   takeRecords() {
     return [];
   }
-  unobserve() {}
+  unobserve() { }
 };
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
+  constructor() { }
+  disconnect() { }
+  observe() { }
+  unobserve() { }
 };
 
 // Mock canvas-confetti

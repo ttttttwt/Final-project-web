@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Course } from "@/types/course";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "@/lib/i18n";
+import { getFileUrl } from "@/lib/utils";
 
 /**
  * CEFR Level Color Mapping
@@ -73,7 +74,8 @@ export function CourseCard({
       : course.description;
 
   // Get image URL (support both thumbnailUrl and imageUrl)
-  const imageUrl = course.thumbnailUrl || course.imageUrl;
+  // Use getFileUrl to convert relative paths (e.g., /api/v1/files/{id}/download) to absolute URLs
+  const imageUrl = getFileUrl(course.thumbnailUrl) || getFileUrl(course.imageUrl);
 
   // Get CEFR level (support both cefrLevel and level)
   const level = course.cefrLevel || course.level || "A1";
