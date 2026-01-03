@@ -15,6 +15,7 @@ import {
   SwipeableCard,
   StudyProgress,
   MasteryIndicator,
+  TranslateButton,
 } from "@/components/ai/flashcards";
 import { AiLoadingState, AiErrorCard, AiPageWrapper } from "@/components/ai/common";
 import {

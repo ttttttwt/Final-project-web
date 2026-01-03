@@ -5,3 +5,5 @@ export { StudyProgress, StudyProgressCompact } from "./StudyProgress";
 export { StudyTimer } from "./StudyTimer";
 export { MasteryIndicator, MasteryBar, MasteryDots } from "./MasteryIndicator";
 export { DeckCard, DeckCardSkeleton } from "./DeckCard";
+export { TranslateButton } from "./TranslateButton";
+export { CardTranslateButton, TranslatedContent } from "./CardTranslateButton";

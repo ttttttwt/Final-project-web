@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Volume2, Lightbulb, BookOpen, FileText, ImageIcon, ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
+import { CardTranslateButton, TranslatedContent, CardTranslation } from "./CardTranslateButton";
 
 interface FlashCardProps {
   card: FlashcardCardDTO;
@@ -32,6 +33,7 @@ export const FlashCard = memo(function FlashCard({
   showHint = false,
 }: FlashCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [cardTranslation, setCardTranslation] = useState<CardTranslation | null>(null);
 
   const handleClick = useCallback(() => {
     onFlip?.();
@@ -153,9 +155,19 @@ export const FlashCard = memo(function FlashCard({
         {/* Back Face */}
         <Card className="flashcard-face flashcard-back flex flex-col p-6 md:p-8 bg-card border-2 border-primary/30 cursor-pointer overflow-y-auto">
           <div className="space-y-5">
+            {/* Translate Button - Top Right */}
+            <div className="flex justify-end -mt-2 mb-2">
+              <CardTranslateButton
+                card={card}
+                cachedTranslation={cardTranslation || undefined}
+                onTranslation={setCardTranslation}
+              />
+            </div>
+
             {/* Term and pronunciation */}
             <div className="text-center border-b border-border pb-4">
               <h3 className="text-2xl font-bold text-foreground">{card.front}</h3>
+              <TranslatedContent original={card.front} translated={cardTranslation?.front} className="justify-center" />
               <div className="flex items-center justify-center gap-2 mt-2">
                 {card.back.pronunciation && (
                   <span className="text-muted-foreground font-mono">
@@ -264,16 +276,19 @@ export const FlashCard = memo(function FlashCard({
               )}>
                 {card.back.definition}
               </p>
-              {card.back.definition.length > 120 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1 h-7 text-xs text-primary hover:bg-primary/5 px-2"
-                  onClick={toggleExpand}
-                >
-                  {isExpanded ? "Show Less" : "Read More..."}
-                </Button>
-              )}
+              <div className="flex items-center gap-2 mt-2">
+                {card.back.definition.length > 120 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-primary hover:bg-primary/5 px-2"
+                    onClick={toggleExpand}
+                  >
+                    {isExpanded ? "Show Less" : "Read More..."}
+                  </Button>
+                )}
+              </div>
+              <TranslatedContent original={card.back.definition} translated={cardTranslation?.definition} />
             </div>
 
             {/* Example sentence */}
@@ -291,6 +306,7 @@ export const FlashCard = memo(function FlashCard({
                 )}>
                   "{card.back.exampleSentence}"
                 </p>
+                <TranslatedContent original={card.back.exampleSentence} translated={cardTranslation?.exampleSentence} />
               </div>
             )}
 

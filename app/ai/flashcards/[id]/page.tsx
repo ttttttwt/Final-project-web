@@ -6,7 +6,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { FlashcardDeckDTO, FlashcardCardDTO } from "@/types/ai";
 import { aiFlashcardService } from "@/services/ai-flashcard.service";
-import { FlashCard, MasteryIndicator, MasteryBar } from "@/components/ai/flashcards";
+import { FlashCard, MasteryIndicator, MasteryBar, CardTranslateButton, TranslatedContent } from "@/components/ai/flashcards";
 import { AiLoadingState, AiErrorCard, AiPageWrapper } from "@/components/ai/common";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +80,7 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
   const [previewCard, setPreviewCard] = useState<FlashcardCardDTO | null>(null);
+  const [cardTranslations, setCardTranslations] = useState<Record<number, { front?: string; definition?: string; exampleSentence?: string }>>({});
 
   useEffect(() => {
     loadDeck();
@@ -378,6 +379,12 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                         <h3 className="font-semibold text-lg truncate text-foreground group-hover:text-primary transition-colors">
                           {card.front}
                         </h3>
+                        {/* Inline front translation */}
+                        {cardTranslations[index]?.front && (
+                          <span className="text-sm text-primary/70 italic">
+                            ({cardTranslations[index]?.front})
+                          </span>
+                        )}
                         {card.back.partOfSpeech && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal bg-muted text-muted-foreground border-border/50">
                             {card.back.partOfSpeech}
@@ -394,6 +401,17 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
 
                       {expandedCards.has(index) && (
                         <div className="mt-4 pl-9 space-y-3 text-sm animate-in slide-in-from-top-2 duration-200">
+                          {/* Translate All Button - Top Right */}
+                          <div className="flex justify-end -mt-2 mb-2">
+                            <CardTranslateButton
+                              card={card}
+                              cachedTranslation={cardTranslations[index]}
+                              onTranslation={(translation) => {
+                                setCardTranslations(prev => ({ ...prev, [index]: translation }));
+                              }}
+                            />
+                          </div>
+
                           <div>
                             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">
                               {t("ai.flashcards.definition")}
@@ -401,6 +419,10 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                             <p className="text-foreground/90 leading-relaxed">
                               {card.back.definition}
                             </p>
+                            <TranslatedContent
+                              original={card.back.definition}
+                              translated={cardTranslations[index]?.definition}
+                            />
                           </div>
 
                           {card.back.pronunciation && (
@@ -415,8 +437,15 @@ export default function DeckDetailPage({ params }: DeckDetailPageProps) {
                           )}
 
                           {card.back.exampleSentence && (
-                            <div className="relative pl-3 border-l-2 border-primary/20 italic text-muted-foreground">
-                              "{card.back.exampleSentence}"
+                            <div>
+                              <div className="relative pl-3 border-l-2 border-primary/20 italic text-muted-foreground">
+                                "{card.back.exampleSentence}"
+                              </div>
+                              <TranslatedContent
+                                original={card.back.exampleSentence}
+                                translated={cardTranslations[index]?.exampleSentence}
+                                className="pl-3"
+                              />
                             </div>
                           )}
                         </div>

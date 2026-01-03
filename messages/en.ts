@@ -578,6 +578,12 @@ export const en = {
       practiceComplete: "Practice session complete!",
       progressNotSaved: "Progress was not saved (practice mode).",
       seenThisSession: "Seen {{count}}x this session",
+      // Translation
+      translate: "Translate",
+      translateToVietnamese: "Translate to Vietnamese",
+      translationFailed: "Translation failed",
+      translating: "Translating...",
+      translated: "Translated",
     },
 
     // Grammar

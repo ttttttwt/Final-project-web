@@ -579,6 +579,12 @@ export const vi = {
       practiceComplete: "Hoàn thành phiên luyện tập!",
       progressNotSaved: "Tiến độ không được lưu (chế độ luyện tập).",
       seenThisSession: "Đã xem {{count}} lần trong phiên này",
+      // Translation
+      translate: "Dịch",
+      translateToVietnamese: "Dịch sang tiếng Việt",
+      translationFailed: "Dịch thất bại",
+      translating: "Đang dịch...",
+      translated: "Đã dịch",
     },
 
     // Grammar
