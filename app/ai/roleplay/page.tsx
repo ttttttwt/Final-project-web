@@ -57,6 +57,9 @@ const DOMAINS = [
   "phone-calls",
 ] as const;
 
+// LocalStorage key for persisting generated scenario
+const GENERATED_SCENARIO_KEY = "lexia_generated_scenario";
+
 /**
  * Role-Play Scenario Selection Page
  * Allows users to generate new scenarios or browse existing ones.
@@ -90,15 +93,38 @@ export default function RolePlayPage() {
     }
   }, [userLevel]);
 
+  // Load persisted scenario on mount
+  useEffect(() => {
+    const loadPersistedScenario = async () => {
+      try {
+        const savedScenarioId = localStorage.getItem(GENERATED_SCENARIO_KEY);
+        if (savedScenarioId && !generatedScenario) {
+          const scenario = await aiRolePlayService.getScenario(savedScenarioId);
+          if (scenario) {
+            setGeneratedScenario(scenario);
+          }
+        }
+      } catch (err) {
+        // Scenario might have been deleted or expired, clear localStorage
+        localStorage.removeItem(GENERATED_SCENARIO_KEY);
+      }
+    };
+    loadPersistedScenario();
+  }, []);
+
   // Generate a new scenario
   const handleGenerateScenario = async () => {
     setIsGenerating(true);
     setError(null);
     setGeneratedScenario(null);
+    // Clear old scenario from localStorage
+    localStorage.removeItem(GENERATED_SCENARIO_KEY);
 
     try {
       const scenario = await aiRolePlayService.generateScenario(formData);
       setGeneratedScenario(scenario);
+      // Save scenario ID to localStorage for persistence
+      localStorage.setItem(GENERATED_SCENARIO_KEY, scenario.id);
       toast.success("Scenario generated!", {
         description: scenario.title,
       });
@@ -121,6 +147,9 @@ export default function RolePlayPage() {
         mode,
       };
       const conversation = await aiRolePlayService.startConversation(data);
+
+      // Clear persisted scenario after starting conversation
+      localStorage.removeItem(GENERATED_SCENARIO_KEY);
 
       // Navigate to the conversation page
       router.push(`/ai/roleplay/${conversation.id}`);
