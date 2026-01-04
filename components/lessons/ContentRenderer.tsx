@@ -24,6 +24,20 @@ import type {
   SpeakingContent,
 } from "@/types/lesson";
 
+/** Convert relative URL to full URL for media playback */
+const getFullUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  // If already a full URL, return as-is
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:")) {
+    return url;
+  }
+  // Convert relative URL to full URL using API base URL
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8088/api/v1";
+  // Remove /api/v1 suffix from base URL if the relative URL already has it
+  const serverBaseUrl = baseUrl.replace(/\/api\/v1\/?$/, "");
+  return `${serverBaseUrl}${url}`;
+};
+
 interface ContentRendererProps {
   lessonType: LessonType;
   parsedContent:
@@ -278,7 +292,7 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
             <audio
               controls
               className="w-full"
-              src={content.audioUrl}
+              src={getFullUrl(content.audioUrl)}
               preload="metadata"
             >
               Your browser does not support the audio element.
