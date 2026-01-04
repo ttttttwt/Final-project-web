@@ -948,5 +948,10 @@ export const vi = {
     remaining: "còn lại",
     monthlyQuota: "Hạn mức hàng tháng",
     quotaExhausted: "Bạn đã hết hạn mức hàng tháng. Đặt lại vào tháng sau.",
+    
+    // Pro feature benefits (for upgrade prompt)
+    proFeature1: "Tải lên bất kỳ tài liệu, video hoặc văn bản",
+    proFeature2: "AI tạo từ vựng, bài kiểm tra & tóm tắt",
+    proFeature3: "Luyện tập với các kịch bản đóng vai tương tác",
   },
 };

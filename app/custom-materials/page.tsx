@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useCustomMaterialStore } from "@/store/customMaterialStore";
 import {
   MaterialsGrid,
@@ -22,8 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, RefreshCw, Sparkles } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Plus, RefreshCw, Sparkles, Crown } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 
 /**
@@ -32,6 +41,7 @@ import { useTranslation } from "@/lib/i18n";
 export default function CustomMaterialsPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { isPro, isLoading: isLoadingSubscription } = useSubscriptionStore();
   const {
     materials,
     totalMaterials,
@@ -51,19 +61,22 @@ export default function CustomMaterialsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch materials on mount and when filter changes
+  // Fetch materials on mount and when filter changes (only for Pro users)
   useEffect(() => {
+    if (!isPro) return;
     const params: { status?: CustomMaterialStatus } = {};
     if (statusFilter !== "ALL") {
       params.status = statusFilter;
     }
     fetchMaterials(params);
-  }, [statusFilter, fetchMaterials]);
+  }, [statusFilter, fetchMaterials, isPro]);
 
-  // Fetch quota on mount
+  // Fetch quota on mount (only for Pro users)
   useEffect(() => {
-    fetchQuota();
-  }, [fetchQuota]);
+    if (isPro) {
+      fetchQuota();
+    }
+  }, [fetchQuota, isPro]);
 
   // Handle view material
   const handleView = useCallback(
@@ -117,6 +130,53 @@ export default function CustomMaterialsPage() {
     },
     {} as Record<CustomMaterialStatus | "ALL", number>
   );
+
+  // Render premium gate for non-Pro users
+  if (!isLoadingSubscription && !isPro) {
+    return (
+      <ProtectedRoute>
+        <MainLayout>
+          <div className="container mx-auto px-4 py-8 max-w-2xl">
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA000] flex items-center justify-center">
+                  <Crown className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("subscription.premiumFeature")}</CardTitle>
+                <CardDescription className="text-base">
+                  {t("customMaterials.premiumDesc")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-3 text-left max-w-sm mx-auto">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
+                    <span>{t("customMaterials.proFeature1")}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
+                    <span>{t("customMaterials.proFeature2")}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-5 w-5 text-[#4285F4]" />
+                    <span>{t("customMaterials.proFeature3")}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button variant="outline" asChild>
+                    <Link href="/dashboard">{t("ai.common.backToDashboardFull")}</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/pricing">{t("ai.common.upgrade")}</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </MainLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>

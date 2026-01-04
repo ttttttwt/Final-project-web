@@ -947,6 +947,11 @@ export const en = {
     remaining: "remaining",
     monthlyQuota: "Monthly Quota",
     quotaExhausted: "You've reached your monthly limit. Resets next month.",
+    
+    // Pro feature benefits (for upgrade prompt)
+    proFeature1: "Upload any document, video, or text",
+    proFeature2: "AI generates vocabulary, quizzes & summaries",
+    proFeature3: "Practice with interactive role-play scenarios",
   },
 } as const;
 
