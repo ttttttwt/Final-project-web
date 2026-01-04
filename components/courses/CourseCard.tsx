@@ -68,10 +68,11 @@ export function CourseCard({
   };
 
   // Truncate description to max 120 characters
+  const description = course.description || "";
   const truncatedDescription =
-    course.description.length > 120
-      ? course.description.substring(0, 120) + "..."
-      : course.description;
+    description.length > 120
+      ? description.substring(0, 120) + "..."
+      : description;
 
   // Get image URL (support both thumbnailUrl and imageUrl)
   // Use getFileUrl to convert relative paths (e.g., /api/v1/files/{id}/download) to absolute URLs

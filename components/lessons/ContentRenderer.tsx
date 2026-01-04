@@ -73,7 +73,7 @@ function ReadingContentRenderer({ content }: { content: ReadingContent }) {
   return (
     <div className="space-y-6">
       {/* Passages */}
-      {content.passages.map((passage, index) => (
+      {content.passages && content.passages.length > 0 && content.passages.map((passage, index) => (
         <Card key={index}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -126,17 +126,18 @@ function ReadingContentRenderer({ content }: { content: ReadingContent }) {
       )}
 
       {/* Questions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comprehension Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {content.questions.map((question, index) => (
-              <div key={index} className="pb-6 border-b last:border-0">
-                <h4 className="font-medium mb-3">
-                  {index + 1}. {question.question}
-                </h4>
+      {content.questions && content.questions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Comprehension Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {content.questions.map((question, index) => (
+                <div key={index} className="pb-6 border-b last:border-0">
+                  <h4 className="font-medium mb-3">
+                    {index + 1}. {question.question}
+                  </h4>
                 {question.type === "multiple_choice" && question.options && (
                   <div className="space-y-2">
                     {question.options.map((option, optIndex) => {
@@ -245,6 +246,7 @@ function ReadingContentRenderer({ content }: { content: ReadingContent }) {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
@@ -336,16 +338,17 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
       )}
 
       {/* Questions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comprehension Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {content.questions.map((question, index) => (
-              <div key={index} className="pb-6 border-b last:border-0">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-medium flex-1">
+      {content.questions && content.questions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Comprehension Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {content.questions.map((question, index) => (
+                <div key={index} className="pb-6 border-b last:border-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <h4 className="font-medium flex-1">
                     {index + 1}. {question.question}
                   </h4>
                   {question.timestamp !== undefined && (
@@ -463,6 +466,7 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
@@ -504,9 +508,10 @@ function QuizContentRenderer({ content }: { content: QuizContent }) {
       </Card>
 
       {/* Questions */}
-      <div className="space-y-6">
-        {content.questions.map((question, index) => (
-          <Card key={index}>
+      {content.questions && content.questions.length > 0 && (
+        <div className="space-y-6">
+          {content.questions.map((question, index) => (
+            <Card key={index}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <CardTitle className="text-base">
@@ -652,7 +657,8 @@ function QuizContentRenderer({ content }: { content: QuizContent }) {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -704,9 +710,10 @@ function SpeakingContentRenderer({ content }: { content: SpeakingContent }) {
       </Card>
 
       {/* Prompts */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Practice Prompts</h3>
-        {content.prompts?.map((prompt, index) => (
+      {content.prompts && content.prompts.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Practice Prompts</h3>
+          {content.prompts.map((prompt, index) => (
           <Card key={index}>
             <CardHeader>
               <CardTitle className="text-base">
@@ -772,7 +779,8 @@ function SpeakingContentRenderer({ content }: { content: SpeakingContent }) {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Placeholder for AI Role-play */}
       <Card className="border-dashed">

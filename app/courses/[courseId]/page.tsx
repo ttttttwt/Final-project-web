@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CourseSection } from "@/components/courses/CourseSection";
 import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, getFileUrl } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 const CEFR_COLORS: Record<string, string> = {
@@ -221,10 +221,10 @@ export default function CourseDetailPage() {
         {/* Course Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-8">
           {/* Course Thumbnail */}
-          {course.thumbnailUrl && (
+          {course.thumbnailUrl && getFileUrl(course.thumbnailUrl) && (
             <div className="relative w-full h-64 md:h-80 bg-gray-200 dark:bg-gray-700">
               <Image
-                src={course.thumbnailUrl}
+                src={getFileUrl(course.thumbnailUrl)!}
                 alt={course.title}
                 fill
                 className="object-cover"
