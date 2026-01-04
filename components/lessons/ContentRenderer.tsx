@@ -23,6 +23,7 @@ import type {
   QuizContent,
   SpeakingContent,
 } from "@/types/lesson";
+import { SpeakingLessonRenderer } from "./speaking/SpeakingLessonPage";
 
 /** Convert relative URL to full URL for media playback */
 const getFullUrl = (url: string | undefined): string => {
@@ -45,11 +46,15 @@ interface ContentRendererProps {
   | ListeningContent
   | QuizContent
   | SpeakingContent;
+  lessonId: number;
+  onComplete?: () => void;
 }
 
 export default function ContentRenderer({
   lessonType,
   parsedContent,
+  lessonId,
+  onComplete,
 }: ContentRendererProps) {
   switch (lessonType) {
     case "READING":
@@ -64,7 +69,11 @@ export default function ContentRenderer({
       return <QuizContentRenderer content={parsedContent as QuizContent} />;
     case "SPEAKING":
       return (
-        <SpeakingContentRenderer content={parsedContent as SpeakingContent} />
+        <SpeakingLessonRenderer
+          content={parsedContent as SpeakingContent}
+          lessonId={lessonId}
+          onComplete={onComplete}
+        />
       );
     default:
       return (
@@ -152,114 +161,114 @@ function ReadingContentRenderer({ content }: { content: ReadingContent }) {
                   <h4 className="font-medium mb-3">
                     {index + 1}. {question.question}
                   </h4>
-                {question.type === "multiple_choice" && question.options && (
-                  <div className="space-y-2">
-                    {question.options.map((option, optIndex) => {
-                      const isSelected = answers[index] === optIndex;
-                      const isCorrect = question.correctAnswer === optIndex;
-                      const showFeedback = answers[index] !== undefined;
+                  {question.type === "multiple_choice" && question.options && (
+                    <div className="space-y-2">
+                      {question.options.map((option, optIndex) => {
+                        const isSelected = answers[index] === optIndex;
+                        const isCorrect = question.correctAnswer === optIndex;
+                        const showFeedback = answers[index] !== undefined;
 
-                      let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
-                      let className = "w-full justify-start text-left h-auto py-3";
+                        let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                        let className = "w-full justify-start text-left h-auto py-3";
 
-                      if (showFeedback) {
-                        if (isSelected && isCorrect) {
+                        if (showFeedback) {
+                          if (isSelected && isCorrect) {
+                            variant = "default";
+                            className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                          } else if (isSelected && !isCorrect) {
+                            variant = "destructive";
+                          } else if (!isSelected && isCorrect) {
+                            className += " border-green-500 bg-green-50 text-green-900";
+                          }
+                        } else if (isSelected) {
                           variant = "default";
-                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
-                        } else if (isSelected && !isCorrect) {
-                          variant = "destructive";
-                        } else if (!isSelected && isCorrect) {
-                          className += " border-green-500 bg-green-50 text-green-900";
                         }
-                      } else if (isSelected) {
-                        variant = "default";
-                      }
 
-                      return (
-                        <Button
-                          key={optIndex}
-                          variant={variant}
-                          className={className}
-                          onClick={() => handleAnswer(index, optIndex)}
-                        >
-                          <span className="mr-2 font-semibold">
-                            {String.fromCharCode(65 + optIndex)}.
-                          </span>
-                          {option}
-                          {showFeedback && isSelected && isCorrect && (
-                            <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
-                          )}
-                          {showFeedback && isSelected && !isCorrect && (
-                            <XCircle className="ml-auto h-5 w-5 text-white" />
-                          )}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
-                {question.type === "true_false" && (
-                  <div className="flex gap-4">
-                    {[true, false].map((val) => {
-                      const isSelected = answers[index] === val;
-                      const isCorrect = question.correctAnswer === val;
-                      const showFeedback = answers[index] !== undefined;
+                        return (
+                          <Button
+                            key={optIndex}
+                            variant={variant}
+                            className={className}
+                            onClick={() => handleAnswer(index, optIndex)}
+                          >
+                            <span className="mr-2 font-semibold">
+                              {String.fromCharCode(65 + optIndex)}.
+                            </span>
+                            {option}
+                            {showFeedback && isSelected && isCorrect && (
+                              <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
+                            )}
+                            {showFeedback && isSelected && !isCorrect && (
+                              <XCircle className="ml-auto h-5 w-5 text-white" />
+                            )}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {question.type === "true_false" && (
+                    <div className="flex gap-4">
+                      {[true, false].map((val) => {
+                        const isSelected = answers[index] === val;
+                        const isCorrect = question.correctAnswer === val;
+                        const showFeedback = answers[index] !== undefined;
 
-                      let variant: "default" | "outline" | "destructive" = "outline";
-                      let className = "flex-1 h-auto py-3";
+                        let variant: "default" | "outline" | "destructive" = "outline";
+                        let className = "flex-1 h-auto py-3";
 
-                      if (showFeedback) {
-                        if (isSelected && isCorrect) {
+                        if (showFeedback) {
+                          if (isSelected && isCorrect) {
+                            variant = "default";
+                            className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                          } else if (isSelected && !isCorrect) {
+                            variant = "destructive";
+                          } else if (!isSelected && isCorrect) {
+                            className += " border-green-500 bg-green-50 text-green-900";
+                          }
+                        } else if (isSelected) {
                           variant = "default";
-                          className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
-                        } else if (isSelected && !isCorrect) {
-                          variant = "destructive";
-                        } else if (!isSelected && isCorrect) {
-                          className += " border-green-500 bg-green-50 text-green-900";
                         }
-                      } else if (isSelected) {
-                        variant = "default";
-                      }
 
-                      return (
-                        <Button
-                          key={String(val)}
-                          variant={variant}
-                          className={className}
-                          onClick={() => handleAnswer(index, val)}
-                        >
-                          {val ? (
-                            <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-                          ) : (
-                            <XCircle className="mr-2 h-5 w-5 text-red-600" />
-                          )}
-                          {val ? "True" : "False"}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
-                {question.type === "short_answer" && (
-                  <div className="space-y-2">
-                    <textarea
-                      className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Type your answer here..."
-                      value={answers[index] || ""}
-                      onChange={(e) => handleAnswer(index, e.target.value)}
-                    />
-                  </div>
-                )}
-                {question.explanation && (
-                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <p className="text-sm text-blue-900 dark:text-blue-100">
-                      <strong>Explanation:</strong> {question.explanation}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                        return (
+                          <Button
+                            key={String(val)}
+                            variant={variant}
+                            className={className}
+                            onClick={() => handleAnswer(index, val)}
+                          >
+                            {val ? (
+                              <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                            ) : (
+                              <XCircle className="mr-2 h-5 w-5 text-red-600" />
+                            )}
+                            {val ? "True" : "False"}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {question.type === "short_answer" && (
+                    <div className="space-y-2">
+                      <textarea
+                        className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Type your answer here..."
+                        value={answers[index] || ""}
+                        onChange={(e) => handleAnswer(index, e.target.value)}
+                      />
+                    </div>
+                  )}
+                  {question.explanation && (
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <p className="text-sm text-blue-900 dark:text-blue-100">
+                        <strong>Explanation:</strong> {question.explanation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -363,14 +372,190 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
                 <div key={index} className="pb-6 border-b last:border-0">
                   <div className="flex items-start justify-between mb-3">
                     <h4 className="font-medium flex-1">
-                    {index + 1}. {question.question}
-                  </h4>
-                  {question.timestamp !== undefined && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      @ {question.timestamp}s
-                    </Badge>
+                      {index + 1}. {question.question}
+                    </h4>
+                    {question.timestamp !== undefined && (
+                      <Badge variant="secondary" className="ml-2 text-xs">
+                        @ {question.timestamp}s
+                      </Badge>
+                    )}
+                  </div>
+                  {question.type === "multiple_choice" && question.options && (
+                    <div className="space-y-2">
+                      {question.options.map((option, optIndex) => {
+                        const isSelected = answers[index] === optIndex;
+                        const isCorrect = question.correctAnswer === optIndex;
+                        const showFeedback = answers[index] !== undefined;
+
+                        let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
+                        let className = "w-full justify-start text-left h-auto py-3";
+
+                        if (showFeedback) {
+                          if (isSelected && isCorrect) {
+                            variant = "default";
+                            className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                          } else if (isSelected && !isCorrect) {
+                            variant = "destructive";
+                          } else if (!isSelected && isCorrect) {
+                            className += " border-green-500 bg-green-50 text-green-900";
+                          }
+                        } else if (isSelected) {
+                          variant = "default";
+                        }
+
+                        return (
+                          <Button
+                            key={optIndex}
+                            variant={variant}
+                            className={className}
+                            onClick={() => handleAnswer(index, optIndex)}
+                          >
+                            <span className="mr-2 font-semibold">
+                              {String.fromCharCode(65 + optIndex)}.
+                            </span>
+                            {option}
+                            {showFeedback && isSelected && isCorrect && (
+                              <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
+                            )}
+                            {showFeedback && isSelected && !isCorrect && (
+                              <XCircle className="ml-auto h-5 w-5 text-white" />
+                            )}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {question.type === "true_false" && (
+                    <div className="flex gap-4">
+                      {[true, false].map((val) => {
+                        const isSelected = answers[index] === val;
+                        const isCorrect = question.correctAnswer === val;
+                        const showFeedback = answers[index] !== undefined;
+
+                        let variant: "default" | "outline" | "destructive" = "outline";
+                        let className = "flex-1 h-auto py-3";
+
+                        if (showFeedback) {
+                          if (isSelected && isCorrect) {
+                            variant = "default";
+                            className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
+                          } else if (isSelected && !isCorrect) {
+                            variant = "destructive";
+                          } else if (!isSelected && isCorrect) {
+                            className += " border-green-500 bg-green-50 text-green-900";
+                          }
+                        } else if (isSelected) {
+                          variant = "default";
+                        }
+
+                        return (
+                          <Button
+                            key={String(val)}
+                            variant={variant}
+                            className={className}
+                            onClick={() => handleAnswer(index, val)}
+                          >
+                            {val ? (
+                              <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                            ) : (
+                              <XCircle className="mr-2 h-5 w-5 text-red-600" />
+                            )}
+                            {val ? "True" : "False"}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {question.type === "fill_blank" && (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Type your answer..."
+                        value={answers[index] || ""}
+                        onChange={(e) => handleAnswer(index, e.target.value)}
+                      />
+                    </div>
+                  )}
+                  {question.explanation && (
+                    <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                      <p className="text-sm text-green-900 dark:text-green-100">
+                        <strong>Explanation:</strong> {question.explanation}
+                      </p>
+                    </div>
                   )}
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ==================== QUIZ RENDERER ====================
+
+function QuizContentRenderer({ content }: { content: QuizContent }) {
+  const [answers, setAnswers] = React.useState<Record<number, any>>({});
+
+  const handleAnswer = (questionIndex: number, answer: any) => {
+    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Quiz Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{content.title || "Quiz"}</CardTitle>
+          {content.instructions && (
+            <p className="text-sm text-muted-foreground">
+              {content.instructions}
+            </p>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {content.timeLimit && (
+              <span>
+                ⏱️ Time Limit: {Math.floor(content.timeLimit / 60)}min
+              </span>
+            )}
+            {content.passingScore && (
+              <span>✓ Passing Score: {content.passingScore}%</span>
+            )}
+            <span>📝 {content.questions.length} Questions</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Questions */}
+      {content.questions && content.questions.length > 0 && (
+        <div className="space-y-6">
+          {content.questions.map((question, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-base">
+                    Question {index + 1}
+                    {question.points && (
+                      <Badge variant="secondary" className="ml-2">
+                        {question.points} pts
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </div>
+                <p className="text-base font-normal mt-2">{question.question}</p>
+              </CardHeader>
+              <CardContent>
+                {question.hint && (
+                  <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+                    <p className="text-sm text-yellow-900 dark:text-yellow-100">
+                      💡 <strong>Hint:</strong> {question.hint}
+                    </p>
+                  </div>
+                )}
                 {question.type === "multiple_choice" && question.options && (
                   <div className="space-y-2">
                     {question.options.map((option, optIndex) => {
@@ -468,209 +653,33 @@ function ListeningContentRenderer({ content }: { content: ListeningContent }) {
                     />
                   </div>
                 )}
+                {question.type === "matching" && question.options && (
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-4 border rounded-md bg-muted/50 text-center text-muted-foreground">
+                      Matching exercise interface placeholder
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {question.options.map((option, optIndex) => (
+                        <div
+                          key={optIndex}
+                          className="p-3 border rounded-md text-sm"
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {question.explanation && (
-                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                    <p className="text-sm text-green-900 dark:text-green-100">
+                  <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                    <p className="text-sm text-purple-900 dark:text-purple-100">
                       <strong>Explanation:</strong> {question.explanation}
                     </p>
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      )}
-    </div>
-  );
-}
-
-// ==================== QUIZ RENDERER ====================
-
-function QuizContentRenderer({ content }: { content: QuizContent }) {
-  const [answers, setAnswers] = React.useState<Record<number, any>>({});
-
-  const handleAnswer = (questionIndex: number, answer: any) => {
-    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Quiz Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{content.title || "Quiz"}</CardTitle>
-          {content.instructions && (
-            <p className="text-sm text-muted-foreground">
-              {content.instructions}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            {content.timeLimit && (
-              <span>
-                ⏱️ Time Limit: {Math.floor(content.timeLimit / 60)}min
-              </span>
-            )}
-            {content.passingScore && (
-              <span>✓ Passing Score: {content.passingScore}%</span>
-            )}
-            <span>📝 {content.questions.length} Questions</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Questions */}
-      {content.questions && content.questions.length > 0 && (
-        <div className="space-y-6">
-          {content.questions.map((question, index) => (
-            <Card key={index}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-base">
-                  Question {index + 1}
-                  {question.points && (
-                    <Badge variant="secondary" className="ml-2">
-                      {question.points} pts
-                    </Badge>
-                  )}
-                </CardTitle>
-              </div>
-              <p className="text-base font-normal mt-2">{question.question}</p>
-            </CardHeader>
-            <CardContent>
-              {question.hint && (
-                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-                  <p className="text-sm text-yellow-900 dark:text-yellow-100">
-                    💡 <strong>Hint:</strong> {question.hint}
-                  </p>
-                </div>
-              )}
-              {question.type === "multiple_choice" && question.options && (
-                <div className="space-y-2">
-                  {question.options.map((option, optIndex) => {
-                    const isSelected = answers[index] === optIndex;
-                    const isCorrect = question.correctAnswer === optIndex;
-                    const showFeedback = answers[index] !== undefined;
-
-                    let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
-                    let className = "w-full justify-start text-left h-auto py-3";
-
-                    if (showFeedback) {
-                      if (isSelected && isCorrect) {
-                        variant = "default";
-                        className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
-                      } else if (isSelected && !isCorrect) {
-                        variant = "destructive";
-                      } else if (!isSelected && isCorrect) {
-                        className += " border-green-500 bg-green-50 text-green-900";
-                      }
-                    } else if (isSelected) {
-                      variant = "default";
-                    }
-
-                    return (
-                      <Button
-                        key={optIndex}
-                        variant={variant}
-                        className={className}
-                        onClick={() => handleAnswer(index, optIndex)}
-                      >
-                        <span className="mr-2 font-semibold">
-                          {String.fromCharCode(65 + optIndex)}.
-                        </span>
-                        {option}
-                        {showFeedback && isSelected && isCorrect && (
-                          <CheckCircle2 className="ml-auto h-5 w-5 text-green-600" />
-                        )}
-                        {showFeedback && isSelected && !isCorrect && (
-                          <XCircle className="ml-auto h-5 w-5 text-white" />
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
-              {question.type === "true_false" && (
-                <div className="flex gap-4">
-                  {[true, false].map((val) => {
-                    const isSelected = answers[index] === val;
-                    const isCorrect = question.correctAnswer === val;
-                    const showFeedback = answers[index] !== undefined;
-
-                    let variant: "default" | "outline" | "destructive" = "outline";
-                    let className = "flex-1 h-auto py-3";
-
-                    if (showFeedback) {
-                      if (isSelected && isCorrect) {
-                        variant = "default";
-                        className += " bg-green-100 text-green-900 border-green-500 hover:bg-green-200";
-                      } else if (isSelected && !isCorrect) {
-                        variant = "destructive";
-                      } else if (!isSelected && isCorrect) {
-                        className += " border-green-500 bg-green-50 text-green-900";
-                      }
-                    } else if (isSelected) {
-                      variant = "default";
-                    }
-
-                    return (
-                      <Button
-                        key={String(val)}
-                        variant={variant}
-                        className={className}
-                        onClick={() => handleAnswer(index, val)}
-                      >
-                        {val ? (
-                          <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-                        ) : (
-                          <XCircle className="mr-2 h-5 w-5 text-red-600" />
-                        )}
-                        {val ? "True" : "False"}
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
-              {question.type === "fill_blank" && (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Type your answer..."
-                    value={answers[index] || ""}
-                    onChange={(e) => handleAnswer(index, e.target.value)}
-                  />
-                </div>
-              )}
-              {question.type === "matching" && question.options && (
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="p-4 border rounded-md bg-muted/50 text-center text-muted-foreground">
-                    Matching exercise interface placeholder
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {question.options.map((option, optIndex) => (
-                      <div
-                        key={optIndex}
-                        className="p-3 border rounded-md text-sm"
-                      >
-                        {option}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {question.explanation && (
-                <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                  <p className="text-sm text-purple-900 dark:text-purple-100">
-                    <strong>Explanation:</strong> {question.explanation}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
@@ -728,71 +737,71 @@ function SpeakingContentRenderer({ content }: { content: SpeakingContent }) {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Practice Prompts</h3>
           {content.prompts.map((prompt, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Prompt {index + 1}: {prompt.prompt}
-              </CardTitle>
-              {prompt.context && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {prompt.context}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent>
-              {prompt.sampleAnswers && prompt.sampleAnswers.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold mb-2">
-                    Sample Answers:
-                  </h4>
-                  <ul className="space-y-1">
-                    {prompt.sampleAnswers.map((answer, ansIndex) => (
-                      <li
-                        key={ansIndex}
-                        className="text-sm text-muted-foreground pl-4 border-l-2 border-orange-500"
-                      >
-                        &ldquo;{answer}&rdquo;
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {prompt.targetGrammar && prompt.targetGrammar.length > 0 && (
-                <div className="mb-2">
-                  <h4 className="text-sm font-semibold mb-1">
-                    Target Grammar:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {prompt.targetGrammar.map((grammar, gramIndex) => (
-                      <Badge key={gramIndex} variant="outline">
-                        {grammar}
-                      </Badge>
-                    ))}
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Prompt {index + 1}: {prompt.prompt}
+                </CardTitle>
+                {prompt.context && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {prompt.context}
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                {prompt.sampleAnswers && prompt.sampleAnswers.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold mb-2">
+                      Sample Answers:
+                    </h4>
+                    <ul className="space-y-1">
+                      {prompt.sampleAnswers.map((answer, ansIndex) => (
+                        <li
+                          key={ansIndex}
+                          className="text-sm text-muted-foreground pl-4 border-l-2 border-orange-500"
+                        >
+                          &ldquo;{answer}&rdquo;
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-              )}
-              {prompt.targetVocabulary &&
-                prompt.targetVocabulary.length > 0 && (
-                  <div>
+                )}
+                {prompt.targetGrammar && prompt.targetGrammar.length > 0 && (
+                  <div className="mb-2">
                     <h4 className="text-sm font-semibold mb-1">
-                      Key Vocabulary:
+                      Target Grammar:
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {prompt.targetVocabulary.map((vocab, vocabIndex) => (
-                        <Badge
-                          key={vocabIndex}
-                          variant="secondary"
-                          className="bg-orange-100 text-orange-800"
-                        >
-                          {vocab}
+                      {prompt.targetGrammar.map((grammar, gramIndex) => (
+                        <Badge key={gramIndex} variant="outline">
+                          {grammar}
                         </Badge>
                       ))}
                     </div>
                   </div>
                 )}
-            </CardContent>
-          </Card>
-        ))}
+                {prompt.targetVocabulary &&
+                  prompt.targetVocabulary.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">
+                        Key Vocabulary:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {prompt.targetVocabulary.map((vocab, vocabIndex) => (
+                          <Badge
+                            key={vocabIndex}
+                            variant="secondary"
+                            className="bg-orange-100 text-orange-800"
+                          >
+                            {vocab}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 

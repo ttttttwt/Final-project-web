@@ -263,6 +263,8 @@ export default function LessonViewerClient({
                         <ContentRenderer
                             lessonType={lesson.lessonType}
                             parsedContent={parsedLesson.parsedContent}
+                            lessonId={lessonId}
+                            onComplete={handleCompleteLesson}
                         />
 
                         <LessonNavigation

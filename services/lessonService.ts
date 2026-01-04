@@ -45,10 +45,40 @@ export async function getLessonsByCourseId(
   return response.data;
 }
 
+import { SpeakingAssessmentResponse } from "@/types/speaking";
+
+/**
+ * Assess speaking attempt for a lesson prompt
+ * @param lessonId Lesson ID
+ * @param promptId Prompt ID (index)
+ * @param audio Audio file blob
+ * @returns Assessment results
+ */
+export async function assessSpeaking(
+  lessonId: number,
+  promptId: string,
+  audio: Blob
+): Promise<SpeakingAssessmentResponse> {
+  const formData = new FormData();
+  formData.append("audio", audio);
+
+  const response = await api.post<SpeakingAssessmentResponse>(
+    `/lessons/${lessonId}/speaking/assess/${promptId}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return response.data;
+}
+
 const lessonService = {
   getLessonById,
   getLessonsBySectionId,
   getLessonsByCourseId,
+  assessSpeaking,
 };
 
 export default lessonService;
